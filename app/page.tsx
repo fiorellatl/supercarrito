@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Item = {
   ingrediente: string;
@@ -21,6 +21,7 @@ type Item = {
 
 type Carrito = {
   menu: string;
+  titulo?: string;
   platos: string[];
   items: Item[];
   total: number;
@@ -40,15 +41,23 @@ export default function Home() {
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [cargando, setCargando] = useState(false);
   const [menus, setMenus] = useState<MenuResumen[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Menús reales para la pantalla inicial. Si falla, el empty state
-  // igual muestra la promesa y el usuario puede escribir a mano.
+  // Un menú real como ejemplo tocable (no hardcodeado). Si falla, el chip
+  // de menú usa "menú 2" por defecto y todo lo demás sigue funcionando.
   useEffect(() => {
     fetch("/api/menus")
       .then((r) => r.json())
       .then((d) => setMenus(d.menus ?? []))
       .catch(() => setMenus([]));
   }, []);
+
+  // Los chips-ejemplo rellenan la MISMA caja (enseñan que puedes escribir como
+  // quieras) y dejan al usuario enviar. Nada de flujos separados.
+  function rellenar(texto: string) {
+    setInput(texto);
+    inputRef.current?.focus();
+  }
 
   async function enviar(textoDirecto?: string) {
     const texto = (textoDirecto ?? input).trim();
@@ -103,13 +112,16 @@ export default function Home() {
         </a>
       </div>
       <p style={{ color: "#71717a", marginTop: 0 }}>
-        Elige tu menú de la semana y te armo el carrito en Wong con{" "}
-        <b>precios reales</b>, en segundos.
+        Dime qué necesitas comprar —como te salga— y te lo dejo en un{" "}
+        <b>carrito con precios</b>, listo para comprar.
       </p>
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
         {mensajes.length === 0 && !cargando && (
-          <Inicio menus={menus} onElegir={(t) => enviar(t)} />
+          <Inicio
+            menuEjemplo={menus[1]?.numero ?? menus[0]?.numero ?? "2"}
+            onRellenar={rellenar}
+          />
         )}
         {mensajes.map((m, i) => (
           <Burbuja key={i} mensaje={m} />
@@ -123,11 +135,12 @@ export default function Home() {
 
       <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
         <input
+          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && enviar()}
-          placeholder="Compra el menú 2"
-          aria-label="Escribe tu pedido"
+          placeholder="pollo, pan, aceite…"
+          aria-label="Escribe qué necesitas comprar"
           style={{
             flex: 1,
             padding: "12px 14px",
@@ -157,25 +170,34 @@ export default function Home() {
 }
 
 function Inicio({
-  menus,
-  onElegir,
+  menuEjemplo,
+  onRellenar,
 }: {
-  menus: MenuResumen[];
-  onElegir: (texto: string) => void;
+  menuEjemplo: string;
+  onRellenar: (texto: string) => void;
 }) {
+  // Formas de expresar una intención de compra. Todas pasan por la MISMA caja.
+  const modos = [
+    { emoji: "📝", titulo: "Escribir una lista", ej: "pollo, pan, aceite" },
+    { emoji: "🥘", titulo: "Convertir una receta", ej: "ají de gallina" },
+    { emoji: "🍽️", titulo: "Comprar un menú", ej: `menú ${menuEjemplo}` },
+  ];
+  const proximos = [
+    { emoji: "📷", titulo: "Foto de tu lista" },
+    { emoji: "🎤", titulo: "Nota de voz" },
+  ];
+
   return (
     <div style={{ marginTop: 8 }}>
       <div style={{ fontSize: 13, color: "#71717a", marginBottom: 10 }}>
-        {menus.length > 0
-          ? "Toca un menú y mira cómo se vuelve una lista de compras con precios 👇"
-          : "Escribe tu menú abajo (por ejemplo: “Compra el menú 2”)."}
+        Empieza como te resulte natural 👇 (toca un ejemplo y edítalo)
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {menus.map((m) => (
+        {modos.map((m) => (
           <button
-            key={m.numero}
-            onClick={() => onElegir(`Compra el menú ${m.numero}`)}
+            key={m.titulo}
+            onClick={() => onRellenar(m.ej)}
             style={{
               textAlign: "left",
               background: "#fff",
@@ -189,19 +211,36 @@ function Inicio({
               boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
             }}
           >
-            <span style={{ fontSize: 24 }}>🍽️</span>
+            <span style={{ fontSize: 22 }}>{m.emoji}</span>
             <span style={{ flex: 1 }}>
               <span style={{ display: "block", fontSize: 15, fontWeight: 700 }}>
-                {m.nombre}
+                {m.titulo}
               </span>
               <span style={{ display: "block", fontSize: 13, color: "#71717a" }}>
-                {m.platos.join(" · ")}
+                “{m.ej}”
               </span>
             </span>
             <span style={{ fontSize: 13, fontWeight: 600, color: "#4338ca" }}>
-              Armar carrito →
+              Probar →
             </span>
           </button>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+        {proximos.map((p) => (
+          <span
+            key={p.titulo}
+            style={{
+              fontSize: 12,
+              color: "#a1a1aa",
+              border: "1px dashed #d4d4d8",
+              borderRadius: 999,
+              padding: "5px 10px",
+            }}
+          >
+            {p.emoji} {p.titulo} · pronto
+          </span>
         ))}
       </div>
     </div>
@@ -246,9 +285,11 @@ function Carrito({ data }: { data: Carrito }) {
   const degradado = data.items.some((it) => it.degradado);
   return (
     <div>
-      <div style={{ fontWeight: 700, fontSize: 16 }}>{data.menu}</div>
+      <div style={{ fontWeight: 700, fontSize: 16 }}>{data.titulo ?? data.menu}</div>
       <div style={{ fontSize: 13, color: "#71717a", marginBottom: 12 }}>
-        {data.platos.join(" · ")}
+        {data.platos.length > 0
+          ? data.platos.join(" · ")
+          : `${data.items.length} producto${data.items.length === 1 ? "" : "s"}`}
       </div>
 
       <div

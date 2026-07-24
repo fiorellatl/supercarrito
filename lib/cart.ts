@@ -52,6 +52,61 @@ async function armarListaDeMenu(mensaje: string): Promise<ResultadoMenu | null> 
   };
 }
 
+// --- Normalizador de intención ---------------------------------------------
+// El corazón del producto: no importa CÓMO llegue la intención de compra, la
+// convertimos en una lista canónica de ingredientes. Hoy soportamos 3 formas;
+// foto/voz vendrán después por esta misma puerta.
+//
+//   "menú 2"                -> menú (número) -> platos -> ingredientes
+//   "ají de gallina"        -> receta (por nombre) -> ingredientes
+//   "pollo, pan, aceite"    -> lista libre -> ingredientes tal cual
+//
+// Devuelve además un `titulo` legible para la cabecera del carrito.
+export type Intencion = ResultadoMenu & { titulo: string };
+
+// Palabras de relleno que la gente escribe pero no son ingredientes.
+const RELLENO = new Set([
+  "y", "e", "de", "un", "una", "unos", "unas", "el", "la", "los", "las",
+  "necesito", "quiero", "comprar", "compra", "porfa", "porfavor", "para",
+]);
+
+function normalizarListaLibre(mensaje: string): string[] {
+  const items = mensaje
+    .split(/[,\n;]+|\by\b/gi) // comas, saltos, ";" o " y "
+    .map((s) => s.trim().toLowerCase())
+    .map((s) => s.replace(/^(un|una|unos|unas|el|la|los|las)\s+/i, "")) // "un pollo" -> "pollo"
+    .filter((s) => s.length > 1 && /[a-záéíóúñ]/i.test(s) && !RELLENO.has(s));
+  return [...new Set(items)]; // sin duplicados, preserva orden
+}
+
+export async function normalizarIntencion(mensaje: string): Promise<Intencion | null> {
+  const texto = (mensaje ?? "").trim();
+  if (!texto) return null;
+
+  // 1) Menú por número.
+  const menu = await armarListaDeMenu(texto);
+  if (menu) return { ...menu, titulo: menu.menu };
+
+  // 2) Receta por nombre (coincidencia flexible con data/recipes.json).
+  const { recipes } = await cargarDatos();
+  const clave = Object.keys(recipes).find(
+    (n) => n.toLowerCase() === texto.toLowerCase()
+  );
+  if (clave) {
+    return {
+      menu: clave,
+      titulo: clave,
+      platos: [clave],
+      ingredientes: [...new Set(recipes[clave] ?? [])],
+    };
+  }
+
+  // 3) Lista libre.
+  const ingredientes = normalizarListaLibre(texto);
+  if (ingredientes.length === 0) return null;
+  return { menu: "Tu lista", titulo: "Tu lista", platos: [], ingredientes };
+}
+
 export async function menusDisponibles(): Promise<string[]> {
   const { menus } = await cargarDatos();
   return Object.keys(menus);
@@ -96,13 +151,15 @@ async function buscarConAlternativa(ingrediente: string): Promise<ItemCarrito> {
 }
 
 export type Carrito = ResultadoMenu & {
+  titulo: string;
   items: ItemCarrito[];
   total: number;
   faltantes: string[];
 };
 
-export async function comprarMenu(mensaje: string): Promise<Carrito | null> {
-  const base = await armarListaDeMenu(mensaje);
+// Cualquier intención (menú, receta o lista) -> carrito con productos reales.
+export async function comprarIntencion(mensaje: string): Promise<Carrito | null> {
+  const base = await normalizarIntencion(mensaje);
   if (!base) return null;
 
   // En paralelo: no hacemos esperar al usuario ingrediente por ingrediente.
