@@ -95,7 +95,10 @@ export async function comprarMenu(mensaje: string): Promise<Carrito | null> {
   // En paralelo: no hacemos esperar al usuario ingrediente por ingrediente.
   const items = await Promise.all(base.ingredientes.map(buscarConAlternativa));
 
-  const total = items.reduce((s, it) => s + (it.encontrado ? it.precio ?? 0 : 0), 0);
+  const total = items.reduce(
+    (s, it) => s + (it.encontrado && it.disponible !== false ? it.precio ?? 0 : 0),
+    0
+  );
   const faltantes = items.filter((it) => !it.encontrado).map((it) => it.ingrediente);
 
   return { ...base, items, total: Math.round(total * 100) / 100, faltantes };

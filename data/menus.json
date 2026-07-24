@@ -6,5 +6,9 @@
   "2": {
     "nombre": "Menú 2",
     "platos": ["Ají de gallina", "Pescado con arroz"]
+  },
+  "3": {
+    "nombre": "Menú 3",
+    "platos": ["Tallarín rojo"]
   }
 }

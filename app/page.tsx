@@ -5,10 +5,18 @@ import { useState } from "react";
 type Item = {
   ingrediente: string;
   encontrado: boolean;
+  sku?: string;
   nombre?: string;
+  marca?: string;
+  imagen?: string;
   precio?: number;
+  presentacion?: string;
+  categoria?: string;
+  disponible?: boolean;
+  url?: string;
   alternativa: boolean;
   terminoUsado: string;
+  degradado?: boolean;
 };
 
 type Carrito = {
@@ -133,6 +141,16 @@ export default function Home() {
 
 function Burbuja({ mensaje }: { mensaje: Mensaje }) {
   const esUser = mensaje.autor === "user";
+
+  // El carrito ocupa todo el ancho (no una burbuja) para que las tarjetas respiren.
+  if (mensaje.data) {
+    return (
+      <div style={{ alignSelf: "stretch" }}>
+        <Carrito data={mensaje.data} />
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -147,7 +165,6 @@ function Burbuja({ mensaje }: { mensaje: Mensaje }) {
       }}
     >
       {mensaje.texto && <span>{mensaje.texto}</span>}
-      {mensaje.data && <Carrito data={mensaje.data} />}
     </div>
   );
 }
@@ -157,45 +174,23 @@ function soles(n: number) {
 }
 
 function Carrito({ data }: { data: Carrito }) {
+  const degradado = data.items.some((it) => it.degradado);
   return (
-    <div style={{ minWidth: 280 }}>
-      <div style={{ fontWeight: 700, marginBottom: 2 }}>{data.menu}</div>
-      <div style={{ fontSize: 13, color: "#71717a", marginBottom: 10 }}>
+    <div>
+      <div style={{ fontWeight: 700, fontSize: 16 }}>{data.menu}</div>
+      <div style={{ fontSize: 13, color: "#71717a", marginBottom: 12 }}>
         {data.platos.join(" · ")}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+          gap: 12,
+        }}
+      >
         {data.items.map((it) => (
-          <div
-            key={it.ingrediente}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 10,
-              paddingBottom: 8,
-              borderBottom: "1px solid #f0f0f0",
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 13, color: "#71717a" }}>
-                {it.ingrediente}
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 500 }}>
-                {it.encontrado ? it.nombre : "— no encontrado en Wong —"}
-              </div>
-              {it.alternativa && (
-                <span style={badge("#eef2ff", "#4338ca")}>
-                  alternativa: “{it.terminoUsado}”
-                </span>
-              )}
-              {!it.encontrado && (
-                <span style={badge("#fef2f2", "#b91c1c")}>faltante</span>
-              )}
-            </div>
-            <div style={{ fontWeight: 600, whiteSpace: "nowrap" }}>
-              {it.encontrado && it.precio != null ? soles(it.precio) : "—"}
-            </div>
-          </div>
+          <ProductoCard key={it.ingrediente} it={it} />
         ))}
       </div>
 
@@ -203,13 +198,14 @@ function Carrito({ data }: { data: Carrito }) {
         style={{
           display: "flex",
           justifyContent: "space-between",
-          marginTop: 12,
-          fontSize: 16,
-          fontWeight: 700,
+          alignItems: "baseline",
+          marginTop: 16,
+          paddingTop: 12,
+          borderTop: "1px solid #e4e4e7",
         }}
       >
-        <span>Total estimado</span>
-        <span>{soles(data.total)}</span>
+        <span style={{ fontSize: 15, fontWeight: 600 }}>Total estimado</span>
+        <span style={{ fontSize: 20, fontWeight: 800 }}>{soles(data.total)}</span>
       </div>
 
       {data.faltantes.length > 0 && (
@@ -217,19 +213,83 @@ function Carrito({ data }: { data: Carrito }) {
           No encontré en Wong: {data.faltantes.join(", ")}.
         </div>
       )}
+      {degradado && (
+        <div style={{ marginTop: 6, fontSize: 11, color: "#a16207" }}>
+          Wong no respondió; mostrando catálogo de respaldo.
+        </div>
+      )}
     </div>
   );
 }
 
-function badge(bg: string, color: string): React.CSSProperties {
+function ProductoCard({ it }: { it: Item }) {
+  const card: React.CSSProperties = {
+    border: "1px solid #ececef",
+    borderRadius: 14,
+    overflow: "hidden",
+    background: "#fff",
+    display: "flex",
+    flexDirection: "column",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+  };
+
+  if (!it.encontrado) {
+    return (
+      <div style={{ ...card, alignItems: "center", justifyContent: "center", minHeight: 150, padding: 12 }}>
+        <div style={{ fontSize: 28 }}>🔍</div>
+        <div style={{ fontSize: 13, color: "#71717a", textAlign: "center", marginTop: 6 }}>
+          Sin resultado para <b>{it.ingrediente}</b>
+        </div>
+      </div>
+    );
+  }
+
+  const agotado = it.disponible === false;
+
+  return (
+    <a href={it.url} target="_blank" rel="noopener noreferrer" style={{ ...card, textDecoration: "none", color: "inherit" }}>
+      <div style={{ position: "relative", aspectRatio: "4 / 3", background: "#f6f6f7" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={it.imagen}
+          alt={it.nombre ?? it.ingrediente}
+          style={{ width: "100%", height: "100%", objectFit: "cover", opacity: agotado ? 0.5 : 1 }}
+        />
+        {agotado && (
+          <span style={{ position: "absolute", top: 8, left: 8, ...pill("#fef2f2", "#b91c1c") }}>
+            Agotado
+          </span>
+        )}
+      </div>
+      <div style={{ padding: "10px 12px 12px", display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+        {it.categoria && (
+          <div style={{ fontSize: 10, letterSpacing: 0.4, textTransform: "uppercase", color: "#a1a1aa" }}>
+            {it.categoria}
+          </div>
+        )}
+        <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.25 }}>{it.nombre}</div>
+        <div style={{ fontSize: 12, color: "#71717a" }}>
+          {it.marca}
+          {it.presentacion ? ` · ${it.presentacion}` : ""}
+        </div>
+        <div style={{ marginTop: "auto", paddingTop: 8, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <span style={{ fontSize: 16, fontWeight: 800 }}>
+            {it.precio != null ? soles(it.precio) : "—"}
+          </span>
+          <span style={{ fontSize: 10, color: "#a1a1aa" }}>para {it.ingrediente}</span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+function pill(bg: string, color: string): React.CSSProperties {
   return {
-    display: "inline-block",
-    marginTop: 4,
-    padding: "1px 7px",
+    padding: "2px 8px",
     borderRadius: 999,
     background: bg,
     color,
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 700,
   };
 }

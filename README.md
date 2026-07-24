@@ -2,31 +2,36 @@
 
 Chat que convierte "Compra el menú 2" en un carrito de Wong con precios y total.
 
-## Correr en tu laptop (Wong real)
+## Correr en tu laptop
 
 ```bash
 npm install
-npm run dev
+npm run dev            # por defecto usa FakeWong (catálogo ficticio, sin red)
 ```
 
 - Chat: http://localhost:3000 → escribe **"Compra el menú 2"**
 - Editar tus menús: http://localhost:3000/editar
 
-> En tu laptop pega a Wong real (API pública de VTEX). No necesitas Playwright ni login.
-
-## Modo demo (sin acceso a Wong)
-
-Si estás en una red que bloquea Wong, usa datos de ejemplo:
+## Proveedor de catálogo (una sola configuración)
 
 ```bash
-SUPERCARRITO_MOCK=1 npm run dev
+CATALOG_PROVIDER=fake npm run dev   # catálogo ficticio (por defecto)
+CATALOG_PROVIDER=wong npm run dev   # datos REALES de Wong (API pública de VTEX)
 ```
+
+- En **Netlify**, pon la variable de entorno `CATALOG_PROVIDER=wong` para datos reales.
+- Si Wong no responde (timeout, 403, 429, endpoint caído), el sistema **degrada
+  automáticamente a FakeWong**: nunca se rompe la experiencia.
+- El resto del código nunca sabe qué proveedor está activo (contrato en `lib/catalog.ts`).
 
 ## Cómo funciona
 
 - `data/menus.json` y `data/recipes.json` → datos estáticos (editables en `/editar`).
-- `lib/cart.ts` → menú → ingredientes → busca en Wong → total.
-- `lib/wong.ts` → conector VTEX (`/api/catalog_system/pub/products/search`).
+- `lib/cart.ts` → menú → ingredientes → busca productos → total.
+- `lib/catalog.ts` → **contrato** `ProductoWong` (lo único que conoce el sistema).
+- `lib/fakewong.ts` → catálogo ficticio + motor de ranking heurístico.
+- `lib/wongvtex.ts` → conector real VTEX (`/api/catalog_system/pub/products/search`).
+- `lib/wong.ts` → dispatcher: elige proveedor y degrada con elegancia.
 
 ## Guión de prueba con un usuario (este fin de semana)
 
