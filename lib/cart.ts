@@ -57,6 +57,19 @@ export async function menusDisponibles(): Promise<string[]> {
   return Object.keys(menus);
 }
 
+// Resumen para la pantalla inicial: número + nombre + platos de cada menú.
+// Se lee de data/ (no hardcodeado): editar en /editar se refleja aquí.
+export type MenuResumen = { numero: string; nombre: string; platos: string[] };
+
+export async function menusResumen(): Promise<MenuResumen[]> {
+  const { menus } = await cargarDatos();
+  return Object.entries(menus).map(([numero, m]) => ({
+    numero,
+    nombre: m.nombre,
+    platos: m.platos,
+  }));
+}
+
 // --- Wong: buscar cada ingrediente, con alternativa genérica (idea de Iris) ---
 
 export type ItemCarrito = ProductoWong & {

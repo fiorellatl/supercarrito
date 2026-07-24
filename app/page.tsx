@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Item = {
   ingrediente: string;
@@ -33,13 +33,25 @@ type Mensaje = {
   data?: Carrito;
 };
 
+type MenuResumen = { numero: string; nombre: string; platos: string[] };
+
 export default function Home() {
-  const [input, setInput] = useState("Compra el menú 2");
+  const [input, setInput] = useState("");
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [cargando, setCargando] = useState(false);
+  const [menus, setMenus] = useState<MenuResumen[]>([]);
 
-  async function enviar() {
-    const texto = input.trim();
+  // Menús reales para la pantalla inicial. Si falla, el empty state
+  // igual muestra la promesa y el usuario puede escribir a mano.
+  useEffect(() => {
+    fetch("/api/menus")
+      .then((r) => r.json())
+      .then((d) => setMenus(d.menus ?? []))
+      .catch(() => setMenus([]));
+  }, []);
+
+  async function enviar(textoDirecto?: string) {
+    const texto = (textoDirecto ?? input).trim();
     if (!texto || cargando) return;
 
     setMensajes((m) => [...m, { autor: "user", texto }]);
@@ -91,16 +103,20 @@ export default function Home() {
         </a>
       </div>
       <p style={{ color: "#71717a", marginTop: 0 }}>
-        Escribe algo como <b>&quot;Compra el menú 2&quot;</b>
+        Elige tu menú de la semana y te armo el carrito en Wong con{" "}
+        <b>precios reales</b>, en segundos.
       </p>
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+        {mensajes.length === 0 && !cargando && (
+          <Inicio menus={menus} onElegir={(t) => enviar(t)} />
+        )}
         {mensajes.map((m, i) => (
           <Burbuja key={i} mensaje={m} />
         ))}
         {cargando && (
           <div style={{ color: "#71717a", fontStyle: "italic" }}>
-            Pensando…
+            Armando tu carrito…
           </div>
         )}
       </div>
@@ -111,6 +127,7 @@ export default function Home() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && enviar()}
           placeholder="Compra el menú 2"
+          aria-label="Escribe tu pedido"
           style={{
             flex: 1,
             padding: "12px 14px",
@@ -120,7 +137,7 @@ export default function Home() {
           }}
         />
         <button
-          onClick={enviar}
+          onClick={() => enviar()}
           disabled={cargando}
           style={{
             padding: "12px 18px",
@@ -136,6 +153,58 @@ export default function Home() {
         </button>
       </div>
     </main>
+  );
+}
+
+function Inicio({
+  menus,
+  onElegir,
+}: {
+  menus: MenuResumen[];
+  onElegir: (texto: string) => void;
+}) {
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div style={{ fontSize: 13, color: "#71717a", marginBottom: 10 }}>
+        {menus.length > 0
+          ? "Toca un menú y mira cómo se vuelve una lista de compras con precios 👇"
+          : "Escribe tu menú abajo (por ejemplo: “Compra el menú 2”)."}
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {menus.map((m) => (
+          <button
+            key={m.numero}
+            onClick={() => onElegir(`Compra el menú ${m.numero}`)}
+            style={{
+              textAlign: "left",
+              background: "#fff",
+              border: "1px solid #e4e4e7",
+              borderRadius: 14,
+              padding: "12px 14px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+            }}
+          >
+            <span style={{ fontSize: 24 }}>🍽️</span>
+            <span style={{ flex: 1 }}>
+              <span style={{ display: "block", fontSize: 15, fontWeight: 700 }}>
+                {m.nombre}
+              </span>
+              <span style={{ display: "block", fontSize: 13, color: "#71717a" }}>
+                {m.platos.join(" · ")}
+              </span>
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#4338ca" }}>
+              Armar carrito →
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
