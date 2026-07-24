@@ -1,0 +1,12 @@
+{
+  "pollo": { "nombre": "Pechuga de Pollo San Fernando x kg", "precio": 15.9 },
+  "leche": { "nombre": "Leche Gloria Evaporada 400g x6", "precio": 21.5 },
+  "ají": { "nombre": "Ají Amarillo Molido Doña Isabel 500g", "precio": 4.5 },
+  "pescado": { "nombre": "Filete de Perico x kg", "precio": 18.0 },
+  "arroz": { "nombre": "Arroz Superior Costeño 5kg", "precio": 24.9 },
+  "papas": { "nombre": "Papa Blanca x kg", "precio": 3.2 },
+  "carne": { "nombre": "Carne de Res Molida x kg", "precio": 19.9 },
+  "cebolla": { "nombre": "Cebolla Roja x kg", "precio": 3.5 },
+  "tomate": { "nombre": "Tomate Italiano x kg", "precio": 4.0 },
+  "fideos": { "nombre": "Fideos Don Vittorio Cabello de Ángel 500g", "precio": 3.8 }
+}

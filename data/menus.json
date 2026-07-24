@@ -1,0 +1,10 @@
+{
+  "1": {
+    "nombre": "Menú 1",
+    "platos": ["Lomo saltado", "Sopa a la minuta"]
+  },
+  "2": {
+    "nombre": "Menú 2",
+    "platos": ["Ají de gallina", "Pescado con arroz"]
+  }
+}
