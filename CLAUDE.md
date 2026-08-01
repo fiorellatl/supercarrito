@@ -48,8 +48,64 @@ la PO puede tomar (precio, alcance, qué se prueba con el usuario, en qué se ga
 
 🎯 Objetivo · ⚙️ Implementación · 🧪 QA · 📈 Aprendizaje esperado · ⏸ Esperando decisión
 
+## Principios de producto (no negociables)
+
+Se descubrieron construyendo, y protegen la confianza del usuario y el activo del
+producto. Cualquier diseño que los rompa está mal, aunque sea más fácil.
+
+- **Todo monto debe ser explicable por el propio producto.** El usuario ve el
+  cálculo (cantidad × precio unitario), nunca solo el resultado. Jamás debe
+  preguntarse "¿de dónde salió ese precio?".
+- **Un producto solo suma al total si conocemos su cantidad.** Preferimos un
+  carrito incompleto y honesto a uno completo e inventado. Nada de estimar.
+- **Toda pregunta cerrada debe tener siempre una salida abierta.** Si las
+  opciones no incluyen la respuesta real de la familia, la obligamos a
+  enseñarnos un dato falso — y ese dato se queda en su perfil para siempre.
+  **Nunca debemos obligar a una familia a enseñarnos algo incorrecto.**
+- **La interfaz comunica grado de confianza, no origen técnico.** No "del
+  perfil" sino *"Basado en tu compra anterior"* / *"Lo acabas de confirmar"* /
+  *"Pendiente de confirmar"*. El objetivo no es explicar el sistema.
+- **Nunca ajustamos un dato del usuario en silencio.** Si hay que redondear,
+  convertir o completar algo, se ve.
+
+## Arquitectura: reglas permanentes
+
+- **El sistema nunca conoce a sus proveedores.** Todo proveedor externo entra
+  por un contrato (`ProductoWong` para catálogo, `ExtractorDeEvidencia` para
+  extracción). Cambiar de proveedor = escribir otra implementación, nada más.
+- **Degradación elegante siempre.** Cada proveedor tiene un sustituto local sin
+  red ni costo (FakeWong, ExtractorDeMuestra). El producto arranca y se demuestra
+  sin credenciales. Nunca se rompe la experiencia.
+- **Toda evidencia entra por el mismo normalizador.** Texto, receta, menú,
+  captura, voz: es *una sola tarea* —extraer la intención de compra de una
+  evidencia que el usuario ya tiene—, no funciones distintas. Si una entrada
+  necesita su propio flujo paralelo, la estamos modelando mal.
+- **El historial es hecho; el perfil es opinión derivada.** Los hechos se
+  guardan append-only y no se editan. El perfil es una interpretación que
+  cambiará muchas veces.
+- **La instrumentación no puede alterar lo que observa** ni tener coste cuando
+  está apagada.
+
+## Secretos y datos personales
+
+- **Las claves viven solo en el servidor**, como variable de entorno. Nunca en
+  el cliente, nunca en un archivo versionado. `.env*` está en `.gitignore`.
+- **Los datos reales de familias no se versionan** (capturas, boletas). Solo se
+  versiona la transcripción anónima que sirve de referencia.
+- **Las salidas de instrumentos de medición no se versionan.** La decisión que
+  producen se documenta en `PROJECT_STATE.md`; el crudo es evidencia de
+  investigación, no memoria de desarrollo.
+
 ## Decisiones técnicas tomadas
 
 - Menús/recetas: JSON estático en `data/`, editables en `/editar` (sin tocar código).
 - Precios de Wong: **API pública de VTEX** (`/api/catalog_system/pub/products/search`).
   Descartamos Playwright/DOM por frágil. Solo Wong por ahora.
+- **VTEX, cómo leer sus campos** (verificado contra boleta real): `Price` es el
+  precio **por unidad de venta** (para un producto al peso, el del kilo) y
+  `unitMultiplier` es la **cantidad mínima de compra**, *no* la presentación.
+  Confundirlos produce montos que parecen correctos y no lo son.
+- Extracción desde imagen: modelo multimodal, no OCR. **La IA solo se usa cuando
+  evita construir código frágil sin ventaja competitiva** — no para resolver
+  problemas de negocio. Configurable por entorno; el default en código es
+  siempre la decisión ya tomada, no un placeholder.

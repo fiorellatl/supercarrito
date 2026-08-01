@@ -715,12 +715,52 @@ Alcance final (ampliado por la PO): corregir + guardar + aplicar, con el perfil 
 localStorage y el modelo independiente del almacenamiento. Ver §2.
 → *Pendiente de aprendizaje real: nadie fuera del equipo lo ha usado todavía.*
 
-> ⏸ **Roadmap congelado a la espera de investigación (2026-07-26).** La PO abrió
-> una investigación de producto —*¿cómo expresa una familia su compra semanal?*—
-> antes de abrir el ciclo 6. El objetivo ya no es validar el motor de selección,
-> sino **observar listas reales antes de diseñar el parser**. Mientras tanto:
+---
+
+## 🎯 SIGUIENTE SPRINT — Rediseñar el Momento Cero (Product + UX)
+
+**Empezar aquí.** Sprint abierto por la PO el 2026-08-01, al cerrar el ciclo de
+importación por captura.
+
+**Única pregunta del sprint:**
+
+> ¿Cómo debería ser la mejor experiencia posible para que una familia
+> entregue su compra semanal a SuperCarrito?
+
+**Reglas del sprint, explícitas:**
+- **No se escribe código** hasta terminar el diseño.
+- **No se habla de** matching, modelos, benchmark, extracción ni implementación.
+  Todo eso está cerrado y congelado; ver §2.
+- **No se diseñan componentes** (nada de textareas, botones, pantallas todavía).
+- Se trabaja como **Product · UX · Research · Growth · Ingeniería**, analizando
+  **comportamiento humano**, no soluciones.
+
+**Qué hay que entender:**
+- cómo nacen realmente las listas de compra;
+- cómo las familias las organizan;
+- qué formatos utilizan;
+- qué información ya contienen;
+- qué información **nunca** deberíamos pedir;
+- qué debemos aprender **observando** en vez de preguntando;
+- cómo reducir al mínimo la carga cognitiva del primer uso.
+
+**Entregable:** una propuesta de experiencia completa para el Momento Cero,
+sustentada en **principios de producto**, no en preferencias de implementación.
+
+**Mandato permanente de la PO:** si durante la discusión se descubre que estamos
+optimizando el lugar equivocado, **hay que detener el sprint y decirlo**. Cambiar
+de rumbo antes de escribir código es preferible a construir bien lo que no toca.
+
+**Insumos que ya existen para este sprint:** el insight I-1 (§3, n=1: *"quiero
+pegar una captura del carrito de Wong"*), los artefactos reales recolectados, y
+la oportunidad O-1 (boleta PDF con texto extraíble, §3).
+
+---
+
+> ⏸ **Roadmap de desarrollo congelado (2026-07-26 → sigue vigente).** Los ciclos
+> de abajo esperan al resultado del sprint de Momento Cero. Mientras tanto:
 > **ningún cambio de arquitectura.** El producto ya tiene nivel suficiente para
-> enseñarlo. El insight I-1 (§3) podría reordenar lo de abajo; todavía no lo hace.
+> enseñarlo. El insight I-1 (§3) podría reordenarlos; todavía no lo hace.
 
 ### Ciclo 6 — **Escuchar** ⭐ siguiente
 
