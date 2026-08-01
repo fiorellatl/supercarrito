@@ -1,5 +1,26 @@
 node_modules/
 .next/
+
+# Secretos. NUNCA se versionan: un `git add .` distraído publica la clave.
+.env
+.env.*
+!.env.example
 *.log
 _shot.js
 *.tsbuildinfo
+
+# Capturas y boletas reales de compras: son datos personales de familias
+# concretas. Se usan para medir, NUNCA se versionan. La transcripción anónima
+# (data/capturas-prueba/verdad.json) sí se versiona.
+data/capturas-prueba/*.png
+data/capturas-prueba/*.jpg
+data/capturas-prueba/*.jpeg
+data/capturas-prueba/*.webp
+data/capturas-prueba/*.pdf
+
+# Salidas de instrumentos de medición (benchmarks, comparaciones de modelos):
+# evidencia de investigación, no memoria operativa. La decisión que producen se
+# documenta en PROJECT_STATE.md; el crudo no se versiona. Mismo criterio que
+# data/medicion_c4_raw.json (ciclo 4).
+data/comparacion_extractores.json
+data/comparacion_extractores.md

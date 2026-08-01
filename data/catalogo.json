@@ -9,7 +9,12 @@
     "disponible": true,
     "imagen": "/img/pollo.svg",
     "url": "https://www.wong.pe/pollo-fresco-entero-san-fernando/p",
-    "keywords": ["pollo", "pollo fresco", "fresco", "pollo entero fresco"],
+    "keywords": [
+      "pollo",
+      "pollo fresco",
+      "fresco",
+      "pollo entero fresco"
+    ],
     "prioridad": 100
   },
   {
@@ -22,7 +27,11 @@
     "disponible": true,
     "imagen": "/img/pollo.svg",
     "url": "https://www.wong.pe/pechuga-de-pollo-san-fernando/p",
-    "keywords": ["pechuga", "pechuga de pollo", "pollo"],
+    "keywords": [
+      "pechuga",
+      "pechuga de pollo",
+      "pollo"
+    ],
     "prioridad": 90
   },
   {
@@ -35,7 +44,11 @@
     "disponible": true,
     "imagen": "/img/pollo.svg",
     "url": "https://www.wong.pe/muslo-de-pollo-la-calera/p",
-    "keywords": ["muslo", "muslo de pollo", "pollo"],
+    "keywords": [
+      "muslo",
+      "muslo de pollo",
+      "pollo"
+    ],
     "prioridad": 80
   },
   {
@@ -48,7 +61,11 @@
     "disponible": true,
     "imagen": "/img/pollo.svg",
     "url": "https://www.wong.pe/pollo-entero-congelado-redondos/p",
-    "keywords": ["pollo", "pollo entero", "congelado"],
+    "keywords": [
+      "pollo",
+      "pollo entero",
+      "congelado"
+    ],
     "prioridad": 70
   },
   {
@@ -56,12 +73,18 @@
     "nombre": "Filete de Perico Fresco",
     "marca": "La Perla",
     "categoria": "pescado",
-    "precio": 18.0,
+    "precio": 18,
     "presentacion": "500 g",
     "disponible": true,
     "imagen": "/img/pescado.svg",
     "url": "https://www.wong.pe/filete-de-perico-fresco/p",
-    "keywords": ["pescado", "pescado fresco", "fresco", "perico", "filete"],
+    "keywords": [
+      "pescado",
+      "pescado fresco",
+      "fresco",
+      "perico",
+      "filete"
+    ],
     "prioridad": 100
   },
   {
@@ -74,7 +97,12 @@
     "disponible": true,
     "imagen": "/img/pescado.svg",
     "url": "https://www.wong.pe/filete-de-tilapia-congelado/p",
-    "keywords": ["pescado", "tilapia", "filete", "congelado"],
+    "keywords": [
+      "pescado",
+      "tilapia",
+      "filete",
+      "congelado"
+    ],
     "prioridad": 80
   },
   {
@@ -87,7 +115,13 @@
     "disponible": true,
     "imagen": "/img/res.svg",
     "url": "https://www.wong.pe/carne-de-res-molida-redondos/p",
-    "keywords": ["carne de res", "carne", "res", "molida", "carne molida"],
+    "keywords": [
+      "carne de res",
+      "carne",
+      "res",
+      "molida",
+      "carne molida"
+    ],
     "prioridad": 95
   },
   {
@@ -100,7 +134,13 @@
     "disponible": true,
     "imagen": "/img/res.svg",
     "url": "https://www.wong.pe/lomo-fino-de-res-premium/p",
-    "keywords": ["carne de res", "carne", "res", "lomo", "lomo fino"],
+    "keywords": [
+      "carne de res",
+      "carne",
+      "res",
+      "lomo",
+      "lomo fino"
+    ],
     "prioridad": 85
   },
   {
@@ -113,7 +153,11 @@
     "disponible": true,
     "imagen": "/img/arroz.svg",
     "url": "https://www.wong.pe/arroz-superior-extra-costeno-5kg/p",
-    "keywords": ["arroz", "arroz superior", "arroz extra"],
+    "keywords": [
+      "arroz",
+      "arroz superior",
+      "arroz extra"
+    ],
     "prioridad": 100
   },
   {
@@ -126,7 +170,13 @@
     "disponible": true,
     "imagen": "/img/fideos.svg",
     "url": "https://www.wong.pe/fideos-cabello-de-angel-don-vittorio/p",
-    "keywords": ["fideos", "fideo", "cabello de angel", "tallarin", "pasta"],
+    "keywords": [
+      "fideos",
+      "fideo",
+      "cabello de angel",
+      "tallarin",
+      "pasta"
+    ],
     "prioridad": 100
   },
   {
@@ -139,7 +189,11 @@
     "disponible": true,
     "imagen": "/img/leche.svg",
     "url": "https://www.wong.pe/leche-evaporada-entera-gloria/p",
-    "keywords": ["leche", "leche evaporada", "evaporada"],
+    "keywords": [
+      "leche",
+      "leche evaporada",
+      "evaporada"
+    ],
     "prioridad": 100
   },
   {
@@ -152,7 +206,11 @@
     "disponible": true,
     "imagen": "/img/pan.svg",
     "url": "https://www.wong.pe/pan-frances-unidad/p",
-    "keywords": ["pan", "pan frances", "pan francés"],
+    "keywords": [
+      "pan",
+      "pan frances",
+      "pan francés"
+    ],
     "prioridad": 100
   },
   {
@@ -165,7 +223,13 @@
     "disponible": true,
     "imagen": "/img/aji.svg",
     "url": "https://www.wong.pe/aji-amarillo-molido-dona-isabel/p",
-    "keywords": ["ají amarillo", "aji amarillo", "ají", "aji", "ají amarillo molido"],
+    "keywords": [
+      "ají amarillo",
+      "aji amarillo",
+      "ají",
+      "aji",
+      "ají amarillo molido"
+    ],
     "prioridad": 100
   },
   {
@@ -173,12 +237,15 @@
     "nombre": "Tomate Italiano",
     "marca": "Campo Fresco",
     "categoria": "tomate",
-    "precio": 4.0,
+    "precio": 4,
     "presentacion": "1 kg",
     "disponible": true,
     "imagen": "/img/tomate.svg",
     "url": "https://www.wong.pe/tomate-italiano-x-kg/p",
-    "keywords": ["tomate", "tomate italiano"],
+    "keywords": [
+      "tomate",
+      "tomate italiano"
+    ],
     "prioridad": 100
   },
   {
@@ -191,7 +258,10 @@
     "disponible": true,
     "imagen": "/img/cebolla.svg",
     "url": "https://www.wong.pe/cebolla-roja-x-kg/p",
-    "keywords": ["cebolla", "cebolla roja"],
+    "keywords": [
+      "cebolla",
+      "cebolla roja"
+    ],
     "prioridad": 100
   },
   {
@@ -204,7 +274,232 @@
     "disponible": true,
     "imagen": "/img/papa.svg",
     "url": "https://www.wong.pe/papa-blanca-x-kg/p",
-    "keywords": ["papas", "papa", "papa blanca"],
+    "keywords": [
+      "papas",
+      "papa",
+      "papa blanca"
+    ],
     "prioridad": 100
+  },
+  {
+    "sku": "FW-6002",
+    "nombre": "Leche Evaporada Entera",
+    "marca": "Laive",
+    "categoria": "leche",
+    "precio": 4.05,
+    "presentacion": "400 g",
+    "disponible": true,
+    "imagen": "/img/leche.svg",
+    "url": "https://www.wong.pe/fw-6002/p",
+    "keywords": [
+      "leche",
+      "leche evaporada",
+      "evaporada"
+    ],
+    "prioridad": 90
+  },
+  {
+    "sku": "FW-6003",
+    "nombre": "Leche Evaporada Entera",
+    "marca": "Florida",
+    "categoria": "leche",
+    "precio": 3.7,
+    "presentacion": "400 g",
+    "disponible": true,
+    "imagen": "/img/leche.svg",
+    "url": "https://www.wong.pe/fw-6003/p",
+    "keywords": [
+      "leche",
+      "leche evaporada",
+      "evaporada"
+    ],
+    "prioridad": 80
+  },
+  {
+    "sku": "FW-6004",
+    "nombre": "Leche Fresca Entera",
+    "marca": "Gloria",
+    "categoria": "leche",
+    "precio": 6.9,
+    "presentacion": "1 L",
+    "disponible": true,
+    "imagen": "/img/leche.svg",
+    "url": "https://www.wong.pe/fw-6004/p",
+    "keywords": [
+      "leche",
+      "leche fresca",
+      "leche entera"
+    ],
+    "prioridad": 85
+  },
+  {
+    "sku": "FW-6005",
+    "nombre": "Leche Fresca Entera",
+    "marca": "Laive",
+    "categoria": "leche",
+    "precio": 7.2,
+    "presentacion": "1 L",
+    "disponible": true,
+    "imagen": "/img/leche.svg",
+    "url": "https://www.wong.pe/fw-6005/p",
+    "keywords": [
+      "leche",
+      "leche fresca",
+      "leche entera"
+    ],
+    "prioridad": 75
+  },
+  {
+    "sku": "FW-6006",
+    "nombre": "Leche Sin Lactosa",
+    "marca": "Bonlé",
+    "categoria": "leche",
+    "precio": 5.5,
+    "presentacion": "400 g",
+    "disponible": true,
+    "imagen": "/img/leche.svg",
+    "url": "https://www.wong.pe/fw-6006/p",
+    "keywords": [
+      "leche",
+      "leche sin lactosa",
+      "sin lactosa"
+    ],
+    "prioridad": 60
+  },
+  {
+    "sku": "FW-4002",
+    "nombre": "Arroz Superior Extra",
+    "marca": "Costeño",
+    "categoria": "arroz",
+    "precio": 5.9,
+    "presentacion": "750 g",
+    "disponible": true,
+    "imagen": "/img/arroz.svg",
+    "url": "https://www.wong.pe/fw-4002/p",
+    "keywords": [
+      "arroz",
+      "arroz superior"
+    ],
+    "prioridad": 85
+  },
+  {
+    "sku": "FW-4003",
+    "nombre": "Arroz Extra Añejo",
+    "marca": "Paisana",
+    "categoria": "arroz",
+    "precio": 22.5,
+    "presentacion": "5 kg",
+    "disponible": true,
+    "imagen": "/img/arroz.svg",
+    "url": "https://www.wong.pe/fw-4003/p",
+    "keywords": [
+      "arroz",
+      "arroz añejo",
+      "arroz anejo"
+    ],
+    "prioridad": 80
+  },
+  {
+    "sku": "FW-4004",
+    "nombre": "Arroz Extra",
+    "marca": "Faraón",
+    "categoria": "arroz",
+    "precio": 26.9,
+    "presentacion": "5 kg",
+    "disponible": true,
+    "imagen": "/img/arroz.svg",
+    "url": "https://www.wong.pe/fw-4004/p",
+    "keywords": [
+      "arroz",
+      "arroz extra"
+    ],
+    "prioridad": 70
+  },
+  {
+    "sku": "FW-7002",
+    "nombre": "Pan de Molde Blanco",
+    "marca": "Bimbo",
+    "categoria": "pan",
+    "precio": 7.9,
+    "presentacion": "600 g",
+    "disponible": true,
+    "imagen": "/img/pan.svg",
+    "url": "https://www.wong.pe/fw-7002/p",
+    "keywords": [
+      "pan",
+      "pan de molde",
+      "pan blanco"
+    ],
+    "prioridad": 90
+  },
+  {
+    "sku": "FW-7003",
+    "nombre": "Pan de Molde Integral",
+    "marca": "Bimbo",
+    "categoria": "pan",
+    "precio": 8.9,
+    "presentacion": "600 g",
+    "disponible": true,
+    "imagen": "/img/pan.svg",
+    "url": "https://www.wong.pe/fw-7003/p",
+    "keywords": [
+      "pan",
+      "pan de molde",
+      "pan integral"
+    ],
+    "prioridad": 80
+  },
+  {
+    "sku": "FW-7004",
+    "nombre": "Pan de Molde Blanco",
+    "marca": "Union",
+    "categoria": "pan",
+    "precio": 6.5,
+    "presentacion": "600 g",
+    "disponible": true,
+    "imagen": "/img/pan.svg",
+    "url": "https://www.wong.pe/fw-7004/p",
+    "keywords": [
+      "pan",
+      "pan de molde",
+      "pan blanco"
+    ],
+    "prioridad": 70
+  },
+  {
+    "sku": "FW-5002",
+    "nombre": "Fideos Spaghetti",
+    "marca": "Molitalia",
+    "categoria": "fideos",
+    "precio": 3.8,
+    "presentacion": "500 g",
+    "disponible": true,
+    "imagen": "/img/fideos.svg",
+    "url": "https://www.wong.pe/fw-5002/p",
+    "keywords": [
+      "fideos",
+      "spaghetti",
+      "tallarin",
+      "tallarín"
+    ],
+    "prioridad": 85
+  },
+  {
+    "sku": "FW-5003",
+    "nombre": "Fideos Spaghetti",
+    "marca": "Nicolini",
+    "categoria": "fideos",
+    "precio": 4.2,
+    "presentacion": "500 g",
+    "disponible": true,
+    "imagen": "/img/fideos.svg",
+    "url": "https://www.wong.pe/fw-5003/p",
+    "keywords": [
+      "fideos",
+      "spaghetti",
+      "tallarin",
+      "tallarín"
+    ],
+    "prioridad": 80
   }
 ]

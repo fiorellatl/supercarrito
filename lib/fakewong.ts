@@ -45,34 +45,42 @@ function puntuar(query: string, p: ProductoCatalogo): number {
   return score;
 }
 
-export function buscarEnFakeWong(ingrediente: string): ProductoWong {
-  let mejor: ProductoCatalogo | null = null;
-  let mejorScore = 0;
+const UMBRAL = 40;
+const MAX_CANDIDATOS = 6; // 1 elegido + hasta 5 alternativas para corregir
 
-  for (const p of CATALOGO) {
-    const s = puntuar(ingrediente, p);
-    if (s > mejorScore) {
-      mejorScore = s;
-      mejor = p;
-    }
-  }
-
-  if (!mejor || mejorScore < 40) {
-    return { ingrediente, encontrado: false, motivo: "sin resultados" };
-  }
-
+function aProductoWong(ingrediente: string, p: ProductoCatalogo): ProductoWong {
   return {
     ingrediente,
     encontrado: true,
-    sku: mejor.sku,
-    nombre: mejor.nombre,
-    marca: mejor.marca,
-    imagen: mejor.imagen,
-    precio: mejor.precio,
-    presentacion: mejor.presentacion,
-    categoria: mejor.categoria,
-    disponible: mejor.disponible,
-    url: mejor.url,
+    sku: p.sku,
+    nombre: p.nombre,
+    marca: p.marca,
+    imagen: p.imagen,
+    precio: p.precio,
+    // El catálogo ficticio es todo por pieza. Cuando haga falta probar el
+    // camino de los pesables sin red, se añade aquí un producto "x kg".
+    unidadVenta: "un",
+    cantidadMinima: 1,
+    presentacion: p.presentacion,
+    categoria: p.categoria,
+    disponible: p.disponible,
+    url: p.url,
     proveedor: "fake",
   };
+}
+
+export function buscarEnFakeWong(ingrediente: string): ProductoWong {
+  // Ciclo 5: ya no basta con el mejor. Necesitamos el ranking completo para que
+  // el usuario pueda corregirnos (y para que aprendamos de esa corrección).
+  const ranking = CATALOGO.map((p) => ({ p, score: puntuar(ingrediente, p) }))
+    .filter((r) => r.score >= UMBRAL)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_CANDIDATOS);
+
+  if (ranking.length === 0) {
+    return { ingrediente, encontrado: false, motivo: "sin resultados" };
+  }
+
+  const [mejor, ...resto] = ranking.map((r) => aProductoWong(ingrediente, r.p));
+  return { ...mejor, alternativas: resto };
 }

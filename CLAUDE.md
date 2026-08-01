@@ -3,6 +3,16 @@
 Construimos un **producto**, no un proyecto de programación.
 Objetivo: **aprender del usuario lo más rápido posible**.
 
+> 📌 **Lee `PROJECT_STATE.md` antes de proponer nada.** Es la memoria permanente
+> del proyecto: visión, estado, hipótesis abiertas, decisiones y próximos ciclos.
+> Se actualiza al cerrar cada ciclo.
+
+## Filtro de decisión
+
+Toda propuesta se evalúa con una sola pregunta:
+**¿Esto nos acerca a ser el mejor copiloto para hacer el supermercado?**
+Si no, probablemente no debemos construirlo.
+
 ## Filosofía
 
 - La velocidad de aprendizaje > la velocidad de desarrollo.

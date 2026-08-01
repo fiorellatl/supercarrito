@@ -33,9 +33,11 @@ type VtexProduct = {
 };
 
 export async function buscarEnWongVtex(ingrediente: string): Promise<ProductoWong> {
+  // Ciclo 5: pedimos el Top-6, no el primero. Las alternativas son la materia
+  // prima de la corrección y, por tanto, de todo el aprendizaje del perfil.
   const url = `${BASE}/api/catalog_system/pub/products/search?ft=${encodeURIComponent(
     ingrediente
-  )}&_from=0&_to=0`;
+  )}&_from=0&_to=5`;
 
   // fetch lanza en timeout/red; !ok lo convertimos en throw -> el dispatcher degrada.
   const res = await fetch(url, {
@@ -51,7 +53,15 @@ export async function buscarEnWongVtex(ingrediente: string): Promise<ProductoWon
     return { ingrediente, encontrado: false, motivo: "sin resultados", proveedor: "wong" };
   }
 
-  return mapear(ingrediente, data[0]);
+  // Mapeamos todos y nos quedamos con los que tienen precio. El primero es el
+  // elegido por defecto (orden de relevancia de Wong); el resto, alternativas.
+  const candidatos = data.map((p) => mapear(ingrediente, p)).filter((c) => c.encontrado);
+  if (candidatos.length === 0) {
+    return { ingrediente, encontrado: false, motivo: "sin precio", proveedor: "wong" };
+  }
+
+  const [mejor, ...resto] = candidatos;
+  return { ...mejor, alternativas: resto };
 }
 
 function mapear(ingrediente: string, p: VtexProduct): ProductoWong {
@@ -69,14 +79,22 @@ function mapear(ingrediente: string, p: VtexProduct): ProductoWong {
     .filter(Boolean)
     .pop();
 
-  // presentación: VTEX no tiene un campo limpio. La derivamos de unitMultiplier +
-  // measurementUnit (ej. "5 kg") o, si no, del nombre del ítem. Puede faltar.
+  // Cómo se vende. Verificado contra la API y contra una boleta real:
+  //   · `Price` es el precio POR `measurementUnit` — para "x kg", el del KILO.
+  //   · `unitMultiplier` NO es la presentación: es la cantidad MÍNIMA de compra
+  //     (queso de 100 en 100 g, trucha de 400 en 400 g).
+  // Antes pintábamos unitMultiplier como presentación y Price como el precio de
+  // esa presentación. Cada número era correcto y la pareja era mentira.
+  const unidadVenta = item?.measurementUnit === "kg" ? "kg" : "un";
+  const cantidadMinima =
+    typeof item?.unitMultiplier === "number" && item.unitMultiplier > 0
+      ? item.unitMultiplier
+      : 1;
+
+  // Presentación solo para envasados: el nombre del ítem cuando difiere del
+  // producto ("Pack x6", "180 g"). Nunca se deriva del multiplicador.
   const presentacion =
-    item?.unitMultiplier && item.unitMultiplier !== 1 && item.measurementUnit
-      ? `${item.unitMultiplier} ${item.measurementUnit}`
-      : item?.name && item.name !== p.productName
-        ? item.name
-        : undefined;
+    item?.name && item.name !== p.productName ? item.name : undefined;
 
   const disponible =
     oferta?.IsAvailable ?? ((oferta?.AvailableQuantity ?? 0) > 0);
@@ -89,6 +107,8 @@ function mapear(ingrediente: string, p: VtexProduct): ProductoWong {
     marca: p.brand,
     imagen: item?.images?.[0]?.imageUrl,
     precio,
+    unidadVenta,
+    cantidadMinima,
     presentacion,
     categoria,
     disponible,

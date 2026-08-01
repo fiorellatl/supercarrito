@@ -1,0 +1,193 @@
+{
+  "_nota": "Verdad de referencia transcrita A MANO de 3 capturas reales del carrito de Wong de la PO (2026-07-26). Es el patrón contra el que se mide cualquier extractor. Los precios NO se incluyen a propósito: en las capturas los subtotales de productos por peso no cuadran con la boleta real de esa misma compra (p. ej. papa amarilla 1 kg aparece como S/89.90 en la app y S/9.00 en la boleta), así que el precio de la evidencia no es fiable. El precio real se le pide siempre a Wong.",
+  "_hallazgo": "La propia app de Wong TRUNCA los nombres con '…'. 7 de 8 productos de la primera captura llegan cortados. La evidencia es lossy en origen: ningún extractor, por bueno que sea, puede recuperar lo que no está en la imagen.",
+  "capturas": [
+    {
+      "archivo": "carrito-1.jpg",
+      "descripcion": "Abarrotes y lácteos. 8 productos, 7 con nombre truncado.",
+      "lineas": [
+        {
+          "textoOriginal": "",
+          "producto": "",
+          "cantidad": 3,
+          "unidad": "un",
+          "truncado": true,
+          "_nota": "producto sin nombre visible; solo se ve la foto del yogurt griego Laive"
+        },
+        {
+          "textoOriginal": "Yogurt Laive Griego O…",
+          "producto": "Yogurt Laive Griego O",
+          "cantidad": 1,
+          "unidad": "un",
+          "truncado": true
+        },
+        {
+          "textoOriginal": "Lomos de Atún en Agua y Sal Campo…",
+          "producto": "Lomos de Atún en Agua y Sal Campo",
+          "cantidad": 2,
+          "unidad": "un",
+          "truncado": true
+        },
+        {
+          "textoOriginal": "Trucha Desh…",
+          "producto": "Trucha Desh",
+          "cantidad": 1.6,
+          "unidad": "kg",
+          "truncado": true
+        },
+        {
+          "textoOriginal": "Galletas con Chips de Cacao Sin A…",
+          "producto": "Galletas con Chips de Cacao Sin A",
+          "cantidad": 1,
+          "unidad": "un",
+          "truncado": true
+        },
+        {
+          "textoOriginal": "Salsa de …",
+          "producto": "Salsa de",
+          "cantidad": 2,
+          "unidad": "un",
+          "truncado": true
+        },
+        {
+          "textoOriginal": "Queso Philadel…",
+          "producto": "Queso Philadel",
+          "cantidad": 1,
+          "unidad": "un",
+          "truncado": true
+        },
+        {
+          "textoOriginal": "Queso Edam Laive …",
+          "producto": "Queso Edam Laive",
+          "cantidad": 1,
+          "unidad": "un",
+          "truncado": true
+        }
+      ]
+    },
+    {
+      "archivo": "carrito-2.jpg",
+      "descripcion": "Frutas, verduras y carnes. 8 productos, 1 truncado.",
+      "lineas": [
+        {
+          "textoOriginal": "Fresas Emporio 600g",
+          "producto": "Fresas Emporio 600g",
+          "cantidad": 1,
+          "unidad": "un",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Mango Kent Wong x kg",
+          "producto": "Mango Kent Wong x kg",
+          "cantidad": 0.8,
+          "unidad": "kg",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Zapallito Italiano x un",
+          "producto": "Zapallito Italiano x un",
+          "cantidad": 1,
+          "unidad": "un",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Maracuyá x kg",
+          "producto": "Maracuyá x kg",
+          "cantidad": 0.75,
+          "unidad": "kg",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Pepinillo x un",
+          "producto": "Pepinillo x un",
+          "cantidad": 1,
+          "unidad": "un",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Jugo de Naranja Natural Wong Botella 1L",
+          "producto": "Jugo de Naranja Natural Wong Botella 1L",
+          "cantidad": 1,
+          "unidad": "un",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Carne Molida de Bist…",
+          "producto": "Carne Molida de Bist",
+          "cantidad": 0.8,
+          "unidad": "kg",
+          "truncado": true
+        },
+        {
+          "textoOriginal": "Huevos Pardos Wong 30un",
+          "producto": "Huevos Pardos Wong 30un",
+          "cantidad": 1,
+          "unidad": "un",
+          "truncado": false
+        }
+      ]
+    },
+    {
+      "archivo": "carrito-3.jpg",
+      "descripcion": "Verduras y frutas por peso. 8 productos, ninguno truncado.",
+      "lineas": [
+        {
+          "textoOriginal": "Tomate Italiano x kg",
+          "producto": "Tomate Italiano x kg",
+          "cantidad": 1.05,
+          "unidad": "kg",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Plátano de Seda Tipo Exportación en Bolsa x kg",
+          "producto": "Plátano de Seda Tipo Exportación en Bolsa x kg",
+          "cantidad": 1.2,
+          "unidad": "kg",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Palta Fuerte Verde x kg",
+          "producto": "Palta Fuerte Verde x kg",
+          "cantidad": 0.5,
+          "unidad": "kg",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Papa Amarilla Tumbay Procesada x kg",
+          "producto": "Papa Amarilla Tumbay Procesada x kg",
+          "cantidad": 1,
+          "unidad": "kg",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Zanahoria x kg",
+          "producto": "Zanahoria x kg",
+          "cantidad": 0.18,
+          "unidad": "kg",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Palta Fuerte Madura Empacada x kg",
+          "producto": "Palta Fuerte Madura Empacada x kg",
+          "cantidad": 0.6,
+          "unidad": "kg",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Brócoli x kg",
+          "producto": "Brócoli x kg",
+          "cantidad": 0.5,
+          "unidad": "kg",
+          "truncado": false
+        },
+        {
+          "textoOriginal": "Cebolla Roja x kg",
+          "producto": "Cebolla Roja x kg",
+          "cantidad": 0.3,
+          "unidad": "kg",
+          "truncado": false
+        }
+      ]
+    }
+  ]
+}
