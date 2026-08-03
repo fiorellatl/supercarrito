@@ -48,6 +48,14 @@ la PO puede tomar (precio, alcance, qué se prueba con el usuario, en qué se ga
 
 🎯 Objetivo · ⚙️ Implementación · 🧪 QA · 📈 Aprendizaje esperado · ⏸ Esperando decisión
 
+## Toda idea de UX viene con wireframe
+
+Regla de la PO (2026-08-01). **Ninguna propuesta de experiencia se describe solo
+con palabras**: va acompañada de inmediato de un **wireframe de baja fidelidad**
+—ASCII o esquema, cajas y jerarquía, sin color ni tipografía ni componentes—.
+Discutir una pantalla en prosa cuesta tres rondas; con un dibujo feo cuesta una.
+Baja fidelidad es deliberado: se discute la estructura, no el estilo.
+
 ## Principios de producto (no negociables)
 
 Se descubrieron construyendo, y protegen la confianza del usuario y el activo del

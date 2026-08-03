@@ -4,8 +4,13 @@
 > Última actualización: 2026-08-01 — ciclo de importación por captura cerrado:
 > montos explicables, pasada de UX, benchmark de modelo/estrategia (Sonnet 5 +
 > `completar`), pipeline de búsqueda con matiz, `DEBUG_MATCHING` para
-> investigación. **Listo para pruebas con usuarios.** Próximo: sprint de
-> Momento Cero (Product + UX), sin código todavía.
+> investigación. **Listo para pruebas con usuarios.**
+> **En curso:** sprint de **Product Design** de las cuatro puertas de entrada
+> (Lista → Menú → Recetas → Imagen), empezando por Lista. Cambio de método:
+> *la investigación ocurre ahora a través del producto, no antes*. Sin código.
+> Lo diseñado vive en **§H-D como hipótesis de diseño**, no como decisiones.
+> **Base fijada: la libreta es el Home** — la pantalla de inicio con tres formas de
+> empezar desaparece del prototipo. Siguiente paso: los estados de la Puerta 1.
 
 ---
 
@@ -682,6 +687,73 @@ escriben su lista?" sino **"¿de dónde sale su compra semanal?"**.
   no una feature independiente. Sigue sin implementarse.
 - El filtro de la sección 1 puede cancelar cualquier desarrollo.
 
+**De experiencia** *(consolidados al cerrar la fase conceptual, 2026-08-01. Salieron
+del sprint de Product Design y la PO los considera suficientemente sólidos como
+para no volver a discutirlos. Todo lo demás siguió en §H-D.)*
+
+- 🚪 **El producto tiene cuatro puertas y un solo motor.** Lista → Menú → Recetas →
+  Imagen, en ese orden, una por sprint, cada una con entregable usable. No son
+  cuatro productos: son cuatro formas de llegar al mismo sitio.
+- 📥 **"Pega lo que sea. Yo me encargo."** No le pedimos a la familia que
+  reconstruya una compra que ya existe. Atraviesa las cuatro puertas. Corolario
+  operativo: **nunca existe un "eso aquí no"**.
+- 🎯 **Una sola intención, no un solo gesto.** *(Reformulado por la PO el
+  2026-08-01; sustituye a "una sola boca".)* Todas las entradas responden a la
+  misma pregunta —**¿qué evidencia ya tienes?**— y por eso **la familia nunca
+  clasifica su evidencia antes de entregárnosla**: no hay pestañas de Lista /
+  Menú / Recetas / Imagen. Pero **puede entregarla con el gesto que le salga
+  natural**: escribir, pegar, arrastrar una foto, soltar un enlace. Un gesto
+  distinto no es una puerta distinta si desemboca en el mismo sitio.
+- 📝 **La libreta nunca está esperando una lista. Está esperando una línea.**
+  *(Promovido a principio por la PO, 2026-08-01.)* Nadie debe pensar *"hoy voy a
+  hacer mi lista"* —eso es una tarea, y las tareas se posponen— sino *"déjame
+  apuntar esto antes de que se me olvide"*. La lista aparece sola, como
+  consecuencia. Consecuencias: el producto se adapta al ritmo de la familia, no al
+  revés; la unidad de interacción es **la línea**, no la sesión; y ningún diseño
+  puede sugerir que falta algo para estar completo.
+- 🏠 **La libreta es el Home.** No es la primera pantalla: es el centro del
+  producto. Ocupa casi toda la pantalla y **todo lo demás gira a su alrededor**,
+  apareciendo solo cuando hace falta. El primer contacto con SuperCarrito es la
+  **propia compra**, nunca una decisión sobre cómo empezar.
+- ✍️ **El formato lo pone la familia, nunca nosotros.** Líneas, comas, guiones,
+  párrafos, emojis, numeración, todo mezclado. El separador se detecta, no se
+  declara. Si el usuario tiene que pensar *cómo* escribirlo, ya perdimos.
+- 💾 **El trabajo del usuario no se pierde jamás.** Ni al recargar, ni al salir, ni
+  en tres días. Una entrada a medias es sagrada.
+- 🤍 **La personalidad nace de no juzgar.** Sin títulos que rellenar, sin botón de
+  guardar, sin contadores de progreso, sin "te falta", sin regañar por repetir. Un
+  sitio donde tirar pensamientos es un sitio **donde nada te evalúa**.
+- 🛒 **"Hacer la compra" es un acto claramente identificable, y nunca un CTA.**
+  Separamos escribir de comprar, pero comprar no desaparece: es el **único momento
+  donde pedimos completitud**, y todo lo demás puede ser libre de exigencias porque
+  existe. Está **siempre disponible y siempre discreto** —con menos peso visual que
+  la propia libreta—: no es el objetivo de la pantalla, es la consecuencia natural
+  de que la compra ya está lista. **La protagonista es siempre la compra que la
+  familia está construyendo.**
+- 🕊️ **Escribir de forma continuada es un derecho, no un deber.** La familia que
+  entra una vez por semana, pega algo, compra y se va debe sentirse igual de
+  natural que la que anota durante días. Ningún diseño puede obligar a un hábito.
+- 📸 **La foto marca la frontera entre escribir y comprar.** En la libreta **no
+  hay ni una imagen de producto**: poner una miniatura junto a *"leche"* obliga a
+  la familia a validar una elección que todavía no ha tomado, y convierte anotar
+  en comprar. En el carrito hay foto en **cada** línea: comprar online es visual,
+  y la imagen responde en medio segundo lo que un nombre largo no responde nunca
+  —*"¿es ese yogurt?"*—. Una sola regla dibuja toda la frontera del producto.
+  (PO, 2026-08-02.)
+- 🔢 **Las opciones son tres, ordenadas, y siempre con una salida abierta.** Nunca
+  un catálogo. Orden fijo: **lo que ya compraste** → **el mismo producto en otro
+  formato** → **otra marca**; cada una dice *en lápiz* por qué está ahí (*"marzo y
+  abril"*, *"misma leche, otro formato"*). El orden **es** la recomendación: no
+  hace falta un banner. Todo lo que venga en pack o al peso lleva **precio por
+  unidad**; sin eso, comparar una mano de seis con un kilo suelto es mentira.
+  Ante una línea vaga (*"galletas para el lonche"*) **no devolvemos la pregunta**
+  —*"¿a qué te refieres?"* le devuelve el trabajo—: mostramos candidatas.
+- 🚫 **Lo agotado se muestra, nunca se esconde ni se sustituye en silencio.** En
+  gris, con sello, en su sitio. Si desaparece, la familia cree que **no la
+  entendimos**; viéndolo, entiende que el problema es la tienda. Debajo, la
+  alternativa diciendo **qué es lo que cambia** (el formato o la marca), y una
+  tercera salida siempre: **dejarlo anotado** —no comprarlo hoy sin perderlo.
+
 **Técnicas**
 
 - Menús y recetas: **JSON estático** en `data/`, editables en `/editar`.
@@ -717,43 +789,594 @@ localStorage y el modelo independiente del almacenamiento. Ver §2.
 
 ---
 
-## 🎯 SIGUIENTE SPRINT — Rediseñar el Momento Cero (Product + UX)
+## 🎯 SPRINT EN CURSO — Diseñar las cuatro puertas de entrada (Product Design)
 
-**Empezar aquí.** Sprint abierto por la PO el 2026-08-01, al cerrar el ciclo de
-importación por captura.
+**Empezar aquí.** Abierto el 2026-08-01 como sprint de Research (*"Rediseñar el
+Momento Cero"*) y **reconvertido el mismo día por la PO en sprint de Product
+Design**. Ver el cambio de método abajo.
 
-**Única pregunta del sprint:**
+### 🔄 Cambio de método — la investigación ocurre a través del producto
 
-> ¿Cómo debería ser la mejor experiencia posible para que una familia
-> entregue su compra semanal a SuperCarrito?
+Decisión de la PO, 2026-08-01. Ya no ampliamos el mapa del problema: hay evidencia
+suficiente. A partir de ahora **investigamos diseñando y probando**:
 
-**Reglas del sprint, explícitas:**
-- **No se escribe código** hasta terminar el diseño.
-- **No se habla de** matching, modelos, benchmark, extracción ni implementación.
-  Todo eso está cerrado y congelado; ver §2.
-- **No se diseñan componentes** (nada de textareas, botones, pantallas todavía).
-- Se trabaja como **Product · UX · Research · Growth · Ingeniería**, analizando
-  **comportamiento humano**, no soluciones.
+```
+hipótesis de experiencia → prototipo → familias reales → observar → iterar
+```
 
-**Qué hay que entender:**
-- cómo nacen realmente las listas de compra;
-- cómo las familias las organizan;
-- qué formatos utilizan;
-- qué información ya contienen;
-- qué información **nunca** deberíamos pedir;
-- qué debemos aprender **observando** en vez de preguntando;
-- cómo reducir al mínimo la carga cognitiva del primer uso.
+Consecuencia para este documento: **ya no estamos descubriendo el problema, estamos
+explorando soluciones.** Y las soluciones todavía tienen que sobrevivir a las
+entrevistas. Por eso lo de este sprint se registra como **hipótesis de diseño**
+(§H-D, abajo) y **no** como decisiones de §4. La distinción es deliberada:
 
-**Entregable:** una propuesta de experiencia completa para el Momento Cero,
-sustentada en **principios de producto**, no en preferencias de implementación.
+| §4 Decisiones | §H-D Hipótesis de diseño |
+|---|---|
+| Consolidadas. No se re-litigan. | **En competencia entre sí.** |
+| Salieron de construir y de la visión. | Salen de diseñar. Sin validar con usuario. |
+| Cambiarlas es un evento. | Se espera que varias mueran. |
 
-**Mandato permanente de la PO:** si durante la discusión se descubre que estamos
-optimizando el lugar equivocado, **hay que detener el sprint y decirlo**. Cambiar
-de rumbo antes de escribir código es preferible a construir bien lo que no toca.
+### La estructura: cuatro puertas, un solo motor
 
-**Insumos que ya existen para este sprint:** el insight I-1 (§3, n=1: *"quiero
-pegar una captura del carrito de Wong"*), los artefactos reales recolectados, y
-la oportunidad O-1 (boleta PDF con texto extraíble, §3).
+Decisión de la PO (esta sí es estructural). SuperCarrito tiene **cuatro puertas de
+entrada**, ordenadas por frecuencia de uso, no por sofisticación:
+
+| # | Puerta | Estado |
+|---|---|---|
+| 1 | **Lista** — la más importante | 🎨 en diseño |
+| 2 | **Menú** | 🔜 |
+| 3 | **Recetas** | 🔜 |
+| 4 | **Imagen / evidencia existente** (captura, foto, PDF) | 🔜 (mucho trabajo técnico ya hecho, §2) |
+
+- **No son cuatro productos: son cuatro formas de llegar al mismo sitio.** Todas
+  desembocan en `normalizarIntencion()`, como manda §1.
+- **Se diseñan en secuencia, una por sprint,** y cada sprint deja un entregable
+  usable. No esperamos a tener "el Momento Cero" perfecto.
+- Cada puerta se optimiza para el **comportamiento real de quien la usa**, pero
+  todas comparten la misma filosofía (abajo).
+
+### La filosofía que atraviesa las cuatro puertas
+
+> **"No le pidas a la familia que reconstruya su compra.
+> Acepta cualquier evidencia que ya exista."**
+> Formulación de cara al usuario: **"Pega lo que sea. Yo me encargo."**
+
+No es una puerta adicional: es lo que las cuatro tienen en común. Corolario
+operativo: **nunca existe un "eso aquí no"**.
+
+**Reglas del sprint:** no se escribe código; no se habla de matching, modelos ni
+extracción (congelado, §2); no se diseñan componentes ni pantallas completas — se
+diseñan **experiencias**.
+
+**Mandato permanente de la PO (ampliado):** el equipo **no está obligado a proteger
+el diseño actual**. Si aparece una experiencia claramente superior aunque contradiga
+lo construido, hay que proponerla. Y si estamos optimizando el lugar equivocado,
+hay que parar y decirlo.
+
+**Insumos:** insight I-1 (§3, n=1), artefactos reales recolectados, oportunidad O-1.
+
+---
+
+## 🎨 H-D · Hipótesis de diseño (en competencia, sin validar)
+
+> **Nada de esta sección es una decisión.** Son conceptos que compiten y que deben
+> sobrevivir a familias reales. Al validarse suben a §4; al falsarse se tachan aquí.
+
+> ✅ **Fase conceptual cerrada (2026-08-01).** HD-1, HD-3, HD-4, HD-5, HD-7 y HD-10
+> se consideraron suficientemente sólidos y **subieron a §4 como principios de
+> experiencia**. Se quedan aquí abajo por trazabilidad, marcados. Lo que sigue sin
+> marcar es lo que todavía compite y se valida con usuarios.
+
+### Conceptos de Momento Cero explorados (2026-08-01)
+
+Tres conceptos radicalmente distintos, todos defendibles desde producto:
+
+- **A · El buzón** — *"No me la cuentes, dámela."* Un solo espacio que acepta
+  evidencia cruda y heterogénea. → **Adoptado no como concepto sino como
+  filosofía transversal a las cuatro puertas** (arriba).
+- **B · El recorrido** — *"¿Qué se te acabó?"* El producto enseña la despensa
+  típica y la familia responde sí/no/ya tengo. Reconocer en vez de recordar.
+  → Vive hoy dentro de la puerta Lista, en pequeño: como arranque para quien no
+  tiene nada que pegar (HD-8).
+- **C · La compra ya hecha** — el producto propone un carrito lleno y la familia
+  **quita**. Convierte el Momento Cero en una máquina de correcciones. Ataca H3 y
+  H6 de frente. → **Vivo, sin construir.** Riesgo propio serio: roza el principio
+  *"un producto solo suma al total si conocemos su cantidad"*; solo es defendible
+  si lo propuesto se ve como propuesta y **no suma al total hasta que se toca**.
+
+### Puerta 1 — Lista · hipótesis de diseño
+
+| # | Hipótesis de diseño | Estado |
+|---|---|---|
+| **HD-1** | **El formato lo pone la familia, nunca nosotros.** Aceptamos líneas, comas, guiones, párrafos, emojis, numeración y todo mezclado. El separador se detecta, no se declara. Si el usuario piensa *cómo* escribirlo, ya perdimos. | ⬆️ **Consolidada → §4.** |
+| **HD-2** | **La caja no es una lista: es una libreta.** Un objeto vivo donde caen cosas durante días, no un formulario que se rellena de una vez. La unidad deja de ser *la lista* y pasa a ser *la línea*. | Vigente **como hipótesis**. La PO **no compromete la arquitectura** con ella todavía. |
+| **HD-3** | **La libreta permanente es un derecho, no un deber.** La familia que entra una vez por semana, pega una captura, compra y se va debe sentirse igual de natural: usa la misma caja, su libreta vive tres segundos. | ⬆️ **Consolidada → §4.** Restricción de la PO sobre HD-2. |
+| **HD-4** | **El trabajo nunca se pierde**, ni al recargar, ni al salir, ni en tres días. Una lista a medias es sagrada. | ⬆️ **Consolidada → §4.** |
+| **HD-5** | **La personalidad nace de no juzgar.** Se abre ya escribiendo, sin título, sin "nueva lista", sin botón de guardar, sin contadores de progreso, sin "te falta". Un sitio donde tirar pensamientos es un sitio **donde nada te evalúa**. Si repite algo, no se le corrige: a lo sumo *"también el martes"*. | ⬆️ **Consolidada → §4.** |
+| **HD-6** | **"Puedes volver" se diseña contra tres miedos:** *¿se habrá guardado?* (se ve su texto, esa es la prueba) · *¿tengo que terminarla?* (nada pide completitud) · *¿lo habré apuntado ya?* (nunca se regaña). Volver ideal = 2 segundos: abre, ve lo suyo con el cursor al final, escribe una línea, se va. | Fuerte. |
+| **HD-7** | **Pegar es la acción principal, no escribir.** Escribir es el caso secundario —el de quien no tiene nada que pegar. Lo que hay que diseñar con obsesión es **el segundo posterior a pegar**: decimos lo que **sí** leímos (nunca lo que no), el ruido de WhatsApp **se atenúa, no se borra**, pegar dos veces **añade** y nunca sobrescribe, y pegar algo que no es una compra **no es un error**. | ⬆️ **La promesa consolidada → §4.** El diseño del segundo posterior a pegar sigue siendo hipótesis. |
+| **HD-8** | **El primer producto es el que rompe el miedo al vacío**, y el problema no es el formato: es no tener nada en la cabeza todavía. Tres respuestas: de la semana 2 en adelante **la caja nunca está vacía**; en la semana 1 la mejor primera acción **es pegar** (HD-7); y para quien no tiene nada que pegar, la pregunta que arranca no es *"¿qué necesitas?"* sino *"¿qué se te acabó?"*. | Vigente. |
+| **HD-9** | **La libreta y el carrito son objetos distintos, y el carrito nunca reescribe la libreta.** Libreta = pensamiento, permanente, orden suyo, sin precios, no exige nada. Carrito = decisiones, efímero, orden nuestro, montos explicables, exige confirmación. Si quita el detergente del carrito, la libreta sigue diciendo *detergente*: **la distancia entre lo que pensó y lo que compró es la señal más limpia que tenemos**. | **La decisión más importante en juego** (PO). A explorar. |
+| **HD-10** | **"Hacer la compra" sigue existiendo como acto claramente identificable.** Separamos escribir de comprar, pero no eliminamos la frontera: es el **único momento del producto donde sí pedimos completitud**, y todo lo demás puede ser libre de exigencias precisamente porque ese momento existe. | ⬆️ **Consolidada → §4.** Restricción de la PO. |
+
+### La libreta como Home — hipótesis derivadas (2026-08-01)
+
+Al consolidar §4 *"la libreta es el Home"*, quedan tres hipótesis abiertas que el
+prototipo debe poner delante de familias reales:
+
+| # | Hipótesis de diseño | Cómo se falsa |
+|---|---|---|
+| **HD-12** | **La libreta como Home se entiende sin explicación.** La familia ve un sitio que es suyo y entiende que todo lo demás está a su servicio. | Si busca un menú, un botón de "empezar" o pregunta *"¿dónde va cada cosa?"*. |
+| **HD-13** | **El paso del tiempo hace que la compra se sienta acompañada, no atrasada.** *"Esta compra vive contigo durante la semana."* Dos variantes opuestas a entrevista: **A · el tiempo como estructura** (marca de día al margen, ordena la lectura) · **B · el tiempo como susurro** (el texto queda limpio; solo al volver, un rastro discreto tipo *"lo último, ayer"*). Recomendación de partida: **B** — el tiempo va en el margen, nunca dentro del texto que escribió la familia. | Si ver *lun* junto a algo de hace cinco días transmite **retraso** o culpa en vez de compañía. Es el riesgo real y solo lo dirá una familia mirando la pantalla. |
+| **HD-14** | **Los gestos sobre la libreta se descubren solos.** La familia entiende de forma natural que puede **escribir, pegar, arrastrar una foto o soltar un enlace directamente sobre la libreta**, sin buscar un botón de "añadir". | Si busca un botón de añadir, o si no se le ocurre arrastrar la captura que tiene en el móvil. **Decisión anticipada de la PO: si HD-14 falla, NO se cambia el Home — se cambia únicamente cómo enseñamos el gesto.** |
+
+### ~~H10 · "El silencio produce listas más completas"~~ → retirada, reemplazada
+
+Era una verdad disfrazada de hipótesis (corrección de la PO). El silencio no es un
+valor: es la respuesta correcta **a un momento concreto**. En su lugar, el
+**mapa de momentos de ayuda** — qué casilla merece ayuda lo dicen las entrevistas:
+
+| Momento | Qué hace la persona | Ayuda |
+|---|---|---|
+| Escribiendo seguido | **recordando** (recorre la casa mentalmente) | Silencio total. Interrumpir borra recuerdos. |
+| Pausa larga, mano fuera | terminó un bloque, no está pensando | Aquí **sí** cabe. Es el momento a probar. |
+| Acaba de pegar | no recuerda: **espera** | Ayuda esperada. Callar se siente roto. |
+| Vuelve al día siguiente | retoma | Silencio. Solo su texto. |
+
+Dos reglas para cualquier ayuda que aparezca: **nunca ocupa el lugar del cursor** y
+**nunca modifica su texto**.
+
+### Cuándo corregimos · sugerimos · preguntamos (puerta Lista)
+
+- **Corregimos** después de enviar, nunca durante, y siempre a la vista.
+  `platano`→`plátano` sí; `leche`→`Leche Gloria 1L` **no es corregir, es suponer**,
+  y se etiqueta *"pendiente de confirmar"*.
+- **Sugerimos** solo después del primer carrito y solo con historial detrás. Sin
+  historial no sugerimos nada: sería adivinar.
+- **Preguntamos** solo cuando falta una cantidad **y** hace falta para que el monto
+  sea honesto. Nunca por marca ni formato — eso se aprende observando. Siempre con
+  salida abierta (§4).
+
+### Qué aprendemos sin preguntar nada (puerta Lista)
+
+Escribir es la puerta que más señal regala gratis: **especificidad** (marca y
+formato escritos — hoy se tiran, es la deuda del ciclo 6) · **léxico de la casa**
+(*"papel"*, *"gaseosa"*) · **el orden**, que revela el recorrido mental y es la
+mejor pista para ordenar lo que devolvamos · **cómo llega** (teclea o pega, de una
+vez o en cinco visitas) · **lo que corrige después**.
+
+### Por qué esto gana a buscar dentro de Wong
+
+La comparación **no se gana en tiempo, se gana en número de decisiones**. En Wong:
+buscar + comparar + elegir + cantidad ≈ 4 decisiones × 25 productos ≈ **100
+decisiones**, cada una con riesgo de *"no lo encuentro"*. Aquí: **un acto de
+volcado, sin decisiones**, y confirmar solo lo poco que no sabemos. A la segunda
+semana, con perfil, también eso desaparece.
+
+### 🔭 HD-11 · El ciclo no empieza al abrir SuperCarrito
+
+Reflexión de la PO (2026-08-01), anotada **sin diseñar todavía**:
+
+> **El verdadero ciclo del producto probablemente empieza cuando termina la
+> compra anterior, no cuando alguien abre la app.**
+
+Hemos diseñado mucho **cómo entra** la información y casi nada **cómo sale**. Si la
+libreta acaba siendo donde vive la compra semanal, la experiencia de **volver
+después de comprar** es tan importante como la de empezar. La PO señala aquí una
+oportunidad grande de diferenciación. No se diseña en este sprint.
+
+### Preguntas abiertas del sprint (deliberadamente sin responder)
+
+- **¿La libreta es de una persona o de una casa?** Decisión enorme (invitaciones,
+  sincronización, permisos, conflictos, historial). **No se fija todavía**: primero
+  la experiencia. Mientras tanto, cualquier decisión que asuma un solo autor es
+  provisional.
+- Al hacer la compra, ¿lo comprado **se queda marcado** en la libreta o **se
+  archiva** por semanas?
+- ¿La caja acepta imágenes desde ya —aunque la puerta 4 no esté diseñada— para que
+  nunca haya un *"eso aquí no"*?
+
+---
+
+## 🎨 Diseño de la Puerta 1 — exploración (2026-08-01)
+
+> **Exploración, no decisiones.** Wireframes de baja fidelidad producidos en el
+> sprint de diseño. Se conservan porque reconstruirlos es caro. Ninguno está
+> elegido; los tres finalistas son candidatos a prototipo, nada más.
+>
+> ⬆️ **Superado en parte (2026-08-02).** La PO cerró la exploración y eligió cuatro
+> direcciones: **E3 · el carrito debajo** (estructura), **C1 · el eco** (ayudar sin
+> empujar), **A2 · la última línea** (tratamiento visual) y **F2 · el sobre** (futura
+> puerta, sin diseñar todavía). **Todo lo demás queda archivado como exploración.**
+> El resultado en alta fidelidad está en `design/pantallas.html` y en
+> *🎨 Sistema visual*.
+
+### Estado 1 — Home = la libreta
+
+```
+┌─────────────────────────────────────────────┐
+│  Tu compra                          ⌄       │
+│ ┌─────────────────────────────────────────┐ │
+│ │  leche gloria                           │ │
+│ │  2 kg de pollo                          │ │
+│ │  pan, huevos                            │ │
+│ │  ▌                                      │ │  ← la libreta ocupa
+│ │                                         │ │    casi toda la pantalla
+│ └─────────────────────────────────────────┘ │
+│   ✎ escribe   ⌘V pega   📷 foto   🔗 enlace │  ← gestos al margen,
+│   ────────────────────────────────────────  │    nunca pestañas
+│   12 cosas anotadas        hacer la compra →│  ← texto, no botón
+└─────────────────────────────────────────────┘
+```
+*Pregunta que valida:* ¿entiende que este sitio es suyo y que todo lo demás está
+a su servicio, o busca un menú / un botón de empezar?
+
+**El mapa del sistema:** `LIBRETA` (permanente, suya, pensamiento, su orden, sin
+precios, no exige nada) → *hacer la compra*, **única frontera** → `CARRITO`
+(efímero, nuestro, decisiones, montos explicables, exige confirmar) → comprar →
+**¿?** (HD-11, sin diseñar).
+
+### Estado 2 — Volver al día siguiente
+
+```
+┌─────────────────────────────────────────────┐
+│ │  leche gloria                           │ │
+│ │  2 kg de pollo                          │ │
+│ │  pan, huevos                            │ │
+│ │                                         │ │  ← un hueco. nada más.
+│ │  ▌                                      │ │  ← el cursor ya está aquí
+│   3 cosas anotadas         hacer la compra →│  ← idéntico a ayer
+└─────────────────────────────────────────────┘
+```
+*Pregunta que valida:* ¿siente que su compra le estuvo esperando, o que tiene una
+tarea pendiente?
+
+- **Qué cambia desde ayer: casi nada, y eso es el diseño.** Lo único: el cursor
+  esperando al final.
+- **Lo que hace que algo parezca abandonado no es el tiempo: es que el producto te
+  lo recuerde.** *"Hace 1 día"*, *"sigues sin terminar"*, *"40% completo"*
+  convierten una libreta en una tarea.
+- **"Hacer la compra" no reaparece porque nunca se fue.** No crece, no cambia de
+  color, no se anima. **Su inmutabilidad es el mensaje.**
+
+**El tiempo — tres variantes.** A · *estructura* (marca de día al margen; riesgo:
+transmite retraso) · B · *susurro* (*"lo último, ayer"*; riesgo: innecesario) ·
+**C · el aire** (el hueco en blanco **es** el tiempo; nadie dice nada).
+→ **La PO elige C** y quiere llevar **A vs C** a entrevistas: son las dos
+filosofías opuestas — el tiempo como dato vs el tiempo como silencio.
+
+**La anti-pantalla, para no construirla nunca:** *"👋 ¡Hola de nuevo! Tu lista
+lleva 1 día parada · 3 productos · 40% completo · [CONTINUAR MI LISTA]"*. Cada
+línea rompe un principio de §4, y es exactamente lo que se construye por defecto
+si nadie lo impide.
+
+**Pendiente de móvil real:** al volver, ¿cursor puesto **y** teclado abierto? Un
+teclado que salta solo tapa media libreta justo cuando quiere ver lo que ya tiene.
+Recomendación: cursor sí, teclado no.
+
+### Las 16 propuestas — abanico completo
+
+**Familia A · Minimalismo radical** — *el producto desaparece y queda la compra.*
+- **A1 · El folio** — sin marcos ni barras; el texto flota, el cromo aparece solo
+  al detenerse. Riesgo: parece una app rota.
+- **A2 · La última línea** — lo escrito reposa (más tenue), la línea activa es lo
+  único nítido. **No es un concepto, es un tratamiento**: se aplica encima de
+  cualquier otro. Riesgo: atenuar lo suyo se puede leer como pérdida.
+- **A3 · Un renglón** ⭐ — abre en modo captura: un solo renglón tipo Spotlight,
+  apuntas y se cierra; la libreta está a un gesto pero no se enseña.
+- **B1 · La libreta de la nevera** — papel, renglones tenues, sombra. *Un renglón
+  vacío pide ser llenado; un área en blanco no.* Riesgo: el renglón puede pasar de
+  invitación a casilla que hay que rellenar.
+- **B2 · El aire** — el espacio en blanco como único lenguaje temporal. Riesgo: se
+  lee como fallo de maquetación; a las seis semanas es un desierto.
+- **B3 · Las manos de la casa** — marca mínima (· / ○) por autor, sin nombres ni
+  avatares. Permite **sentir** el modelo colaborativo sin construirlo.
+- **C1 · El eco** ⭐ — bajo la línea activa, en tenue, lo que esta familia suele
+  comprar y hoy no ha anotado; tocar = añadir. **Su propio historial devuelto**,
+  no sugerencia de catálogo.
+- **C2 · El margen** — columna lateral con la interpretación de cada línea
+  (`leche gloria │ Gloria 1 L`). Riesgo alto: interrumpe el recuerdo; no cabe en móvil.
+- **C3 · El total que respira** — un total aproximado que crece al escribir.
+  Riesgo **muy alto**: roza *"solo suma si conocemos la cantidad"*, y puede hacer
+  que se deje de anotar para que no suba. **Descartado sin llevarlo a nadie.**
+- **D1 · Las fichas** — cada línea como tarjeta con imagen. **Descartado**: una
+  imagen es una afirmación, y si enseñamos la leche equivocada mentimos con más
+  fuerza que con texto. Además destruye su orden.
+- **D2 · El estante** — agrupado por zona del súper. Rompe *"su orden es dato"*.
+  Vale la pena falsarlo: si el orden propio no importa, se abre mucho diseño.
+- **D3 · El póster de la compra** — al comprar queda **un objeto** (fecha, total,
+  iconos, *repetir esta compra*), no un vacío. Ataca HD-11. Es estado de salida.
+- **E1 · Dos lugares** — libreta y carrito en pantallas separadas, transición
+  explícita. Modelo mental limpio; la vuelta atrás debe ser perfecta.
+- **E2 · El carrito al lado** — split con el carrito llenándose en vivo. Máxima
+  confianza, **máxima interrupción**; no cabe en móvil.
+- **E3 · El carrito debajo** ⭐ — un lugar, **dos alturas**: la libreta es la
+  superficie y el carrito una hoja que se levanta. Nunca sales de tu libreta.
+- **F1 · El portapapeles que se ofrece** — *"tienes algo copiado, ¿lo suelto
+  aquí?"*, y si no lo tocas se va. Resuelve HD-14 sin enseñar el gesto. Debe verse
+  siempre como oferta, nunca como lectura.
+- **F2 · El sobre** — SuperCarrito en el menú *compartir* del móvil: la entrada
+  ocurre **donde y cuando la evidencia existe**, fuera de la app. **La apuesta más
+  grande del abanico:** si la compra nace fuera, el Home deja de ser el centro.
+
+### Matriz comparativa
+
+| Concepto | Confianza | Rapidez | Aprendizaje | Facilidad | Riesgo |
+|---|:--:|:--:|:--:|:--:|:--:|
+| A1 · El folio | ●●○ | ●●● | ●○○ | ●●○ | medio |
+| **A2 · La última línea** | ●●○ | ●●● | ●○○ | ●●● | bajo |
+| **A3 · Un renglón** | ●●○ | ●●●● | ●●○ | ●●● | medio |
+| B1 · Libreta de la nevera | ●●● | ●●○ | ●○○ | ●●● | bajo |
+| B2 · El aire | ●●○ | ●●● | ●○○ | ●●○ | bajo |
+| B3 · Las manos de la casa | ●●○ | ●●○ | ●●●● | ●●○ | medio |
+| **C1 · El eco** | ●●○ | ●●● | ●●●● | ●●● | medio |
+| C2 · El margen | ●●●● | ●●○ | ●●○ | ●●○ | alto |
+| C3 · El total que respira | ●○○ | ●●○ | ●●○ | ●●● | muy alto |
+| D1 · Las fichas | ●○○ | ●○○ | ●○○ | ●●● | alto |
+| D2 · El estante | ●●○ | ●●○ | ●○○ | ●●○ | alto |
+| D3 · El póster | ●●● | — | ●●● | ●●● | medio |
+| E1 · Dos lugares | ●●● | ●●○ | ●●○ | ●●● | bajo |
+| E2 · El carrito al lado | ●●●● | ●○○ | ●●○ | ●●○ | alto |
+| **E3 · El carrito debajo** | ●●● | ●●● | ●●○ | ●●● | bajo |
+| F1 · Portapapeles ofrecido | ●●○ | ●●●● | ●●○ | ●●●● | medio |
+| F2 · El sobre | ●●○ | ●●●● | ●●● | ●○○ | medio |
+
+*Confianza = ¿creo lo que veo? · Rapidez = coste de anotar una línea · Aprendizaje
+= señal para el perfil · Facilidad = ¿lo entiende sin explicación? · Riesgo =
+probabilidad de romper un principio o la confianza.*
+
+### Las tres finalistas (candidatas a prototipo, sin elegir)
+
+```
+  A3 · Un renglón          C1 · El eco              E3 · El carrito debajo
+┌────────────────────┐  ┌────────────────────┐   ┌────────────────────┐
+│                    │  │  leche gloria      │   │  leche gloria      │
+│  ┌──────────────┐  │  │  2 kg de pollo     │   │  2 kg de pollo     │
+│  │ ▌            │  │  │  ▌                 │   │  pan, huevos       │
+│  └──────────────┘  │  │                    │   │  ▌                 │
+│                    │  │  ⌁ papel higiénico │   │ ╭────────────────╮ │
+│   ▲ 11 cosas       │  │  ⌁ arroz           │   │ │ 12 · S/ —      │ │
+└────────────────────┘  └────────────────────┘   └─┴────────────────┴─┘
+```
+
+1. **A3 · Un renglón** — la única propuesta que traduce en interacción el principio
+   *esperando una línea, no una lista*. Cinco anotaciones cortas dan **cinco veces
+   más señal** que una sesión larga. **Contradice "la libreta es el Home", y por eso
+   vale: es el único concepto capaz de falsar una decisión recién tomada.**
+2. **C1 · El eco** — la mejor respuesta a la pregunta abierta de la PO (*cómo
+   invitar sin empujar*), y la única que invita con algo que solo nosotros tenemos.
+   Pone a prueba **H5** sin construir el motor entero.
+3. **E3 · El carrito debajo** — resuelve HD-9 sin pagar su precio: dos objetos
+   distintos que comparten **un lugar**, no una pantalla. El que mejor sobrevive
+   en móvil.
+
+**No finalistas que no deben perderse:** **A2** (tratamiento aplicable sobre
+cualquiera de los tres) y **F2 · El sobre** (no se puede prototipar en papel, pero
+**merece una pregunta directa en la próxima entrevista**).
+
+---
+
+## 🎨 Sistema visual — aprobado por la PO (2026-08-02)
+
+> **Esto sí son decisiones.** La PO aprobó el look and feel completo tras la v2:
+> *"Increíble. Me encanta."* Las 21 pantallas viven en **`design/pantallas.html`**
+> (un solo archivo, se abre en el navegador). Es la referencia visual del
+> prototipo: si el código y este documento discrepan, gana el archivo.
+
+### La regla que gobierna cada pantalla
+
+**La familia escribe en tinta; SuperCarrito habla en lápiz.** Lo escrito por la
+familia va en tinta azul, peso 500, 17 px. Lo que dice el producto va en lápiz
+gris-verde, peso 400, 12,5 px. **Misma tipografía para ambos** —la diferencia la
+hacen color y peso, no la familia tipográfica—, de forma que el producto nunca
+puede fingir ser ella y nunca hay duda de quién dijo qué.
+
+### Color
+
+| Token | Hex (claro) | Para qué |
+|---|---|---|
+| Papel | `#F5F3ED` | Fondo. Hueso ligeramente frío, no crema nostálgica. |
+| Tinta | `#223354` | **Todo lo que escribe la familia.** |
+| Lápiz | `#7F8A80` | **Todo lo que dice SuperCarrito.** |
+| Pino | `#2E5D4B` | Dinero, confirmar, botón lleno. Nunca decoración. |
+| Papaya | `#E0864B` | El guiño: *"más barato"*, foco de teclado. Aparece poco. |
+| Ladrillo | `#A8503C` | Agotado y error. **Dos veces en toda la app.** |
+
+Tema oscuro con la misma jerarquía (grafito `#16191C`, pino claro `#84C4A6`).
+
+### Tipografía · **sin serif** (decisión de la PO)
+
+Una sola familia **redondeada del sistema** (`ui-rounded` → `SF Pro Rounded` →
+`Segoe UI`), tracking negativo en tamaños grandes. Cifras **tabulares** en todo
+lo que sea plata. Se descartó el serif por solemne: el producto puede permitirse
+no ser tan serio.
+
+### Botones · **se sienten como botones** (decisión de la PO)
+
+- **Lleno** — pino, doble sombra, se hunde 1 px al tocar. La acción principal de
+  cada pantalla. **Nunca hay dos.**
+- **Fantasma** — blanco, borde de 1 px, sombra mínima. La alternativa, y todo lo
+  que vive en la libreta.
+- Radio 13 px, alto mínimo 44 px. **Si algo se puede tocar, se ve tocable**: se
+  acabaron los textos subrayados como acción.
+- ⚠️ **Tensión resuelta con "hacer la compra" (nunca un CTA):** es un botón real
+  y tocable, pero **fantasma, jamás verde**. Tocable sin gritar. El principio se
+  mantiene; lo que cambia es que ya no es un texto suelto que hay que adivinar.
+
+### Fotos de producto
+
+Tile blanco, radio 12 px, borde 1 px. **46 px** en el carrito, **60 px** al
+elegir. Fondo blanco siempre —el papel hueso detrás de un packshot lo ensucia—.
+Dónde no van: **en la libreta**. En `design/pantallas.html` son dibujos de
+relleno; en producción son las imágenes del catálogo de Wong.
+
+### Profundidad, textura y movimiento
+
+- **Una sola sombra** con peso en todo el producto: la del carrito al levantarse.
+  Nada más flota; las tarjetas elevadas convierten una libreta en un panel de control.
+- Renglón al 50 % de opacidad, desvanecido arriba y abajo. **Debe sentirse antes
+  de verse**; si se nota, está mal.
+- Levantar el carrito **320 ms**; aparecer un eco **180 ms solo de opacidad** —el
+  texto de arriba nunca se mueve—; respirar mientras se buscan precios **2,6 s**,
+  el ritmo de una exhalación y no el de un spinner. **Nada rebota, nada gira.**
+- Los esqueletos de carga tienen **la forma final** (mismo alto, mismo hueco
+  cuadrado) para que al llegar los datos no salte ni un píxel. Y ocurren **entre**
+  las líneas ya escritas, nunca encima.
+
+### Iconografía y tono
+
+Trazo 1,5 px, puntas redondeadas. Sin emojis en la interfaz —pero los emojis
+**pegados** por la familia se conservan tal cual: su desorden es suyo—. **Una
+excepción aprobada**: el estado vacío dice *"todo comprado 🎉 por ahora"*. Un
+emoji en toda la app, y el chiste está en el *"por ahora"*.
+
+### Lo que nunca se construye
+
+Badges con pendientes · rachas · barras de progreso de "lista completada" ·
+ilustraciones de estado vacío · sustituciones automáticas al agotarse algo ·
+fotos dentro de la libreta · un botón grande y de color que diga "HACER LA
+COMPRA" · cualquier pantalla que aparezca **antes** de la libreta.
+
+---
+
+## 🧊 Congelación para entrevistas — MVP demostrable (2026-08-02)
+
+**Cierre de la fase de construcción.** A partir de este punto no se construye:
+se observa. Decisión de la PO: *"congelar el estado actual y dejarlo listo para
+desplegar"*. Cualquier cambio de código antes de las entrevistas necesita su
+aprobación explícita.
+
+### Lo verificado antes de congelar
+
+Recorrido completo contra **datos reales de Wong** (`CATALOG_PROVIDER=wong`) y
+contra el **extractor real de Claude**, no con mocks:
+
+| Paso | Resultado |
+|---|---|
+| Escribir una lista | ✅ |
+| Buscar productos reales de Wong | ✅ VTEX responde; precios reales |
+| Importar una captura | ✅ 7 líneas leídas de una captura real, truncados marcados |
+| Revisar productos | ✅ quitar / corregir antes de comprar |
+| Confirmar cantidades | ✅ pesables preguntan; `800 g × S/ 21.90/kg = S/ 17.52` |
+| Armar el carrito | ✅ |
+| Montos explicables | ✅ toda cifra es `cantidad × precio` visible |
+| Manejar agotados | ⚠️ código correcto, **camino inalcanzable** (ver riesgos) |
+| Total correcto | ✅ `Subtotal confirmado` mientras algo esté pendiente; `Total` solo cuando no queda nada |
+
+Build ✅ · typecheck ✅ · sin errores en consola ni en servidor · sin secretos
+versionados · `.env.local` fuera de git y nunca en la historia · las tres
+capturas reales y los crudos de medición siguen ignorados.
+
+### 🔍 Mejoras de UX detectadas y NO implementadas
+
+Documentadas por orden de daño en una entrevista. **Ninguna se toca antes de
+mostrarlo a usuarios**: son justamente lo que las entrevistas deben confirmar o
+desmentir.
+
+1. **La relevancia de una palabra suelta es mala.** Con datos reales, `leche`
+   devuelve *Crema de Leche Gloria 946 ml*; `arroz`, *Arroz Chaufa 500 g*;
+   `pollo`, *Pollo Rostizado*. Tomamos el orden de VTEX tal cual y no lo
+   reordenamos. Con términos específicos (`pechuga de pollo x kg`, `arroz
+   costeño`) acierta. **No se arregla ahora**: reordenar es un motor de ranking,
+   o sea un sprint. Es la primera pregunta que deben responder las entrevistas —
+   ¿la familia corrige, se resigna, o se va?
+2. **La categoría de VTEX se muestra cruda.** *"INGREDIENTES Y COMPLEMENTOS DE
+   DECORACIÓN"* sobre una crema de leche. Es ruido, y además delata el error de
+   emparejamiento antes que el nombre.
+3. **`Prefiero otra (5)` no dice qué hay detrás.** El aprendizaje del perfil
+   entero depende de que alguien pulse ese enlace, y hoy no promete nada.
+4. **Un agotado mostraría `S/ 0.00`** junto a su propia multiplicación. El
+   monto deja de ser explicable justo en la pantalla que sostiene la confianza.
+   No es alcanzable hoy (ver riesgos), por eso queda documentado y no corregido.
+5. **`/api/data` escribe en el filesystem.** En Netlify no persiste: editar
+   menús funciona en local y se pierde en producción. Ya estaba anotado; sigue
+   sin tocarse.
+
+### ⚠️ Riesgos vivos para una entrevista
+
+- **Los agotados no se pueden demostrar.** FakeWong no tiene ninguno (y su
+  ranking los hunde 1000 puntos, así que jamás aparecen) y el buscador de Wong
+  solo devuelve disponibles. El camino existe en el código y no se ha visto
+  nunca funcionando. Si en una entrevista aparece uno de verdad, mostrará el
+  `S/ 0.00` del punto 4.
+- **Los pesables solo existen con Wong real.** El catálogo ficticio es todo por
+  pieza, así que con `CATALOG_PROVIDER=fake` la pregunta de cantidad —una de las
+  mejores piezas del producto— **no aparece nunca**.
+- **Dependemos de dos servicios ajenos en vivo.** Wong (VTEX, sin contrato ni
+  SLA) y la API de Claude. Wong degrada a FakeWong con elegancia; el extractor
+  degrada a muestra. Ninguna de las dos degradaciones se le explica al usuario
+  durante la entrevista.
+- **El perfil vive en el navegador.** Otro dispositivo, otra pestaña en
+  incógnito o borrar datos = familia nueva. Dos entrevistas seguidas en el mismo
+  navegador comparten perfil: **hay que limpiarlo entre familias** o la segunda
+  verá las preferencias de la primera.
+- **La captura sale del país.** Se envía a la API de Claude. La pantalla lo
+  dice; conviene decirlo también en voz alta antes de pedir una captura real.
+
+### 🚫 Lo que NO se toca antes de mostrarlo
+
+`lib/cart.ts` (normalizador único) · `lib/wong.ts` y `lib/wongvtex.ts`
+(contrato y degradación) · la pantalla de revisión de captura · la pregunta de
+cantidad y su salida abierta · la regla del total que no miente. Son
+exactamente las piezas que las entrevistas tienen que poner a prueba: cambiarlas
+antes invalida lo que aprendamos.
+
+---
+
+## 🚀 SIGUIENTE SPRINT — Diseño de la Puerta 1 · Lista
+
+**Empezar aquí.** Abierto por la PO el 2026-08-01 al **cerrar la fase conceptual**.
+
+> Dejamos de buscar mejores ideas. Ahora construimos la primera versión de la
+> mejor experiencia posible y **aprendemos viéndola usar**.
+
+**Ya no es un sprint de definición de producto. Es un sprint de diseño.**
+
+**Entregable:** wireframes, flujos y un prototipo que se pueda **poner delante de
+familias reales**. Con el mayor nivel de detalle posible.
+
+**Base del prototipo (decidida por la PO, 2026-08-01):**
+- **La libreta es el Home.** La pantalla de inicio actual con las tres formas de
+  empezar (`app/page.tsx`) **desaparece del prototipo**. El primer contacto es la
+  propia compra, no una decisión sobre cómo empezar.
+- **Libreta y carrito son dos objetos distintos**, con "hacer la compra" como única
+  frontera entre ellos.
+
+**Orden de trabajo del sprint (fijado por la PO):**
+1. ✅ **La Puerta 1 como sistema** — el mapa completo. Hecho: la libreta como Home,
+   los gestos alrededor, "hacer la compra" sin protagonismo.
+2. **Los estados**, uno a uno y cada uno con su wireframe. **Orden fijado por la
+   PO** (el estado vacío ocurre una vez; volver ocurre toda la vida del producto):
+   ✅ Home = la libreta · ✅ **volver al día siguiente** · ▶️ volver después de
+   comprar · volver tras varias semanas · lista a medio construir · hacer la
+   compra · **y al final** el estado completamente vacío.
+3. **Los microflujos:** pegar un WhatsApp · pegar una captura · escribir una línea ·
+   editar una línea · duplicados · volver después de tres días · hacer la compra.
+4. **El prototipo navegable** para entrevistas — solo cuando el flujo completo
+   tenga sentido.
+
+**Reglas:**
+- **Cada wireframe responde UNA sola pregunta.** Ninguna pantalla intenta resolver
+  todo. Un wireframe existe porque queremos validar **una hipótesis concreta** con
+  una familia; eso los obliga a ser extremadamente simples.
+- **Se piensa visualmente.** Nada de documentos largos describiendo una pantalla:
+  antes un dibujo imperfecto que dos mil palabras sobre una interfaz que todavía
+  no hemos visto.
+- **Toda idea de UX viene con wireframe de baja fidelidad, en el momento.** Regla
+  permanente, también en `CLAUDE.md`. Nada de describir pantallas en prosa.
+- Se parte de los **principios de experiencia de §4** (consolidados, no se
+  re-litigan) y de las **hipótesis de §H-D** (que el prototipo debe poner a prueba).
+- Cada hipótesis de diseño que entre en el prototipo tiene que llevar asociado
+  **qué observaríamos para saber si es falsa**.
+
+---
+
+### Qué observar en las entrevistas (puerta Lista)
+
+Si al ver la caja **escriben o buscan el móvil** · si el primer producto tarda o
+sale solo · si escriben marcas espontáneamente (¿cuánta gente es Perfil A?) · si se
+detienen a *"arreglar"* lo escrito antes de enviar (señal de que no dimos permiso
+suficiente) · si al terminar dicen *"ah, y también…"* · si vuelven a entrar más de
+una vez en la misma semana sin que se lo pidamos (falsa o confirma HD-2).
 
 ---
 
@@ -898,3 +1521,17 @@ no el matching. Los cuatro roles replantean el roadmap completo.
 5. **Tras la investigación: ¿el ciclo 6 sigue siendo "Escuchar" o pasa a ser
    "Importar"?** Son el mismo trabajo de parseo sobre evidencias distintas; decide
    cuál domina en las entrevistas, no la preferencia de diseño.
+6. ~~¿Seguimos investigando antes de construir?~~ ✅ **No.** Cambio de método
+   (2026-08-01): se investiga diseñando y probando. Ver §H-D.
+7. ~~¿Eliminamos el momento de "hacer la compra"?~~ ✅ **No.** Se separa escribir
+   de comprar, pero comprar sigue siendo un acto identificable (HD-10).
+8. ~~¿La libreta pasa a ser el corazón del producto?~~ ✅ **Todavía no.** Se permite
+   vivir así, no se obliga (HD-3). La arquitectura no se compromete.
+9. **¿La libreta es de una persona o de una casa?** Aplazada a conciencia: primero
+   la experiencia, luego el modelo colaborativo.
+10. **¿Los tres conceptos (A/B/C) van a prototipo o matamos alguno?** Y: ¿se prueban
+    con la misma familia (contraste) o con familias distintas (reacción limpia)?
+11. ~~¿Desaparece la pantalla de inicio con las tres formas de empezar?~~ ✅ **Sí,
+    para el prototipo.** La libreta es el Home. El primer contacto es la compra.
+12. ~~¿"Una sola boca" o "una sola intención"?~~ ✅ **Una sola intención.** La
+    filosofía obliga a no clasificar la evidencia; no obliga a un único gesto.

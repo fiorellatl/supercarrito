@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SuperCarrito · La aplicación</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#E7E3D9}
+  a{color:#2E5D4B;text-decoration:none;border-bottom:1px solid rgba(46,93,75,.35)}
+  a:hover{color:#3C7660}
+  @keyframes sc-respirar{0%,100%{transform:scale(.82);opacity:.3}50%{transform:scale(1);opacity:.65}}
+  @keyframes sc-barrido{to{background-position:-200% 0}}
+  @keyframes sc-subir{from{transform:translateY(102%)}to{transform:translateY(0)}}
+  @keyframes sc-eco{from{opacity:0}to{opacity:1}}
+  @keyframes sc-linea{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+  @keyframes sc-clip{from{opacity:0;transform:translateY(-10px) rotate(-1.2deg)}to{opacity:1;transform:none}}
+  @keyframes sc-trazo{to{stroke-dashoffset:0}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  .doc{max-width:1240px;margin:0 auto;padding:0 28px 130px;
+    font-family:ui-rounded,'SF Pro Rounded','Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,sans-serif;
+    color:#3A3B36;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .paso{display:block;width:100%;text-align:left;font-family:inherit;font-size:13.5px;line-height:1.35;
+    border:0;background:transparent;color:#6E6E64;border-radius:9px;padding:7px 9px;margin:0 0 1px;cursor:pointer}
+  .paso:hover{background:#DFDACD}
+  .paso[aria-current="true"]{background:#DFDACD;color:#3A3B36;font-weight:600}
+  .vista{flex:1;min-height:0;display:none;flex-direction:column;z-index:2}
+  .vista.on{display:flex}
+  .oculto{display:none!important}
+  .btn-back{width:32px;height:32px;border-radius:9px;border:1px solid #E2DED2;background:#fff;color:#7F8A80;
+    cursor:pointer;display:grid;place-items:center;font-family:inherit;flex:0 0 auto}
+  .btn-pino{font-family:inherit;font-size:14px;font-weight:600;border:0;border-radius:13px;padding:12px 18px;
+    background:#2E5D4B;color:#fff;cursor:pointer;min-height:44px;
+    box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 2px 5px rgba(34,51,84,.18)}
+  .btn-pino:active{transform:translateY(1px)}
+  .btn-fantasma{font-family:inherit;font-size:14px;font-weight:600;letter-spacing:-.01em;border:1px solid #E2DED2;
+    border-radius:13px;padding:12px 18px;background:#fff;color:#223354;cursor:pointer;min-height:44px;
+    box-shadow:0 1px 2px rgba(34,51,84,.07)}
+  .btn-fantasma:active{transform:translateY(1px)}
+  .tit-vista{font-size:19px;font-weight:600;color:#223354;letter-spacing:-.025em}
+  .cab{padding:8px 0 4px;display:flex;align-items:center;gap:10px}
+  .hoja{position:absolute;left:0;right:0;bottom:0;top:56px;background:#EFEDE5;border-radius:26px 26px 0 0;z-index:7;
+    padding:16px 22px 0;display:flex;flex-direction:column;border-top:1px solid #E2DED2;
+    box-shadow:0 -24px 50px -28px rgba(0,0,0,.55);animation:sc-subir 320ms cubic-bezier(.22,.61,.36,1) both}
+  .tirador{width:34px;height:3.5px;border-radius:2px;background:#E2DED2;margin:-4px auto 14px;cursor:pointer;display:block}
+  .rot{scrollbar-width:none;-ms-overflow-style:none}
+  .rot::-webkit-scrollbar{display:none}
+  .seccion{padding-top:80px}
+  .seccion h2{font-weight:600;font-size:26px;margin:0;letter-spacing:-.025em}
+  .seccion .barra{display:flex;align-items:baseline;gap:16px;border-top:1px solid #DBD6C9;padding-top:20px;margin-bottom:34px;flex-wrap:wrap}
+  .seccion .barra span{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#6E6E64}
+  .craft h4{font-size:14.5px;font-weight:600;margin:0 0 6px}
+  .craft p{margin:0;font-size:13px;color:#6E6E64;line-height:1.6}
+  .lista h4{font-size:15px;font-weight:600;margin:0 0 7px}
+  .lista p{margin:0;font-size:13.5px;color:#6E6E64;line-height:1.62}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="p-pollo"><ellipse cx="22" cy="25" rx="12" ry="9.5" fill="#EBC9A8"/><path d="M14 20.5c3-5 13-5 16 0" stroke="#D2A67F" stroke-width="1.4" fill="none"/></g>
+<g id="p-arroz"><path d="M12 13h20v22a2 2 0 01-2 2H14a2 2 0 01-2-2z" fill="#DCCBAE"/><path d="M12 13l3-5h14l3 5z" fill="#C9B694"/><rect x="15" y="20" width="14" height="9" rx="1.5" fill="#F4EEE2"/></g>
+<g id="p-yogurt"><path d="M13 12h18l-2.4 22a2 2 0 01-2 1.8h-9.2a2 2 0 01-2-1.8z" fill="#F2EFE6"/><rect x="12" y="9" width="20" height="4" rx="1.6" fill="#C4426A"/><rect x="16" y="19" width="12" height="7" rx="1.4" fill="#E6ADC0"/></g>
+<g id="p-yogurt2"><path d="M13 12h18l-2.4 22a2 2 0 01-2 1.8h-9.2a2 2 0 01-2-1.8z" fill="#F2EFE6"/><rect x="12" y="9" width="20" height="4" rx="1.6" fill="#4E7FB8"/><rect x="16" y="19" width="12" height="7" rx="1.4" fill="#AFC6E0"/></g>
+<g id="p-trucha"><path d="M8 22c5-6.5 16-8.5 24-4.5 3 1.5 4 3.3 4 4.5s-1 3-4 4.5C24 30.5 13 28.5 8 22z" fill="#E6A08A"/><path d="M36 22l-5-3.5v7z" fill="#D2846C"/><circle cx="14" cy="21" r="1.3" fill="#7A4736"/></g>
+<g id="p-galleta"><rect x="10" y="14" width="24" height="17" rx="3" fill="#D8A15C"/><circle cx="17" cy="20" r="1.6" fill="#8C5A28"/><circle cx="24" cy="24" r="1.6" fill="#8C5A28"/><circle cx="28" cy="18" r="1.4" fill="#8C5A28"/></g>
+<g id="p-papel"><rect x="12" y="12" width="20" height="21" rx="3" fill="#F0EDE6"/><circle cx="22" cy="22" r="4" fill="#DAD5C8"/><circle cx="22" cy="22" r="1.6" fill="#B9B3A3"/></g>
+</defs></svg>
+
+<div class="doc">
+
+  <header style="padding:96px 0 46px;max-width:62ch">
+    <p style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#6E6E64;margin:0 0 20px">SuperCarrito · Puerta 1 · Sprint autónomo · la aplicación</p>
+    <h1 style="font-weight:600;font-size:clamp(36px,5.4vw,58px);line-height:1.06;letter-spacing:-.035em;margin:0 0 24px;text-wrap:balance">Una sola libreta,<br>encendida de principio a fin.</h1>
+    <p style="font-size:18px;line-height:1.62;color:#6E6E64;margin:0;max-width:56ch;text-wrap:pretty">No es una galería de pantallas: es la aplicación. Toca el teléfono y recorre la semana entera —anotar, pegar, revisar, comprar, volver— sin salir nunca de la misma libreta. La columna de la izquierda solo adelanta el reloj.</p>
+    <p style="font-size:14px;color:#6E6E64;border-left:2px solid #2E5D4B;padding-left:16px;margin:26px 0 0;max-width:56ch;text-wrap:pretty"><b style="color:#3A3B36;font-weight:600">La familia escribe en tinta; SuperCarrito habla en lápiz.</b> Todo lo demás en esta página es consecuencia de esa frase.</p>
+  </header>
+
+  <div style="display:flex;gap:44px;flex-wrap:wrap;align-items:flex-start;border-top:1px solid #DBD6C9;padding-top:40px">
+
+    <nav id="nav" style="width:196px;flex:0 0 auto;display:flex;flex-direction:column;gap:22px;position:sticky;top:24px"></nav>
+
+    <div style="width:320px;flex:0 0 auto;position:sticky;top:24px">
+      <div style="width:320px;height:692px;border-radius:40px;background:#F5F3ED;position:relative;overflow:hidden;display:flex;flex-direction:column;border:1px solid rgba(34,51,84,.10);box-shadow:0 1px 2px rgba(34,51,84,.05),0 14px 30px -14px rgba(34,51,84,.22),0 36px 64px -32px rgba(34,51,84,.3)">
+
+        <div style="height:46px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 5px;font-size:11.5px;color:#4A5A78;position:relative;z-index:5;font-variant-numeric:tabular-nums">
+          <span id="reloj"></span>
+          <span style="display:flex;gap:4px;align-items:center;opacity:.5"><i style="width:4px;height:4px;border-radius:50%;background:currentColor;display:block"></i><i style="width:4px;height:4px;border-radius:50%;background:currentColor;display:block"></i><i style="width:4px;height:4px;border-radius:50%;background:currentColor;display:block"></i></span>
+        </div>
+
+        <!-- LIBRETA -->
+        <div id="v-libreta" class="vista on" style="position:relative">
+          <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,transparent 0 37px,#E2DED2 37px 38px);opacity:.5;mask-image:linear-gradient(to bottom,transparent 0,#000 70px,#000 84%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 70px,#000 84%,transparent 100%)"></div>
+          <div style="padding:12px 26px 20px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2">
+            <span><span style="font-size:21px;font-weight:600;color:#223354;letter-spacing:-.025em;display:block;line-height:1.2">Casa</span><span id="dia" style="font-size:11.5px;color:#7F8A80"></span></span>
+            <button id="b-casa" style="width:34px;height:34px;border-radius:50%;border:1px solid #E2DED2;background:#fff;color:#7F8A80;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;letter-spacing:.02em">MR</button>
+          </div>
+          <div style="flex:1;min-height:0;overflow:hidden;padding:0 26px;position:relative;z-index:2;display:flex;flex-direction:column">
+            <div id="titulo-tiempo" style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#A3ADA5;line-height:38px"></div>
+            <div id="lineas"></div>
+            <div id="leyendo" class="oculto" style="padding:6px 0 8px">
+              <div style="height:14px;border-radius:4px;width:74%;background:linear-gradient(90deg,#E2DED2,#F5F3ED,#E2DED2);background-size:200% 100%;animation:sc-barrido 1.6s linear infinite;margin-bottom:9px"></div>
+              <div style="height:14px;border-radius:4px;width:52%;background:linear-gradient(90deg,#E2DED2,#F5F3ED,#E2DED2);background-size:200% 100%;animation:sc-barrido 1.6s linear infinite"></div>
+              <div id="leyendo-t" style="font-size:12.5px;color:#7F8A80;line-height:30px"></div>
+            </div>
+            <input id="compositor" type="text" style="border:0;outline:0;background:transparent;font-family:inherit;font-size:18px;font-weight:500;color:#223354;line-height:38px;height:38px;letter-spacing:-.015em;padding:0;width:100%;caret-color:#E0864B">
+            <div id="eco" class="oculto" style="font-size:12.5px;color:#7F8A80;line-height:1.5;padding:0 0 10px 1px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;animation:sc-eco 180ms ease both">
+              <span id="eco-t"></span>
+              <button id="eco-si" style="font-family:inherit;font-size:12.5px;font-weight:600;border:0;border-radius:11px;padding:6px 12px;background:#2E5D4B;color:#fff;cursor:pointer">Sí</button>
+              <button id="eco-no" style="font-family:inherit;font-size:12.5px;font-weight:600;border:1px solid #E2DED2;border-radius:11px;padding:6px 12px;background:#fff;color:#223354;cursor:pointer">Otro</button>
+            </div>
+            <div id="pista" style="font-size:12.5px;color:#A3ADA5;line-height:1.5;padding:0 0 10px 1px"></div>
+          </div>
+          <div style="flex:0 0 auto;position:relative;z-index:3;padding:0 24px 20px;display:flex;gap:9px;align-items:center">
+            <button id="b-comprar" class="btn-fantasma" style="white-space:nowrap;flex:0 0 auto">Hacer la compra</button>
+            <button id="b-captura" title="pegar una captura" style="font-family:inherit;width:44px;height:44px;border-radius:13px;border:1px solid #E2DED2;background:#fff;color:#7F8A80;cursor:pointer;display:grid;place-items:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m4 16 4.5-4.5 4 4L16 12l4 4"/><circle cx="15" cy="9" r="1.4"/></svg></button>
+            <span id="labio" style="margin-left:auto;min-width:0;font-size:12.5px;color:#7F8A80;cursor:pointer;text-align:right;line-height:1.3;overflow:hidden;text-overflow:ellipsis"></span>
+          </div>
+        </div>
+
+        <!-- REVISIÓN -->
+        <div id="v-revision" class="vista" style="padding:0 24px">
+          <div class="cab"><button class="btn-back" data-ir="libreta"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button><span class="tit-vista">Antes de comprar</span></div>
+          <p style="font-size:12.5px;color:#7F8A80;margin:2px 0 14px;line-height:1.5">Esto es lo que voy a buscar. Quita o corrige lo que quieras; nada se ha comprado todavía.</p>
+          <div id="revision" style="flex:1;min-height:0;overflow:hidden"></div>
+          <div style="padding:14px 0 20px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <span id="conteo-rev" style="font-size:12.5px;color:#7F8A80;max-width:15ch;line-height:1.4"></span>
+            <button id="b-precios" class="btn-pino">Buscar precios</button>
+          </div>
+        </div>
+
+        <!-- CARRITO -->
+        <div id="v-carrito" class="vista" style="padding:0 24px">
+          <div class="cab"><button class="btn-back" data-ir="revision"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button><span class="tit-vista">Tu carrito</span></div>
+          <p style="font-size:12.5px;color:#7F8A80;margin:2px 0 12px">Wong · precios de hoy</p>
+          <div id="carrito" class="rot" style="flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain"></div>
+          <div style="padding:12px 0 20px">
+            <div id="pendientes" style="font-size:12.5px;color:#7F8A80;padding-bottom:10px;line-height:1.45"></div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
+              <span><span style="font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#7F8A80;display:block">Subtotal confirmado</span><span id="subtotal" style="font-size:25px;color:#223354;font-variant-numeric:tabular-nums;letter-spacing:-.03em;font-weight:600"></span></span>
+              <button id="b-comprar-final" class="btn-pino">Comprar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CASA -->
+        <div id="v-casa" class="vista" style="padding:0 24px;overflow:hidden">
+          <div class="cab"><button class="btn-back" data-ir="libreta"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button><span class="tit-vista">La casa</span></div>
+          <p id="frase-casa" style="font-size:12.5px;color:#7F8A80;margin:2px 0 18px;line-height:1.5"></p>
+          <div id="casa-cuerpo" style="flex:1;min-height:0;overflow:hidden"></div>
+        </div>
+
+        <!-- BOLETA -->
+        <div id="v-boleta" class="vista" style="padding:0 24px">
+          <div class="cab"><button class="btn-back" data-ir="casa"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button><span id="boleta-tit" class="tit-vista"></span></div>
+          <p id="boleta-sub" style="font-size:12.5px;color:#7F8A80;margin:2px 0 14px"></p>
+          <div id="boleta" style="flex:1;min-height:0;overflow:hidden"></div>
+          <div style="padding:14px 0 20px;border-top:1px solid #E2DED2;display:flex;justify-content:space-between;align-items:baseline">
+            <span style="font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#7F8A80">Total</span>
+            <span id="boleta-total" style="font-size:25px;color:#223354;font-variant-numeric:tabular-nums;letter-spacing:-.03em;font-weight:600"></span>
+          </div>
+        </div>
+
+        <div id="overlay"></div>
+        <div id="calma"></div>
+        <div id="toast"></div>
+
+      </div>
+    </div>
+
+    <div style="width:266px;flex:0 0 auto;position:sticky;top:24px">
+      <p id="n-etiqueta" style="font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:#9A9A8E;margin:0 0 8px"></p>
+      <h3 id="n-titulo" style="font-size:19px;font-weight:600;margin:0 0 10px;letter-spacing:-.022em;line-height:1.25;text-wrap:balance"></h3>
+      <p id="n-texto" style="font-size:13.5px;color:#6E6E64;line-height:1.62;margin:0 0 10px;text-wrap:pretty"></p>
+      <p id="n-porque" style="font-size:13px;color:#6E6E64;line-height:1.6;margin:0;border-left:2px solid #DBD6C9;padding-left:12px;text-wrap:pretty"></p>
+    </div>
+
+  </div>
+
+  <section class="seccion craft" style="padding-top:96px">
+    <div class="barra"><span>Craft</span><h2>Ocho detalles que hacen todo el trabajo</h2></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:26px">
+      <div><h4>Entra una línea · 220 ms</h4><p>Sube 3 px y aparece. No rebota: rebotar es celebrar, y anotar papel higiénico no se celebra.</p></div>
+      <div><h4>Cae una captura · 260 ms</h4><p>Baja 10 px con un grado de rotación y se endereza. Es el único elemento torcido de la app: se siente prendido con clip, no subido a un servidor.</p></div>
+      <div><h4>Lee el producto · esqueleto</h4><p>Con la forma final y siempre entre las líneas escritas. Al llegar el dato no salta un píxel.</p></div>
+      <div><h4>Respira · 2,6 s</h4><p>Una exhalación, no un spinner. Un círculo que gira dice «trabajando»; uno que respira dice «tranquila».</p></div>
+      <div><h4>Sube el carrito · 320 ms</h4><p>Salida rápida, llegada lenta. La libreta se queda asomando arriba: volver nunca da miedo.</p></div>
+      <div><h4>Aparece un eco · 180 ms</h4><p>Solo opacidad. Si el texto de arriba se moviera un milímetro, el producto habría empujado a la familia.</p></div>
+      <div><h4>Se dibuja el visto · 520 ms</h4><p>Un trazo que se escribe, no un icono que aparece. Es lo más parecido a una celebración que nos permitimos.</p></div>
+      <div><h4>Volver a los días · opacidad</h4><p>100 % hoy · 62 % esta semana · 40 % más atrás. El tiempo se dice con luz, nunca con fechas dentro del texto de la familia.</p></div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="barra"><span>Sistema</span><h2>Lo que mantiene unidas las catorce pantallas</h2></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:34px 42px">
+      <div>
+        <h4 style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6E6E64;margin:0 0 12px;font-weight:600">Color</h4>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <span style="width:32px;height:32px;border-radius:10px;background:#F5F3ED;border:1px solid rgba(128,128,128,.25)"></span>
+          <span style="width:32px;height:32px;border-radius:10px;background:#223354"></span>
+          <span style="width:32px;height:32px;border-radius:10px;background:#7F8A80"></span>
+          <span style="width:32px;height:32px;border-radius:10px;background:#2E5D4B"></span>
+          <span style="width:32px;height:32px;border-radius:10px;background:#E0864B"></span>
+          <span style="width:32px;height:32px;border-radius:10px;background:#A8503C"></span>
+        </div>
+        <p style="margin:0;font-size:13px;color:#6E6E64;line-height:1.62">Papel · tinta · lápiz · pino · papaya · ladrillo, tal como se aprobaron. Papaya solo donde está el cursor. Ladrillo exactamente dos veces en toda la app: agotado y error.</p>
+      </div>
+      <div>
+        <h4 style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6E6E64;margin:0 0 12px;font-weight:600">Dos voces, una tipografía</h4>
+        <p style="margin:0 0 4px;font-size:17px;font-weight:500;color:#223354">2 kg de pollo</p>
+        <p style="margin:0 0 12px;font-size:12.5px;color:#7F8A80">San Fernando · como la vez pasada</p>
+        <p style="margin:0;font-size:13px;color:#6E6E64;line-height:1.62">Tinta 17 px peso 500 para la familia; lápiz 12,5 px peso 400 para el producto. Nunca se cruzan de tamaño ni de color, en ninguna de las catorce pantallas.</p>
+      </div>
+      <div>
+        <h4 style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6E6E64;margin:0 0 12px;font-weight:600">Una sola navegación</h4>
+        <p style="margin:0;font-size:13px;color:#6E6E64;line-height:1.62">Sin barra de pestañas: una barra inferior convierte una libreta en una app. Todo cuelga de la libreta —el carrito hacia abajo, la casa detrás del monograma— y siempre se vuelve con la misma flecha en la misma esquina.</p>
+      </div>
+      <div>
+        <h4 style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6E6E64;margin:0 0 12px;font-weight:600">Los vacíos</h4>
+        <p style="margin:0;font-size:13px;color:#6E6E64;line-height:1.62">Cuatro, y ninguno dice «no hay nada»: la primera vez explica en una línea; la libreta limpia dice <i>todo comprado 🎉 por ahora</i>; la casa nueva admite que aún no sabe nada; la revisión vaciada responde «la libreta te espera igual». Sin ilustraciones — una ilustración de vacío convierte un descanso en un problema.</p>
+      </div>
+      <div>
+        <h4 style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6E6E64;margin:0 0 12px;font-weight:600">Los errores</h4>
+        <p style="margin:0;font-size:13px;color:#6E6E64;line-height:1.62">Ninguno culpa. «No pude leerla» es el producto asumiendo la falla; «no hay Gloria hoy» es un hecho de la tienda. Nada se sustituye solo, nada se borra, y lo escrito por la familia sobrevive siempre al error.</p>
+      </div>
+      <div>
+        <h4 style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6E6E64;margin:0 0 12px;font-weight:600">El renglón de 38 px</h4>
+        <p style="margin:0;font-size:13px;color:#6E6E64;line-height:1.62">Todo lo que vive en la libreta cae en él: línea, aire, esqueleto, eco. Si algo no cabe en 38 px o un múltiplo, no pertenece a la libreta — pertenece a la hoja del carrito. Es la regla que impide que esto crezca hasta parecer un panel.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion lista">
+    <div class="barra"><span>Los cinco segundos</span><h2>Martes, 21:14, «papel higiénico»</h2></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:30px 42px;max-width:1020px">
+      <div><h4 style="color:#2E5D4B">Corregido · el cursor ya está puesto</h4><p>La libreta abre con el foco en la línea libre. Cero toques antes de la primera letra: abrir y escribir son el mismo gesto.</p></div>
+      <div><h4 style="color:#2E5D4B">Corregido · el eco no interrumpe</h4><p>Aparece <i>debajo</i> y sin mover nada. Si ella pulsa Enter y bloquea el teléfono, el eco muere solo y no pasó nada: no hay decisión pendiente esperándola mañana.</p></div>
+      <div><h4 style="color:#2E5D4B">Corregido · el labio perdió el número</h4><p>Decía «5 cosas anotadas». Un número que sube es lo más parecido a una evaluación que existe, y en cinco segundos no aporta nada. Ahora dice cuándo fue la última compra, o no dice nada.</p></div>
+      <div><h4 style="color:#2E5D4B">Corregido · nada nuevo arriba</h4><p>Al volver, lo de ayer está donde lo dejó, más tenue. Ninguna novedad se inserta sobre lo escrito: leer para reencontrar el sitio cuesta más que escribir.</p></div>
+      <div><h4 style="color:#3A3B36">Aceptado · el duplicado</h4><p>Si ya lo había anotado el domingo, no avisamos. Advertir cuesta un segundo y una microdecisión; resolverlo al comprar cuesta cero. El duplicado no es un error, es memoria repetida.</p></div>
+      <div><h4 style="color:#3A3B36">Aceptado · el monograma</h4><p>Ocupa la esquina y no sirve en esos cinco segundos. Se queda porque es la única puerta a la casa y no roba ni un píxel a la zona de escritura, pero es lo primero que quitaría si estorbase.</p></div>
+    </div>
+  </section>
+
+  <section class="seccion lista">
+    <div class="barra"><span>Crítica</span><h2>Lo que todavía no está bien</h2></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:30px 42px;max-width:1020px">
+      <div><h4 style="color:#A8503C">1 · La hoja de opciones sigue siendo una tienda</h4><p>Tres tarjetas con foto y precio es exactamente el patrón que dijimos no imitar. Se sostiene porque elegir es visual y porque la primera trae la etiqueta «la de siempre» —pero es la única pantalla donde alguien podría decir «esto es Rappi». Pregunta para la entrevista: ¿la familia elige, o solo confirma? Si solo confirma, sobran dos tarjetas.</p></div>
+      <div><h4 style="color:#A8503C">2 · Revisión es una pantalla que la libreta ya era</h4><p>Editar y quitar ya se pueden hacer en la libreta. La añadí porque comprar merece una frontera consciente, pero duplica un gesto —y duplicar gestos es lo primero que hace que un producto se sienta software. Si en las entrevistas nadie la usa, se elimina y se compra directo desde la libreta.</p></div>
+      <div><h4 style="color:#A8503C">3 · «La casa» mezcla dos cosas</h4><p>Historial y perfil viven juntos para no crear una barra de pestañas, y eso está bien; pero son cosas distintas —hecho y opinión— y la pantalla lo insinúa con un simple título. Si el perfil crece, esta pantalla se rompe antes que ninguna otra.</p></div>
+      <div><h4 style="color:#3A3B36">4 · Lo que sí se siente producto</h4><p>El carrito honesto: convive lo confirmado con lo pendiente sin que el total mienta ni un céntimo. El agotado que propone y no sustituye. El perfil escrito en frases de casa —«la leche es Gloria»— y no en tabla. Y volver el martes y que no pase absolutamente nada.</p></div>
+      <div><h4 style="color:#3A3B36">5 · El hueco que sigue abierto</h4><p>Todo asume una libreta de una persona. El bloque pegado dice «Rosa» como si supiéramos quién escribe, y no lo sabemos: no existe la pantalla de dos personas anotando a la vez. Es la decisión de producto pendiente (§ preguntas abiertas del sprint), y hasta que se tome, ese «Rosa» es una promesa que el diseño no puede cumplir.</p></div>
+      <div><h4 style="color:#3A3B36">6 · Lo que quité en la última pasada</h4><p>El contador del labio · una segunda sombra en las hojas · el icono de cámara duplicado dentro del compositor · las fechas en el historial reciente («el domingo» basta) · un título «Resumen» sobre la boleta que no decía nada que el total no dijera. Cinco elementos menos, ninguna función menos.</p></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const ESCENAS = {
+  primera: { reloj:'20:06', dia:'martes', titulo:null, lineas:[], marcador:'leche',
+    pista:'Escribe una cosa. Solo una. Yo me encargo del resto.', labio:null },
+  viva: { reloj:'21:14', dia:'jueves', titulo:'esta semana',
+    lineas:[
+      {t:'leche',op:.4},{t:'pañales talla 4',op:.4},{t:'papel higiénico',op:.62},
+      {tipo:'pegado',filas:[{t:'mami compra 2 kg de pollo'},{t:'arroz costeño el grande'},{t:'y yogurt para la Vale 🙏'}]},
+      {tipo:'clip',t:'captura del carrito de Wong',sub:'leí 8 líneas · las verás al comprar'},
+      {t:'galletas para el lonche',op:1}
+    ], marcador:'', pista:null, labio:'la última compra fue el domingo' },
+  segunda: { reloj:'8:12', dia:'lunes', titulo:'quedó de la semana pasada',
+    lineas:[{t:'focos led',op:.62},{t:'detergente',op:.62}], marcador:'',
+    pista:'el arroz suele durarles seis semanas · va la cuarta', labio:'compraste el domingo' },
+  vacia: { reloj:'9:41', dia:'martes', titulo:null, lineas:[], marcador:'',
+    pista:'todo comprado 🎉 por ahora', labio:null }
+};
+
+const CARRITO = [
+  {id:'pollo',nombre:'Pollo entero San Fernando',icono:'#p-pollo',estado:'ok',nota:'2 kg × S/ 12.90',confianza:'lo pediste así',monto:'25.80',valor:25.8},
+  {id:'arroz',nombre:'Arroz Costeño Extra 5 kg',icono:'#p-arroz',estado:'ok',nota:'1 × S/ 29.50',confianza:'basado en tu compra anterior',monto:'29.50',valor:29.5},
+  {id:'trucha',nombre:'Trucha deshuesada',icono:'#p-trucha',estado:'cantidad',nota:'S/ 31.50 por kilo · falta la cantidad',confianza:null,accion:'¿Cuánto llevas?',monto:'—',valor:0},
+  {id:'yogurt',nombre:'Yogurt Gloria fresa 1 L',icono:'#p-yogurt',estado:'agotado',nota:'hoy no hay en Wong',confianza:'lo dejé anotado igual',accion:'Ver qué sí hay',monto:'—',valor:0},
+  {id:'galletas',nombre:'Galletas para el lonche',icono:'#p-galleta',estado:'pendiente',nota:'escribiste algo abierto',confianza:null,accion:'Elegir cuáles',monto:'—',valor:0},
+  {id:'papel',nombre:'Papel higiénico Elite x12',icono:'#p-papel',estado:'ok',nota:'1 × S/ 21.90',confianza:'lo compras cada tres semanas',monto:'21.90',valor:21.9}
+];
+
+const APRENDIDO = [
+  {frase:'La leche es Gloria, siempre entera',desde:'cinco compras seguidas'},
+  {frase:'El arroz es el grande, el de 5 kg',desde:'lo escribiste así en marzo'},
+  {frase:'La trucha, 800 g',desde:'lo confirmaste el domingo'},
+  {frase:'Nada con pistacho en casa',desde:'lo quitaste dos veces'}
+];
+
+const COMPRAS = [
+  {id:'dom',cuando:'El domingo',detalle:'12 cosas · Wong',total:'S/ 214.60',op:1},
+  {id:'ant',cuando:'Hace dos semanas',detalle:'9 cosas · Wong',total:'S/ 168.20',op:.7},
+  {id:'tres',cuando:'Hace tres semanas',detalle:'15 cosas · Wong',total:'S/ 246.90',op:.45}
+];
+
+const BOLETAS = {
+  dom:{titulo:'La compra del domingo',sub:'3 de agosto · Wong',total:'S/ 214.60',resto:'y nueve más',
+    filas:[{nombre:'Pollo entero San Fernando',cuenta:'2 kg × S/ 12.90',monto:'25.80'},{nombre:'Arroz Costeño Extra 5 kg',cuenta:'1 × S/ 29.50',monto:'29.50'},{nombre:'Yogurt Gloria fresa 1 L',cuenta:'2 × S/ 7.20',monto:'14.40'}]},
+  ant:{titulo:'Hace dos semanas',sub:'20 de julio · Wong',total:'S/ 168.20',resto:'y seis más',
+    filas:[{nombre:'Detergente Bolívar 4,5 kg',cuenta:'1 × S/ 42.90',monto:'42.90'},{nombre:'Leche Gloria entera x6',cuenta:'2 × S/ 25.40',monto:'50.80'},{nombre:'Pan de yema',cuenta:'12 × S/ 0.80',monto:'9.60'}]},
+  tres:{titulo:'Hace tres semanas',sub:'13 de julio · Wong',total:'S/ 246.90',resto:'y doce más',
+    filas:[{nombre:'Pañales Huggies talla 4 x60',cuenta:'1 × S/ 79.90',monto:'79.90'},{nombre:'Trucha deshuesada',cuenta:'0,8 kg × S/ 31.50',monto:'25.20'},{nombre:'Papel higiénico Elite x12',cuenta:'1 × S/ 21.90',monto:'21.90'}]}
+};
+
+const OPCIONES = {
+  galletas:{ titulo:'Galletas para el lonche', sub:'Escribiste algo abierto. Te muestro por dónde ir.',
+    salida:'¿Nada de esto es? Escribe la marca y la busco.',
+    items:[
+      {id:'g1',nombre:'Margarita pack x6',nota:'la de siempre · marzo y abril · S/ 1.15 c/u',monto:'6.90',valor:6.9,icono:'#p-galleta'},
+      {id:'g2',nombre:'Soda Field pack x8',nota:'S/ 0.95 c/u',monto:'7.60',valor:7.6,icono:'#p-galleta'},
+      {id:'g3',nombre:'Vainilla Gretel x6',nota:'S/ 1.30 c/u',monto:'7.80',valor:7.8,icono:'#p-galleta'}
+    ]},
+  yogurt:{ titulo:'Hoy no hay Gloria fresa', sub:'No cambio nada por mi cuenta. Estas sí están hoy.',
+    salida:'También puedes dejarlo anotado y lo busco la próxima vez.',
+    items:[
+      {id:'y1',nombre:'Laive fresa 1 L',nota:'la más parecida · S/ 6.90 c/u',monto:'13.80',valor:13.8,icono:'#p-yogurt2'},
+      {id:'y2',nombre:'Gloria durazno 1 L',nota:'misma marca, otro sabor · S/ 7.20 c/u',monto:'14.40',valor:14.4,icono:'#p-yogurt'}
+    ]}
+};
+
+const PESOS = [{t:'400 g',v:12.6},{t:'800 g',v:25.2},{t:'1,2 kg',v:37.8},{t:'2 kg',v:63.0}];
+
+const NOTAS = {
+  primera:['Pantalla 2 · Primera semana','Nada que configurar','La primera vez no hay bienvenida, ni tour, ni cuenta. Hay una línea vacía con el cursor puesto y una frase en lápiz que se irá sola en cuanto escriba algo.','Por qué: cualquier pantalla que aparezca antes de la libreta contradice que la libreta sea el Home.'],
+  viva:['Pantalla 1 y 3 · La libreta viva','Una semana normal','Cuatro días de anotaciones conviven: lo de hoy nítido, lo del lunes al 40 %. Un WhatsApp pegado tal cual, con su emoji, y una captura prendida con clip. Toca cualquier línea para corregirla.','Por qué: la única jerarquía es el tiempo, y se dice con luz. Ninguna fecha entra en el texto de la familia.'],
+  segunda:['Pantalla 9 · Segunda semana','El eco y lo aprendido','Lo que no se compró sigue ahí, más tenue, sin reproche. Escribe «yogurt» y verás el eco: una propuesta en lápiz que no suma nada hasta que la toques.','Por qué: preguntar en el momento en que ella escribe es el único instante en que la respuesta es barata. Pero se puede ignorar y muere sola.'],
+  vacia:['Pantalla 12 · Vacío','Todo comprado 🎉 por ahora','El único emoji de la aplicación, y el chiste está en el «por ahora». «Hacer la compra» se atenúa al 50 % en vez de desaparecer: un botón que se va enseña que la pantalla cambia sola.','Por qué: el vacío aquí no es una falta, es un logro. Nada de ilustraciones.'],
+  pegar:['Pantalla 4 · Pegar un WhatsApp','Antes · durante · después','Durante: un esqueleto con la forma final, entre las líneas, nunca encima. Después: el texto entra literal —faltas, emojis y todo— marcado con una barra de lápiz, y un «Deshacer» que dura lo que dura la duda.','Por qué: no tocamos nunca lo que escribió la familia. La barra dice «esto lo pegaste tú», no «esto lo entendí yo».'],
+  captura:['Pantalla 5 · Pegar una captura','Subiendo · leyendo · resultado','La captura cae torcida y se endereza. Decimos cuántas líneas leímos, nunca cuántas no pudimos. El detalle se ve al comprar, no ahora: ahora ella está anotando.','Por qué: la evidencia es suya y se queda a la vista. Lo que no sabemos leer no se inventa.'],
+  error:['Pantalla 13 · Error','No pude leerla','Sin rojo de alarma, sin icono de advertencia, sin «Error 400». El producto asume la falla en primera persona y deja la captura donde está: nada del usuario desaparece por un fallo nuestro.','Por qué: culpar al usuario cuesta una sesión; culparse a uno mismo cuesta una línea de texto.'],
+  revision:['Pantalla 6 · Revisión','Antes de comprar','Quitar, corregir, confirmar. Cada línea recuerda de dónde vino. Es la frontera: escribir y comprar son actos distintos y este es el único momento del producto donde sí pedimos atención.','Por qué: si el carrito apareciera solo, la familia nunca sabría qué autorizó.'],
+  precios:['Pantalla 14 · Loading','Buscando precios','Un círculo que respira cada 2,6 s. No hay barra, no hay porcentaje, no hay «analizando con IA».','Por qué: una barra de progreso promete un tiempo que no controlamos; una respiración solo promete que seguimos aquí.'],
+  carrito:['Pantalla 7 · El carrito','Los seis estados a la vez','Confirmado con su multiplicación · pendiente de elegir · agotado · sustitución propuesta · cantidad desconocida · cantidad conocida. Toca las tres filas con botón y mira subir el subtotal.','Por qué: un producto solo suma si conocemos su cantidad. Preferimos un carrito incompleto y honesto a uno completo e inventado.'],
+  confirmacion:['Pantalla 8 · Confirmación','Tranquilidad, no fiesta','Un trazo que se dibuja en medio segundo y una frase. Sin confeti, sin puntuación, sin «¡Felicidades!». Lo que no se llevó sigue anotado, y eso se dice antes de que lo pregunte.','Por qué: celebrar una compra del súper es celebrar el trabajo de otro.'],
+  casa:['Pantalla 11 · Perfil','Lo que aprendí de ustedes','Frases de casa, no una tabla: «la leche es Gloria, siempre entera», y debajo en lápiz de dónde salió. Cada una se toca y se cambia.','Por qué: el perfil es opinión derivada, y una opinión se escribe en frases. Si esto pareciera una base de datos, la familia dejaría de sentirlo suyo.'],
+  casaVacia:['Pantalla 12 · Vacío','La casa recién estrenada','«Todavía no sé nada de ustedes» — y el motivo: hasta la primera compra no hay nada que aprender. Cero campos, cero formulario de preferencias.','Por qué: pedir preferencias por adelantado es hacer trabajar a la familia por un beneficio que aún no ha visto.'],
+  boleta:['Pantalla 10 · Historial','Una compra de hace tres semanas','Cada línea conserva su multiplicación semanas después. Sin fotos: aquí ya no se está eligiendo, y la foto sirve para decidir, no para archivar.','Por qué: todo monto debe ser explicable por el propio producto. Uno que no se puede reconstruir es uno que no se puede defender.']
+};
+
+const RECORRIDO = [
+  {grupo:'La semana', pasos:[
+    ['Primera vez','primera',()=>irEscena('primera')],
+    ['Libreta viva','viva',()=>irEscena('viva')],
+    ['Segunda semana','segunda',()=>irEscena('segunda')],
+    ['Todo comprado','vacia',()=>irEscena('vacia')]
+  ]},
+  {grupo:'Las puertas', pasos:[
+    ['Pegar un WhatsApp','pegar',()=>pegarWhatsapp()],
+    ['Pegar una captura','captura',()=>pegarCaptura()],
+    ['Captura ilegible','error',()=>errorCaptura()]
+  ]},
+  {grupo:'La compra', pasos:[
+    ['Revisión','revision',()=>{limpiar();Object.assign(S,{escena:'viva',ruta:'revision',revision:null,calma:null,overlay:null,nota:'revision'});S.revision=aRevision();render();}],
+    ['Buscando precios','precios',()=>{limpiar();Object.assign(S,{escena:'viva',ruta:'revision',calma:'precios',nota:'precios'});render();luego(2100,()=>{S.calma=null;S.ruta='carrito';S.nota='carrito';render();});}],
+    ['El carrito','carrito',()=>{limpiar();Object.assign(S,{escena:'viva',ruta:'carrito',calma:null,overlay:null,carrito:CARRITO.map(c=>({...c})),nota:'carrito'});render();}],
+    ['Confirmación','confirmacion',()=>{limpiar();Object.assign(S,{escena:'viva',ruta:'libreta',calma:'listo',overlay:null,nota:'confirmacion'});render();}]
+  ]},
+  {grupo:'La casa', pasos:[
+    ['Lo que aprendí','casa',()=>{limpiar();Object.assign(S,{escena:'viva',ruta:'casa',calma:null,overlay:null,nota:'casa'});render();}],
+    ['Casa recién estrenada','casaVacia',()=>{limpiar();Object.assign(S,{escena:'primera',ruta:'casa',calma:null,overlay:null,nota:'casaVacia'});render();}],
+    ['Hace tres semanas','boleta',()=>{limpiar();Object.assign(S,{escena:'viva',ruta:'boleta',boletaId:'tres',calma:null,overlay:null,nota:'boleta'});render();}]
+  ]}
+];
+
+/* ---------- estado ---------- */
+
+const S = {
+  escena:'viva', ruta:'libreta', overlay:null, opcionesDe:'galletas', calma:null,
+  borrador:'', toast:null, deshacer:false, eco:null, leyendo:null,
+  lineasExtra:[], revision:null, editando:-1,
+  carrito: CARRITO.map(c=>({...c})), boletaId:'tres', nota:'viva'
+};
+
+let timers = [];
+const limpiar = () => { timers.forEach(clearTimeout); timers = []; };
+const luego = (ms,fn) => timers.push(setTimeout(fn,ms));
+const escena = () => ESCENAS[S.escena];
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function irEscena(e, nota){
+  limpiar();
+  Object.assign(S,{escena:e,ruta:'libreta',overlay:null,calma:null,borrador:'',toast:null,deshacer:false,
+    eco:null,leyendo:null,lineasExtra:[],revision:null,editando:-1,
+    carrito:CARRITO.map(c=>({...c})),nota:nota||e});
+  render();
+  $('compositor').focus();
+}
+
+const lineasVivas = () => escena().lineas.concat(S.lineasExtra);
+
+function aRevision(){
+  const out = [];
+  lineasVivas().forEach(l => {
+    if (l.tipo === 'pegado') l.filas.forEach(f => out.push({t:f.t, origen:'del WhatsApp de la casa'}));
+    else if (l.tipo === 'clip') out.push({t:'8 líneas de la captura', origen:'de la captura de Wong'});
+    else out.push({t:l.t, origen:'lo escribiste tú'});
+  });
+  return out;
+}
+
+function avisar(txt, conDeshacer, ms){
+  S.toast = txt; S.deshacer = !!conDeshacer; render();
+  luego(ms||2600, () => { S.toast=null; S.deshacer=false; render(); });
+}
+
+/* ---------- acciones ---------- */
+
+function pegarWhatsapp(){
+  limpiar();
+  Object.assign(S,{escena:'viva',ruta:'libreta',calma:null,overlay:null,lineasExtra:[],revision:null,
+    leyendo:'leyendo lo que pegaste…',nota:'pegar',eco:null,toast:null,deshacer:false});
+  render();
+  luego(1400, () => {
+    S.leyendo = null;
+    S.lineasExtra = [{tipo:'pegado',filas:[{t:'mami compra 2 kg de pollo'},{t:'arroz costeño el grande'},{t:'y yogurt para la Vale 🙏'}]}];
+    S.toast = 'Pegado tal cual. Yo lo ordeno cuando compres.'; S.deshacer = true;
+    render();
+    luego(3800, () => { S.toast=null; S.deshacer=false; render(); });
+  });
+}
+
+function pegarCaptura(){
+  limpiar();
+  Object.assign(S,{escena:'viva',ruta:'libreta',calma:'captura',overlay:null,lineasExtra:[],revision:null,
+    nota:'captura',eco:null,toast:null,deshacer:false,leyendo:null});
+  render();
+  luego(2200, () => {
+    S.calma = null;
+    S.lineasExtra = [{tipo:'clip',t:'captura del carrito de Wong',sub:'leí 8 líneas · las verás al comprar'}];
+    S.toast = 'Guardada. Nada tuyo se pierde.'; S.deshacer = false;
+    render();
+    luego(2800, () => { S.toast=null; render(); });
+  });
+}
+
+function errorCaptura(){
+  limpiar();
+  Object.assign(S,{escena:'viva',ruta:'libreta',calma:'captura',overlay:null,lineasExtra:[],revision:null,
+    nota:'error',eco:null,toast:null,deshacer:false,leyendo:null});
+  render();
+  luego(1800, () => {
+    S.calma = 'error';
+    S.lineasExtra = [{tipo:'clip',t:'captura del carrito de Wong',sub:'no pude leerla · sigue aquí'}];
+    render();
+  });
+}
+
+function irRevision(){
+  if (!lineasVivas().length) return;
+  limpiar();
+  S.revision = aRevision(); S.ruta = 'revision'; S.nota = 'revision'; S.editando = -1;
+  render();
+}
+
+function buscarPrecios(){
+  limpiar();
+  S.calma = 'precios'; S.nota = 'precios'; render();
+  luego(2100, () => { S.calma = null; S.ruta = 'carrito'; S.nota = 'carrito'; render(); });
+}
+
+function elegirOpcion(o){
+  const id = S.opcionesDe === 'yogurt' ? 'yogurt' : 'galletas';
+  S.overlay = null;
+  S.carrito = S.carrito.map(c => c.id === id ? Object.assign({},c,{
+    estado:'ok', nombre:o.nombre, icono:o.icono, monto:o.monto, valor:o.valor,
+    nota:o.nota.split(' · ').pop(), confianza:'lo acabas de elegir', accion:null
+  }) : c);
+  render();
+}
+
+function elegirPeso(w){
+  S.overlay = null;
+  S.carrito = S.carrito.map(c => c.id === 'trucha' ? Object.assign({},c,{
+    estado:'ok', nota:w.t + ' × S/ 31.50/kg', confianza:'lo acabas de confirmar',
+    monto:w.v.toFixed(2), valor:w.v, accion:null
+  }) : c);
+  render();
+}
+
+/* ---------- render ---------- */
+
+function pintarNav(){
+  $('nav').innerHTML = RECORRIDO.map((g,gi) => `
+    <div>
+      <p style="font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:#9A9A8E;margin:0 0 7px">${esc(g.grupo)}</p>
+      ${g.pasos.map((p,pi)=>`<button class="paso" data-g="${gi}" data-p="${pi}" data-clave="${esc(p[1])}">${esc(p[0])}</button>`).join('')}
+    </div>`).join('');
+  $('nav').addEventListener('click', e => {
+    const b = e.target.closest('.paso'); if (!b) return;
+    RECORRIDO[+b.dataset.g].pasos[+b.dataset.p][2]();
+  });
+}
+
+function render(){
+  const e = escena();
+  const enLibreta = S.ruta === 'libreta';
+
+  $('reloj').textContent = e.reloj;
+  $('dia').textContent = e.dia;
+
+  document.querySelectorAll('.paso').forEach(b => b.setAttribute('aria-current', b.dataset.clave === S.nota));
+
+  ['libreta','revision','carrito','casa','boleta'].forEach(v =>
+    $('v-'+v).classList.toggle('on', S.ruta === v));
+
+  /* libreta */
+  const tt = $('titulo-tiempo');
+  tt.textContent = enLibreta && e.titulo ? e.titulo : '';
+  tt.classList.toggle('oculto', !(enLibreta && e.titulo));
+
+  $('lineas').innerHTML = lineasVivas().map(l => {
+    if (l.tipo === 'pegado') return `
+      <div style="animation:sc-linea 220ms cubic-bezier(.22,.61,.36,1) both">
+        <div style="border-left:2px solid #A3ADA5;padding:2px 0 2px 12px;margin:5px 0 9px">
+          <div style="font-size:11px;color:#A3ADA5;line-height:20px">pegado de WhatsApp · Rosa</div>
+          ${l.filas.map(f=>`<div style="font-size:14.5px;color:#4A5A78;line-height:26px;opacity:.82">${esc(f.t)}</div>`).join('')}
+        </div>
+      </div>`;
+    if (l.tipo === 'clip') return `
+      <div style="display:flex;align-items:center;gap:10px;border:1px dashed #C9C3B4;border-radius:14px;padding:9px 12px;margin:5px 0 9px;background:rgba(255,255,255,.55);animation:sc-clip 260ms cubic-bezier(.22,.61,.36,1) both">
+        <span style="width:32px;height:42px;border-radius:6px;background:#fff;border:1px solid #E2DED2;flex:0 0 auto;display:grid;place-items:center"><span style="width:16px;height:2px;background:#E2DED2;display:block;box-shadow:0 5px 0 #E2DED2,0 10px 0 #E2DED2,0 15px 0 #E2DED2"></span></span>
+        <div style="flex:1;min-width:0"><div style="font-size:13.5px;color:#4A5A78;font-weight:500">${esc(l.t)}</div><div style="font-size:12px;color:#7F8A80;margin-top:2px">${esc(l.sub)}</div></div>
+      </div>`;
+    return `<div style="animation:sc-linea 220ms cubic-bezier(.22,.61,.36,1) both"><div style="font-size:17px;font-weight:500;color:#223354;line-height:38px;letter-spacing:-.015em;opacity:${l.op||1};cursor:text;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.t)}</div></div>`;
+  }).join('');
+
+  $('leyendo').classList.toggle('oculto', !S.leyendo);
+  $('leyendo-t').textContent = S.leyendo || '';
+
+  const comp = $('compositor');
+  if (comp.value !== S.borrador) comp.value = S.borrador;
+  comp.placeholder = (S.lineasExtra.length || S.borrador) ? '' : e.marcador;
+
+  $('eco').classList.toggle('oculto', !S.eco);
+  $('eco-t').textContent = S.eco || '';
+
+  const pista = (!S.borrador && !S.eco) ? e.pista : null;
+  $('pista').textContent = pista || '';
+  $('pista').classList.toggle('oculto', !pista);
+
+  $('b-comprar').style.opacity = lineasVivas().length ? 1 : .5;
+  $('labio').textContent = e.labio || '';
+  $('labio').classList.toggle('oculto', !e.labio);
+
+  /* revisión */
+  const rev = S.revision || aRevision();
+  $('revision').innerHTML = rev.length ? rev.map((r,i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #E2DED2;animation:sc-linea 200ms ease both">
+      ${S.editando === i
+        ? `<input class="rev-in" data-i="${i}" type="text" value="${esc(r.t)}" style="flex:1;border:0;outline:0;background:rgba(224,134,75,.10);border-radius:8px;padding:4px 8px;margin:-4px -8px;font-family:inherit;font-size:16px;font-weight:500;color:#223354;caret-color:#E0864B">`
+        : `<span class="rev-txt" data-i="${i}" style="flex:1;min-width:0;font-size:16px;font-weight:500;color:#223354;cursor:text;line-height:1.3">${esc(r.t)}<span style="display:block;font-size:11.5px;color:#7F8A80;font-weight:400;margin-top:1px">${esc(r.origen)}</span></span>`}
+      <button class="rev-x" data-i="${i}" style="width:32px;height:32px;flex:0 0 auto;border-radius:9px;border:1px solid #E2DED2;background:#fff;color:#A3ADA5;cursor:pointer;display:grid;place-items:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>`).join('')
+    : `<div style="padding:30px 0;font-size:14px;color:#7F8A80;line-height:1.6">Quitaste todo. La libreta te espera igual.</div>`;
+  $('conteo-rev').textContent = rev.length ? (rev.length === 1 ? 'una cosa' : rev.length + ' cosas') : 'nada por ahora';
+  if (S.editando >= 0) { const inp = $('revision').querySelector('.rev-in'); if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); } }
+
+  /* carrito */
+  const conf = S.carrito.filter(c => c.estado === 'ok');
+  const pend = S.carrito.filter(c => c.estado !== 'ok');
+  const total = conf.reduce((a,c) => a + c.valor, 0);
+  $('carrito').innerHTML = S.carrito.map(c => `
+    <div style="display:flex;align-items:flex-start;gap:11px;padding:10px 0;border-bottom:1px solid #E2DED2">
+      <span style="width:46px;height:46px;border-radius:12px;background:#fff;flex:0 0 auto;border:1px solid #E2DED2;display:grid;place-items:center;opacity:${c.estado==='agotado'?.45:1}">${c.icono?`<svg width="44" height="44" viewBox="0 0 44 44"><use href="${c.icono}"></use></svg>`:''}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14.5px;font-weight:500;color:#223354;line-height:1.28;text-wrap:pretty">${esc(c.nombre)}</div>
+        <div style="font-size:11.5px;color:${c.estado==='agotado'?'#A8503C':'#7F8A80'};margin-top:2px;font-variant-numeric:tabular-nums;line-height:1.4">${esc(c.nota)}</div>
+        ${c.confianza?`<div style="font-size:11px;color:#A3ADA5;margin-top:2px">${esc(c.confianza)}</div>`:''}
+        ${c.accion?`<button class="c-accion" data-id="${c.id}" style="font-family:inherit;font-size:12px;font-weight:600;border:1px solid #E2DED2;border-radius:13px;padding:0 13px;height:44px;background:#fff;color:#223354;cursor:pointer;margin-top:7px;white-space:nowrap">${esc(c.accion)}</button>`:''}
+      </div>
+      <div style="font-size:14px;color:${c.estado==='ok'?'#223354':'#A3ADA5'};font-variant-numeric:tabular-nums;font-weight:600;padding-top:1px;flex:0 0 auto">${c.estado==='ok'?esc(c.monto):'—'}</div>
+    </div>`).join('');
+  $('pendientes').textContent = pend.length
+    ? (pend.length === 1 ? 'Un producto todavía no suma: falta saber cuál o cuánto.'
+                         : pend.length + ' productos todavía no suman: falta saber cuál o cuánto.')
+    : '';
+  $('pendientes').classList.toggle('oculto', !pend.length);
+  $('subtotal').textContent = 'S/ ' + total.toFixed(2);
+
+  /* casa */
+  $('frase-casa').textContent = S.escena === 'primera'
+    ? 'Aún nos estamos conociendo.'
+    : 'Esto es lo que llevo aprendido. Cámbialo cuando quieras.';
+  $('casa-cuerpo').innerHTML = S.escena === 'primera'
+    ? `<div style="padding:20px 0;font-size:15px;color:#223354;line-height:1.6;max-width:26ch">Todavía no sé nada de ustedes.<span style="display:block;font-size:13px;color:#7F8A80;margin-top:8px">Después de la primera compra aparecerán aquí sus marcas y sus cantidades. No hay nada que rellenar.</span></div>`
+    : `<div style="font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#A3ADA5;padding-bottom:8px">Lo que aprendí</div>
+       ${APRENDIDO.map(a=>`<div class="apr" style="padding:9px 0;border-bottom:1px solid #E2DED2;cursor:pointer">
+          <div style="font-size:15px;color:#223354;font-weight:500;line-height:1.3">${esc(a.frase)}</div>
+          <div style="font-size:11.5px;color:#7F8A80;margin-top:2px">${esc(a.desde)}</div></div>`).join('')}
+       <div style="font-size:12.5px;color:#7F8A80;padding:12px 0 20px;line-height:1.5">Toca cualquiera para cambiarla. Nada de esto se aplica sin que se vea.</div>
+       <div style="font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#A3ADA5;padding-bottom:8px">Compras</div>
+       ${COMPRAS.map(k=>`<div class="compra" data-id="${k.id}" style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid #E2DED2;cursor:pointer;opacity:${k.op}">
+          <span><span style="font-size:15px;color:#223354;font-weight:500;display:block;line-height:1.3">${esc(k.cuando)}</span><span style="font-size:11.5px;color:#7F8A80">${esc(k.detalle)}</span></span>
+          <span style="font-size:14px;color:#223354;font-variant-numeric:tabular-nums;font-weight:600">${esc(k.total)}</span></div>`).join('')}`;
+
+  /* boleta */
+  const b = BOLETAS[S.boletaId];
+  $('boleta-tit').textContent = b.titulo;
+  $('boleta-sub').textContent = b.sub;
+  $('boleta-total').textContent = b.total;
+  $('boleta').innerHTML = b.filas.map(f => `
+    <div style="padding:9px 0;border-bottom:1px solid #E2DED2">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:13.5px;color:#223354">${esc(f.nombre)}</span><span style="font-size:13.5px;color:#223354;font-variant-numeric:tabular-nums;font-weight:600">${esc(f.monto)}</span></div>
+      <div style="font-size:11.5px;color:#7F8A80;font-variant-numeric:tabular-nums;margin-top:2px">${esc(f.cuenta)}</div>
+    </div>`).join('') + `<div style="font-size:12.5px;color:#7F8A80;padding:16px 0 0">${esc(b.resto)}</div>`;
+
+  /* hojas */
+  const ov = $('overlay');
+  if (S.overlay === 'opciones') {
+    const g = OPCIONES[S.opcionesDe] || OPCIONES.galletas;
+    ov.innerHTML = `<div class="hoja">
+      <span class="tirador cerrar-hoja"></span>
+      <h4 style="font-weight:600;font-size:19px;margin:0 0 2px;color:#223354;letter-spacing:-.025em">${esc(g.titulo)}</h4>
+      <p style="font-size:12px;color:#7F8A80;margin:0 0 14px;line-height:1.45">${esc(g.sub)}</p>
+      <div style="flex:1;min-height:0;overflow:hidden">
+        ${g.items.map((o,i)=>`<div class="opt" data-i="${i}" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:15px;background:#fff;border:1px solid #E2DED2;margin-bottom:9px;cursor:pointer">
+          <span style="width:60px;height:60px;border-radius:14px;background:#fff;flex:0 0 auto;border:1px solid #E2DED2;display:grid;place-items:center"><svg width="56" height="56" viewBox="0 0 44 44"><use href="${o.icono}"></use></svg></span>
+          <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500;color:#223354;line-height:1.28">${esc(o.nombre)}</div><div style="font-size:11.5px;color:#7F8A80;margin-top:2px;font-variant-numeric:tabular-nums">${esc(o.nota)}</div></div>
+          <div style="font-size:14px;font-weight:600;color:#223354;font-variant-numeric:tabular-nums">${esc(o.monto)}</div></div>`).join('')}
+        <div style="font-size:12.5px;color:#7F8A80;padding:4px 0 0;line-height:1.5">${esc(g.salida)}</div>
+      </div>
+      <div style="padding:14px 0 20px"><button class="cerrar-hoja" style="font-family:inherit;font-size:12.5px;font-weight:600;border:1px solid #E2DED2;border-radius:11px;padding:11px 15px;background:#fff;color:#223354;cursor:pointer;min-height:44px">Dejarlo anotado</button></div>
+    </div>`;
+  } else if (S.overlay === 'cantidad') {
+    ov.innerHTML = `<div class="hoja">
+      <span class="tirador cerrar-hoja"></span>
+      <h4 style="font-weight:600;font-size:19px;margin:0 0 2px;color:#223354;letter-spacing:-.025em">Trucha deshuesada</h4>
+      <p style="font-size:12px;color:#7F8A80;margin:0 0 16px">Se vende al peso · S/ 31.50 por kilo · de 400 en 400 g</p>
+      <div style="display:flex;gap:14px;align-items:center;padding-bottom:16px;border-bottom:1px solid #E2DED2">
+        <span style="width:60px;height:60px;border-radius:14px;background:#fff;border:1px solid #E2DED2;display:grid;place-items:center;flex:0 0 auto"><svg width="56" height="56" viewBox="0 0 44 44"><use href="#p-trucha"/></svg></span>
+        <div><div style="font-size:15px;font-weight:600;color:#223354;letter-spacing:-.01em">¿Cuánto compras normalmente?</div><div style="font-size:12.5px;color:#7F8A80;margin-top:3px;line-height:1.45">Lo recordaré y no te lo vuelvo a preguntar.</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;padding-top:14px">
+        ${PESOS.map((w,i)=>`<button class="peso" data-i="${i}" style="font-family:inherit;font-size:14px;font-weight:600;border:1px solid #E2DED2;border-radius:13px;padding:13px;background:#fff;color:#223354;cursor:pointer;min-height:44px">${esc(w.t)}</button>`).join('')}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px;border:1px solid #E0864B;border-radius:13px;padding:12px 14px;background:#fff;min-height:44px">
+        <span style="font-size:14px;color:#223354;font-weight:500">Otra cantidad</span>
+        <span style="flex:1;text-align:right;font-size:13px;color:#A3ADA5">en gramos</span>
+      </div>
+      <div style="margin-top:auto;padding:14px 0 20px;display:flex;justify-content:space-between;align-items:center">
+        <span><span style="font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#7F8A80;display:block">Aún no suma</span><span style="font-size:25px;color:#7F8A80;font-variant-numeric:tabular-nums;letter-spacing:-.03em;font-weight:600">S/ —</span></span>
+        <button class="cerrar-hoja" style="font-family:inherit;font-size:12.5px;font-weight:600;border:1px solid #E2DED2;border-radius:11px;padding:11px 15px;background:#fff;color:#223354;cursor:pointer;min-height:44px;white-space:nowrap;flex:0 0 auto">Hoy no</button>
+      </div>
+    </div>`;
+  } else ov.innerHTML = '';
+
+  /* pantalla de calma */
+  const c = $('calma');
+  if (S.calma) {
+    const esperando = S.calma === 'precios' || S.calma === 'captura';
+    const titulo = {precios:'Buscando precios en Wong', captura:'Leyendo tu captura', listo:'Listo. Compraste 4 cosas.', error:'No pude leerla'}[S.calma] || '';
+    const texto = {
+      precios:'Tarda unos segundos. Puedes seguir escribiendo mientras tanto.',
+      captura:'Sin prisa. Tu captura se queda aquí pase lo que pase.',
+      listo:'Lo que no llevaste sigue anotado para la próxima. Tu libreta te espera igual.',
+      error:'La imagen salió muy pequeña para leerla bien. La dejé prendida en tu libreta; puedes escribir a mano lo que recuerdes o probar con otra.'
+    }[S.calma] || '';
+    const boton = (S.calma === 'listo' || S.calma === 'error') ? 'Volver a la libreta' : null;
+    c.innerHTML = `<div style="position:absolute;inset:0;z-index:9;background:#F5F3ED;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 42px;gap:14px">
+      ${esperando?`<div style="width:34px;height:34px;border-radius:50%;border:1.5px solid #A3ADA5;animation:sc-respirar 2.6s ease-in-out infinite"></div>`:''}
+      ${S.calma==='listo'?`<svg width="44" height="44" viewBox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="21" stroke="#2E5D4B" stroke-width="1.5" opacity=".28"/><path d="M13 22.5 19.5 29 31 16" stroke="#2E5D4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="34" stroke-dashoffset="34" style="animation:sc-trazo 520ms cubic-bezier(.22,.61,.36,1) 120ms forwards"/></svg>`:''}
+      <div style="font-size:23px;font-weight:600;color:#223354;line-height:1.3;letter-spacing:-.025em;text-wrap:balance">${esc(titulo)}</div>
+      <div style="font-size:13px;color:#7F8A80;line-height:1.6;max-width:28ch">${esc(texto)}</div>
+      ${boton?`<button id="b-calma" class="btn-pino" style="margin-top:6px">${esc(boton)}</button>`:''}
+    </div>`;
+  } else c.innerHTML = '';
+
+  /* toast */
+  $('toast').innerHTML = S.toast ? `
+    <div style="position:absolute;left:20px;right:20px;bottom:88px;background:#223354;color:#F5F3ED;border-radius:15px;padding:11px 12px 11px 15px;font-size:12.5px;z-index:8;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:0 14px 30px -14px rgba(0,0,0,.5);animation:sc-eco 180ms ease both;line-height:1.4">
+      <span>${esc(S.toast)}</span>
+      ${S.deshacer?`<button id="b-deshacer" style="background:rgba(255,255,255,.14);color:inherit;border:0;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;flex:0 0 auto">Deshacer</button>`:''}
+    </div>` : '';
+
+  /* nota lateral */
+  const n = NOTAS[S.nota] || NOTAS.viva;
+  $('n-etiqueta').textContent = n[0];
+  $('n-titulo').textContent = n[1];
+  $('n-texto').textContent = n[2];
+  $('n-porque').textContent = n[3];
+}
+
+/* ---------- eventos ---------- */
+
+document.querySelectorAll('.btn-back').forEach(b => b.addEventListener('click', () => {
+  limpiar();
+  const destino = b.dataset.ir;
+  S.ruta = destino; S.overlay = null; S.calma = null;
+  S.nota = destino === 'libreta' ? S.escena : destino === 'casa' ? (S.escena === 'primera' ? 'casaVacia' : 'casa') : destino;
+  render();
+}));
+
+$('b-casa').addEventListener('click', () => {
+  limpiar();
+  S.ruta = 'casa'; S.nota = S.escena === 'primera' ? 'casaVacia' : 'casa'; render();
+});
+
+$('b-comprar').addEventListener('click', irRevision);
+$('b-captura').addEventListener('click', pegarCaptura);
+$('b-precios').addEventListener('click', buscarPrecios);
+$('b-comprar-final').addEventListener('click', () => {
+  limpiar(); S.ruta = 'libreta'; S.calma = 'listo'; S.nota = 'confirmacion'; render();
+});
+$('labio').addEventListener('click', irRevision);
+
+$('compositor').addEventListener('input', e => { S.borrador = e.target.value; render(); });
+$('compositor').addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const t = S.borrador.trim(); if (!t) return;
+  S.eco = /yogur/i.test(t) ? 'Gloria fresa 1 L, 2 · como siempre'
+        : /leche/i.test(t) ? 'Gloria entera x6 · como siempre' : null;
+  S.lineasExtra = S.lineasExtra.concat([{t:t, op:1}]);
+  S.borrador = ''; S.revision = null;
+  render();
+});
+$('eco-si').addEventListener('click', () => { S.eco = null; render(); });
+$('eco-no').addEventListener('click', () => { S.eco = null; render(); });
+
+$('revision').addEventListener('click', e => {
+  const x = e.target.closest('.rev-x');
+  if (x) {
+    const i = +x.dataset.i;
+    S.revision = (S.revision || aRevision()).slice();
+    S.revision.splice(i,1); S.editando = -1;
+    limpiar(); avisar('Quitado de esta compra. Sigue en tu libreta.', false);
+    return;
+  }
+  const t = e.target.closest('.rev-txt');
+  if (t) { S.revision = S.revision || aRevision(); S.editando = +t.dataset.i; render(); }
+});
+$('revision').addEventListener('input', e => {
+  const inp = e.target.closest('.rev-in'); if (!inp) return;
+  S.revision = (S.revision || aRevision()).slice();
+  S.revision[+inp.dataset.i] = Object.assign({}, S.revision[+inp.dataset.i], {t: inp.value});
+});
+$('revision').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.closest('.rev-in')) { S.editando = -1; render(); }
+});
+
+$('carrito').addEventListener('click', e => {
+  const b = e.target.closest('.c-accion'); if (!b) return;
+  if (b.dataset.id === 'trucha') S.overlay = 'cantidad';
+  else { S.overlay = 'opciones'; S.opcionesDe = b.dataset.id === 'yogurt' ? 'yogurt' : 'galletas'; }
+  render();
+});
+
+$('overlay').addEventListener('click', e => {
+  if (e.target.closest('.cerrar-hoja')) { S.overlay = null; return render(); }
+  const o = e.target.closest('.opt');
+  if (o) return elegirOpcion((OPCIONES[S.opcionesDe] || OPCIONES.galletas).items[+o.dataset.i]);
+  const w = e.target.closest('.peso');
+  if (w) return elegirPeso(PESOS[+w.dataset.i]);
+});
+
+$('calma').addEventListener('click', e => {
+  if (!e.target.closest('#b-calma')) return;
+  if (S.calma === 'listo') irEscena('segunda','segunda');
+  else { S.calma = null; S.ruta = 'libreta'; render(); }
+});
+
+$('toast').addEventListener('click', e => {
+  if (!e.target.closest('#b-deshacer')) return;
+  limpiar(); S.lineasExtra = []; S.revision = null; S.toast = null; S.deshacer = false; render();
+});
+
+$('casa-cuerpo').addEventListener('click', e => {
+  const k = e.target.closest('.compra');
+  if (k) { limpiar(); S.ruta = 'boleta'; S.boletaId = k.dataset.id; S.nota = 'boleta'; return render(); }
+  if (e.target.closest('.apr')) { limpiar(); avisar('Aquí se abriría para cambiarla.', false, 2200); }
+});
+
+pintarNav();
+render();
+</script>
+</body>
+</html>

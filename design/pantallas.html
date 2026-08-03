@@ -1,0 +1,748 @@
+<title>SuperCarrito · La semana en pantallas</title>
+<style>
+:root{
+  --papel:#F5F3ED; --papel-2:#EFEDE5; --blanco:#FFFFFF;
+  --tinta:#223354; --tinta-2:#4A5A78;
+  --lapiz:#7F8A80; --lapiz-2:#A3ADA5; --renglon:#E2DED2;
+  --pino:#2E5D4B; --pino-alto:#3C7660; --papaya:#E0864B; --ladrillo:#A8503C;
+  --mesa:#E7E3D9; --mesa-2:#DBD6C9; --mesa-tinta:#3A3B36; --mesa-suave:#6E6E64;
+  --sombra: 0 1px 2px rgba(34,51,84,.05), 0 12px 28px -12px rgba(34,51,84,.22), 0 32px 60px -30px rgba(34,51,84,.28);
+  --btn-sombra: 0 1px 0 rgba(255,255,255,.18) inset, 0 2px 5px rgba(34,51,84,.18), 0 1px 1px rgba(34,51,84,.12);
+  --sans:ui-rounded,'SF Pro Rounded','Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,'Helvetica Neue',sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --papel:#16191C; --papel-2:#1D2125; --blanco:#252A2E;
+  --tinta:#E6E2D8; --tinta-2:#B3B0A6;
+  --lapiz:#8E9A92; --lapiz-2:#6B7570; --renglon:#282D31;
+  --pino:#84C4A6; --pino-alto:#9BD3B8; --papaya:#EDA271; --ladrillo:#D98A72;
+  --mesa:#0D0F11; --mesa-2:#15181B; --mesa-tinta:#DCD8CE; --mesa-suave:#8B8F8A;
+  --sombra: 0 1px 2px rgba(0,0,0,.5), 0 18px 40px -16px rgba(0,0,0,.7);
+  --btn-sombra: 0 1px 0 rgba(255,255,255,.12) inset, 0 2px 6px rgba(0,0,0,.45);
+}}
+:root[data-theme="dark"]{
+  --papel:#16191C; --papel-2:#1D2125; --blanco:#252A2E;
+  --tinta:#E6E2D8; --tinta-2:#B3B0A6;
+  --lapiz:#8E9A92; --lapiz-2:#6B7570; --renglon:#282D31;
+  --pino:#84C4A6; --pino-alto:#9BD3B8; --papaya:#EDA271; --ladrillo:#D98A72;
+  --mesa:#0D0F11; --mesa-2:#15181B; --mesa-tinta:#DCD8CE; --mesa-suave:#8B8F8A;
+  --sombra: 0 1px 2px rgba(0,0,0,.5), 0 18px 40px -16px rgba(0,0,0,.7);
+  --btn-sombra: 0 1px 0 rgba(255,255,255,.12) inset, 0 2px 6px rgba(0,0,0,.45);
+}
+:root[data-theme="light"]{
+  --papel:#F5F3ED; --papel-2:#EFEDE5; --blanco:#FFFFFF;
+  --tinta:#223354; --tinta-2:#4A5A78;
+  --lapiz:#7F8A80; --lapiz-2:#A3ADA5; --renglon:#E2DED2;
+  --pino:#2E5D4B; --pino-alto:#3C7660; --papaya:#E0864B; --ladrillo:#A8503C;
+  --mesa:#E7E3D9; --mesa-2:#DBD6C9; --mesa-tinta:#3A3B36; --mesa-suave:#6E6E64;
+  --sombra: 0 1px 2px rgba(34,51,84,.05), 0 12px 28px -12px rgba(34,51,84,.22), 0 32px 60px -30px rgba(34,51,84,.28);
+  --btn-sombra: 0 1px 0 rgba(255,255,255,.18) inset, 0 2px 5px rgba(34,51,84,.18), 0 1px 1px rgba(34,51,84,.12);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--mesa);color:var(--mesa-tinta);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;line-height:1.55}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px 120px}
+
+header.top{padding:96px 0 64px;max-width:62ch}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mesa-suave);margin:0 0 22px}
+h1{font-weight:600;font-size:clamp(38px,6vw,66px);line-height:1.06;
+  letter-spacing:-.03em;margin:0 0 26px;text-wrap:balance;color:var(--mesa-tinta)}
+h1 span{color:var(--pino)}
+.lead{font-size:19px;line-height:1.62;color:var(--mesa-suave);margin:0 0 18px;font-weight:400}
+.rule-note{font-size:14px;color:var(--mesa-suave);border-left:2px solid var(--pino);padding-left:16px;margin-top:34px;max-width:54ch}
+.rule-note b{color:var(--mesa-tinta);font-weight:600}
+.cambios{margin-top:30px;display:flex;flex-wrap:wrap;gap:8px}
+.cambios span{font-size:12px;background:var(--mesa-2);border-radius:999px;padding:6px 13px;color:var(--mesa-tinta)}
+
+section.acto{padding-top:72px}
+.acto-head{display:flex;align-items:baseline;gap:16px;border-top:1px solid var(--mesa-2);padding-top:20px;margin-bottom:40px;flex-wrap:wrap}
+.acto-dia{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mesa-suave);white-space:nowrap}
+.acto-head h2{font-weight:600;font-size:26px;margin:0;letter-spacing:-.02em}
+.acto-head p{margin:0;font-size:14px;color:var(--mesa-suave);max-width:48ch}
+
+.fila{display:flex;gap:44px;flex-wrap:wrap;align-items:flex-start}
+.item{width:320px;flex:0 0 auto}
+.cap{margin:20px 2px 0}
+.cap .q{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mesa-suave);margin:0 0 6px}
+.cap h3{font-weight:600;font-size:18px;margin:0 0 8px;letter-spacing:-.015em}
+.cap p{margin:0;font-size:13.5px;line-height:1.62;color:var(--mesa-suave)}
+.cap p+p{margin-top:8px}
+.tag{display:inline-block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--pino);border:1px solid var(--pino);border-radius:999px;padding:2px 9px;margin-top:12px;opacity:.85}
+
+/* ---------- teléfono ---------- */
+.phone{width:320px;height:672px;border-radius:38px;background:var(--papel);position:relative;
+  box-shadow:var(--sombra);overflow:hidden;display:flex;flex-direction:column;
+  border:1px solid color-mix(in srgb,var(--tinta) 10%,transparent)}
+.papel-rayado{position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(to bottom,transparent 0 37px,var(--renglon) 37px 38px);
+  opacity:.5;mask-image:linear-gradient(to bottom,transparent 0,#000 90px,#000 86%,transparent 100%)}
+.status{height:44px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 22px 4px;font-size:11px;color:var(--tinta-2);position:relative;z-index:2}
+.status .dots{display:flex;gap:4px;align-items:center;opacity:.55}
+.status .dots i{width:4px;height:4px;border-radius:50%;background:currentColor;display:block}
+.hoja{flex:1;min-height:0;position:relative;display:flex;flex-direction:column;padding:0 26px;z-index:2;overflow:hidden}
+.encabezado{padding:14px 0 22px;display:flex;align-items:baseline;justify-content:space-between}
+.encabezado .titulo{font-size:21px;font-weight:600;color:var(--tinta);letter-spacing:-.02em}
+.encabezado .meta{font-size:11.5px;color:var(--lapiz)}
+
+/* la familia: peso 500, tinta, grande. el producto: peso 400, lápiz, chico. */
+.lineas{display:flex;flex-direction:column;flex:1;min-height:0}
+.ln{font-size:17px;font-weight:500;color:var(--tinta);line-height:38px;letter-spacing:-.015em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ln.d1{opacity:.4}.ln.d2{opacity:.54}.ln.d3{opacity:.7}.ln.d4{opacity:.85}
+.ln.ultima{opacity:1;font-size:18px}
+.aire{height:38px}.aire.doble{height:76px}
+.cursor{display:inline-block;width:2px;height:18px;background:var(--tinta);vertical-align:-3px;
+  animation:parpadeo 1.15s steps(1) infinite;border-radius:1px}
+@keyframes parpadeo{0%,55%{opacity:1}56%,100%{opacity:0}}
+.gesto{font-size:12px;color:var(--lapiz-2);line-height:38px;font-weight:400}
+.eco{font-size:12.5px;color:var(--lapiz);line-height:1.5;font-weight:400;
+  padding:0 0 10px 2px;display:flex;gap:8px;align-items:center;margin-top:-6px;flex-wrap:wrap}
+.pendiente{color:var(--ladrillo)}
+
+/* ---------- botones de verdad ---------- */
+.btn{font-family:var(--sans);font-size:14px;font-weight:600;letter-spacing:-.01em;border:0;
+  border-radius:13px;padding:12px 18px;background:var(--pino);color:#fff;cursor:pointer;
+  box-shadow:var(--btn-sombra);transition:transform .09s ease, box-shadow .09s ease;line-height:1}
+:root[data-theme="dark"] .btn,:root:not([data-theme="light"]) .btn{color:#0F1512}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .btn{color:#fff}}
+.btn:active{transform:translateY(1px);box-shadow:0 1px 2px rgba(34,51,84,.2)}
+.btn.fantasma{background:var(--blanco);color:var(--tinta);border:1px solid var(--renglon);
+  box-shadow:0 1px 2px rgba(34,51,84,.07)}
+.btn.chico{font-size:12.5px;padding:9px 14px;border-radius:11px}
+.btn.ancho{width:100%;text-align:center}
+.btn:focus-visible{outline:2px solid var(--papaya);outline-offset:2px}
+
+.pie{flex:0 0 auto;position:relative;z-index:3;padding:0 22px 22px;display:flex;
+  align-items:center;justify-content:flex-start}
+.labio{position:absolute;left:0;right:0;bottom:0;background:var(--papel-2);
+  border-top:1px solid var(--renglon);border-radius:22px 22px 0 0;padding:14px 20px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:4;
+  box-shadow:0 -10px 24px -18px rgba(0,0,0,.5)}
+.labio .asa{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:34px;height:3.5px;
+  border-radius:2px;background:var(--renglon)}
+.labio .n{font-size:12.5px;color:var(--lapiz)}
+.labio .monto{font-size:14.5px;color:var(--tinta);font-variant-numeric:tabular-nums;font-weight:600}
+
+/* ---------- fotos de producto ---------- */
+.th{width:46px;height:46px;border-radius:12px;background:var(--blanco);flex:0 0 auto;
+  border:1px solid var(--renglon);display:grid;place-items:center;overflow:hidden}
+.th.g{width:60px;height:60px;border-radius:14px}
+.th.xl{width:100%;height:126px;border-radius:16px}
+.th.agotado svg{opacity:.32;filter:grayscale(1)}
+
+/* ---------- hoja del carrito ---------- */
+.sheet{position:absolute;left:0;right:0;bottom:0;top:58px;background:var(--papel-2);
+  border-radius:26px 26px 0 0;z-index:6;padding:18px 20px 0;display:flex;flex-direction:column;
+  box-shadow:0 -24px 50px -28px rgba(0,0,0,.55);border-top:1px solid var(--renglon)}
+.sheet .asa{width:34px;height:3.5px;border-radius:2px;background:var(--renglon);margin:-6px auto 14px}
+.sheet h4{font-weight:600;font-size:19px;margin:0 0 2px;color:var(--tinta);letter-spacing:-.02em}
+.sheet .sub{font-size:11.5px;color:var(--lapiz);margin:0 0 16px}
+.sheet .scroll{flex:1;min-height:0;overflow:hidden}
+.item-c{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--renglon)}
+.item-c .txt{flex:1;min-width:0}
+.item-c .nom{font-size:14.5px;font-weight:500;color:var(--tinta);line-height:1.25;letter-spacing:-.01em}
+.item-c .calc{font-size:11.5px;color:var(--lapiz);margin-top:2px;font-variant-numeric:tabular-nums}
+.item-c .pre{font-size:14px;color:var(--tinta);font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.item-c .pre.falta{color:var(--ladrillo);font-size:11.5px;font-weight:500}
+.total{margin-top:auto;padding:16px 0 20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.total .lab{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--lapiz);display:block}
+.total .val{font-size:25px;color:var(--tinta);font-variant-numeric:tabular-nums;letter-spacing:-.03em;font-weight:600}
+.total .val small{font-size:12.5px;color:var(--lapiz);letter-spacing:0;font-weight:400}
+
+/* ---------- hoja de opciones ---------- */
+.opt{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:15px;
+  background:var(--blanco);border:1px solid var(--renglon);margin-bottom:9px}
+.opt.elegida{border-color:var(--pino);box-shadow:0 0 0 1.5px var(--pino)}
+.opt .txt{flex:1;min-width:0}
+.opt .nom{font-size:14px;font-weight:500;color:var(--tinta);letter-spacing:-.01em;line-height:1.25}
+.opt .por{font-size:11.5px;color:var(--lapiz);margin-top:2px;font-variant-numeric:tabular-nums}
+.opt .pre{font-size:14px;font-weight:600;color:var(--tinta);font-variant-numeric:tabular-nums}
+.sello{display:inline-block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+  border-radius:999px;padding:2px 8px;font-weight:600;vertical-align:1px}
+.sello.tuyo{background:color-mix(in srgb,var(--pino) 16%,transparent);color:var(--pino)}
+.sello.barato{background:color-mix(in srgb,var(--papaya) 20%,transparent);color:var(--papaya)}
+.sello.no{background:color-mix(in srgb,var(--ladrillo) 15%,transparent);color:var(--ladrillo)}
+.opt.fuera .nom,.opt.fuera .por,.opt.fuera .pre{opacity:.45}
+
+.centro{position:absolute;inset:0;z-index:7;background:var(--papel);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:0 40px;gap:14px}
+.centro .grande{font-size:23px;font-weight:600;color:var(--tinta);line-height:1.3;letter-spacing:-.025em}
+.centro .chico{font-size:13px;color:var(--lapiz);line-height:1.6;max-width:27ch}
+.respira{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--lapiz-2);opacity:.5;
+  animation:respirar 2.6s ease-in-out infinite}
+@keyframes respirar{0%,100%{transform:scale(.82);opacity:.35}50%{transform:scale(1);opacity:.7}}
+.marca{width:44px;height:44px;border-radius:50%;background:var(--pino);display:grid;place-items:center;color:var(--papel)}
+.esqueleto{height:14px;border-radius:4px;background:linear-gradient(90deg,var(--renglon),var(--papel-2),var(--renglon));
+  background-size:200% 100%;animation:barrido 1.6s linear infinite;margin:12px 0}
+@keyframes barrido{to{background-position:-200% 0}}
+.pegado{border-left:2px solid var(--lapiz-2);padding:2px 0 2px 12px;margin:6px 0 10px}
+.pegado .l{font-size:14.5px;color:var(--tinta-2);line-height:26px;opacity:.8;font-weight:400}
+.toast{position:absolute;left:20px;right:20px;bottom:94px;background:var(--tinta);color:var(--papel);
+  border-radius:15px;padding:11px 12px 11px 16px;font-size:12.5px;z-index:8;display:flex;
+  justify-content:space-between;align-items:center;gap:10px;box-shadow:0 14px 30px -14px rgba(0,0,0,.5)}
+.toast .u{background:rgba(255,255,255,.14);color:inherit;border:0;border-radius:9px;padding:6px 11px;
+  font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+
+.sistema{margin-top:110px;border-top:1px solid var(--mesa-2);padding-top:56px}
+.grid-s{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:40px 44px;margin-top:36px}
+.grid-s h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mesa-suave);margin:0 0 14px;font-weight:600}
+.grid-s p{margin:0 0 10px;font-size:13.5px;color:var(--mesa-suave);line-height:1.65;max-width:44ch}
+.grid-s b{color:var(--mesa-tinta);font-weight:600}
+.sw{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.sw span{width:34px;height:34px;border-radius:10px;border:1px solid rgba(128,128,128,.25);display:block}
+button.tema{position:fixed;right:20px;bottom:20px;z-index:50;background:var(--mesa-2);color:var(--mesa-tinta);
+  border:1px solid rgba(128,128,128,.3);border-radius:999px;padding:9px 16px;font-size:12.5px;font-weight:600;
+  cursor:pointer;font-family:var(--sans)}
+button.tema:focus-visible{outline:2px solid var(--pino);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:700px){.wrap{padding:0 18px 80px}header.top{padding:56px 0 40px}}
+</style>
+
+<!-- fotos de producto (marcadores de posición: en producción son las de Wong) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="i-leche"><rect x="13" y="9" width="18" height="26" rx="2.5" fill="#3E6BB5"/><path d="M13 9l9-5 9 5" fill="#5B85C9"/><rect x="15" y="20" width="14" height="8" rx="1.5" fill="#EEF3FA"/></g>
+<g id="i-yogurt"><path d="M13 12h18l-2.4 22a2 2 0 01-2 1.8h-9.2a2 2 0 01-2-1.8z" fill="#F2EFE6"/><rect x="12" y="9" width="20" height="4" rx="1.6" fill="#C4426A"/><rect x="16" y="19" width="12" height="7" rx="1.4" fill="#E6ADC0"/></g>
+<g id="i-platano"><path d="M9 24c2 8 12 12 20 8 3-1.4 4-3 2-3.4-8-1.6-13-6-14.6-12.6-.5-2-3-1.6-4.4 0S8 20 9 24z" fill="#E9C24A"/><path d="M11 15c3 7 8 11 15 12.6" stroke="#C9A233" stroke-width="1.3" fill="none"/></g>
+<g id="i-arroz"><path d="M12 13h20v22a2 2 0 01-2 2H14a2 2 0 01-2-2z" fill="#DCCBAE"/><path d="M12 13l3-5h14l3 5z" fill="#C9B694"/><rect x="15" y="20" width="14" height="9" rx="1.5" fill="#F4EEE2"/><rect x="17" y="23" width="10" height="1.6" rx=".8" fill="#B9A783"/></g>
+<g id="i-galleta"><rect x="10" y="14" width="24" height="17" rx="3" fill="#D8A15C"/><circle cx="17" cy="20" r="1.6" fill="#8C5A28"/><circle cx="24" cy="24" r="1.6" fill="#8C5A28"/><circle cx="28" cy="18" r="1.4" fill="#8C5A28"/><circle cx="15" cy="26" r="1.3" fill="#8C5A28"/></g>
+<g id="i-pollo"><ellipse cx="22" cy="25" rx="12" ry="10" fill="#EBC9A8"/><path d="M14 20c3-5 13-5 16 0" stroke="#D2A67F" stroke-width="1.4" fill="none"/></g>
+<g id="i-jabon"><rect x="11" y="16" width="22" height="15" rx="4" fill="#7FB2C9"/><path d="M14 21c3-2 6-2 9 0s6 2 9 0" stroke="#DCEEF5" stroke-width="1.6" fill="none"/></g>
+<g id="i-papel"><rect x="12" y="12" width="20" height="21" rx="3" fill="#F0EDE6"/><circle cx="22" cy="22" r="4" fill="#DAD5C8"/><circle cx="22" cy="22" r="1.6" fill="#B9B3A3"/></g>
+</defs></svg>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">SuperCarrito · Puerta 1 · Diseño de producto · v2</p>
+  <h1>Escribir es en papel.<br>Elegir es <span>con fotos</span>.</h1>
+  <p class="lead">Veintiuna pantallas, una semana entera. La libreta sigue siendo papel tranquilo. Pero el momento de elegir —marcas, formatos, lo que se acabó— ahora se ve, se compara y se toca.</p>
+  <p class="rule-note">La regla de siempre, ya sin serif: <b>lo que escribe la familia va en tinta, peso medio, 17 px. Lo que dice SuperCarrito va en lápiz, peso normal, 12,5 px.</b> Misma tipografía redondeada para todo — la diferencia la hacen el color y el peso, no la familia tipográfica.</p>
+  <div class="cambios">
+    <span>↩ fuera el serif</span><span>+ fotos de producto</span><span>+ opciones y marcas</span>
+    <span>+ sin stock</span><span>+ botones con peso</span><span>+ un poco menos serio</span>
+  </div>
+</header>
+
+<!-- ============ ACTO 1 ============ -->
+<section class="acto">
+  <div class="acto-head">
+    <span class="acto-dia">Semana 1 · Lunes</span>
+    <h2>La libreta sigue siendo papel</h2>
+    <p>Aquí no hay fotos, ni precios, ni opciones. Escribir no puede tener consecuencias.</p>
+  </div>
+  <div class="fila">
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja">
+          <div class="encabezado"><span class="titulo">Casa</span><span class="meta">lunes</span></div>
+          <div class="lineas">
+            <div class="ln ultima"><span class="cursor"></span></div>
+            <div class="gesto">escribe · pega · suelta una foto</div>
+          </div>
+        </div>
+        <div class="pie"><button class="btn fantasma">Hacer la compra</button></div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Qué hago aquí?</h3>
+        <p>El cursor ya está puesto. Ninguna pantalla se interpone entre abrir y escribir.</p>
+        <p><b>«Hacer la compra» ahora es un botón de verdad</b> — se toca, se hunde, tiene borde. Pero es fantasma, no verde: se ve tocable sin gritar.</p>
+        <span class="tag">Home = la libreta</span>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>18:20</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja">
+          <div class="encabezado"><span class="titulo">Casa</span><span class="meta">lunes</span></div>
+          <div class="lineas">
+            <div class="ln d3">leche</div>
+            <div class="ln d3">pan de yema</div>
+            <div class="ln d4">papel higiénico</div>
+            <div class="aire"></div>
+            <div class="ln d4">plátanos de seda</div>
+            <div class="ln ultima">galletas para el lonche<span class="cursor"></span></div>
+          </div>
+        </div>
+        <div class="pie"><button class="btn fantasma">Hacer la compra</button></div>
+        <div class="labio"><span class="asa"></span><span class="n">5 cosas anotadas</span><span class="monto">—</span></div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Y aquí no van fotos?</h3>
+        <p>No. Poner una miniatura junto a «leche» obliga a la familia a validar una elección que todavía no hizo — y convierte anotar en comprar.</p>
+        <p>El hueco entre líneas son cuatro horas. <b>El tiempo es el aire.</b></p>
+        <span class="tag">Escribir ≠ comprar</span>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>13:02</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja">
+          <div class="encabezado"><span class="titulo">Casa</span><span class="meta">miércoles</span></div>
+          <div class="lineas">
+            <div class="ln d1">papel higiénico</div>
+            <div class="ln d2">galletas para el lonche</div>
+            <div class="aire"></div>
+            <div class="pegado">
+              <div class="l">mami compra 2 kg de pollo</div>
+              <div class="l">arroz costeño el grande</div>
+              <div class="l">y yogurt para la Vale 🙏</div>
+            </div>
+            <div class="ln ultima"><span class="cursor"></span></div>
+          </div>
+        </div>
+        <div class="pie"><button class="btn fantasma">Hacer la compra</button></div>
+        <div class="toast"><span>Pegado tal cual. Yo lo ordeno cuando compres.</span><button class="u">Deshacer</button></div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Qué pasa si pego un desastre?</h3>
+        <p>Entra entero, con emojis y con «mami». Una barra al costado marca lo pegado y se va sola en unos días.</p>
+        <p>«Deshacer» ahora es un botón dentro del aviso, no un texto subrayado que hay que adivinar.</p>
+        <span class="tag">Pega lo que sea</span>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>10:07</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja">
+          <div class="encabezado"><span class="titulo">Casa</span><span class="meta">domingo</span></div>
+          <div class="lineas">
+            <div class="ln d1">2 kg de pollo</div>
+            <div class="ln d2">arroz costeño el grande</div>
+            <div class="ln d3">yogurt para la Vale</div>
+            <div class="aire doble"></div>
+            <div class="ln ultima"><span class="cursor"></span></div>
+          </div>
+        </div>
+        <div class="pie"><button class="btn fantasma">Hacer la compra</button></div>
+        <div class="labio"><span class="asa"></span><span class="n">7 cosas anotadas</span><span class="monto">—</span></div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Y si no escribo en cuatro días?</h3>
+        <p>Sin «hace 4 días», sin badge rojo. Lo que hace que algo parezca abandonado no es el tiempo: es que el producto te lo recuerde.</p>
+        <p>Solo hay más aire, y el cursor esperando. <b>La libreta no espera una lista. Espera una línea.</b></p>
+        <span class="tag">C · el aire</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ ACTO 2 · ELEGIR ============ -->
+<section class="acto">
+  <div class="acto-head">
+    <span class="acto-dia">Domingo · el acto de comprar</span>
+    <h2>Elegir se ve, se compara y se toca</h2>
+    <p>Aquí sí hay fotos, marcas, formatos, precio por kilo y lo que se acabó. Todo lo visual vive de este lado de la frontera.</p>
+  </div>
+  <div class="fila">
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>10:09</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja"><div class="encabezado"><span class="titulo">Casa</span><span class="meta">domingo</span></div>
+          <div class="lineas"><div class="ln d1">2 kg de pollo</div><div class="ln d1">arroz costeño</div></div></div>
+        <div class="sheet">
+          <span class="asa"></span>
+          <h4>Tu carrito</h4>
+          <p class="sub">Wong · precios de hoy · 7 cosas</p>
+          <div class="scroll">
+            <div class="item-c"><span class="th"><svg width="44" height="44" viewBox="0 0 44 44"><use href="#i-pollo"/></svg></span>
+              <div class="txt"><div class="nom">Pollo entero San Fernando</div><div class="calc">2 kg × S/ 12.90</div></div><div class="pre">25.80</div></div>
+            <div class="item-c"><span class="th"><svg width="44" height="44" viewBox="0 0 44 44"><use href="#i-arroz"/></svg></span>
+              <div class="txt"><div class="nom">Arroz Costeño Extra 5 kg</div><div class="calc">1 × S/ 29.50</div></div><div class="pre">29.50</div></div>
+            <div class="item-c"><span class="th"><svg width="44" height="44" viewBox="0 0 44 44"><use href="#i-yogurt"/></svg></span>
+              <div class="txt"><div class="nom">Yogurt Gloria fresa 1 L</div><div class="calc">2 × S/ 7.20 · como la vez pasada</div></div><div class="pre">14.40</div></div>
+            <div class="item-c"><span class="th"><svg width="44" height="44" viewBox="0 0 44 44"><use href="#i-galleta"/></svg></span>
+              <div class="txt"><div class="nom">Galletas para el lonche</div><div class="calc pendiente">falta elegir cuáles</div></div><div class="pre falta">Elegir ›</div></div>
+          </div>
+          <div class="total"><span><span class="lab">Van sumando</span><span class="val">S/ 96.10 <small>de 6</small></span></span>
+            <button class="btn">Comprar</button></div>
+        </div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Es <em>ese</em> yogurt el que estoy comprando?</h3>
+        <p>Cada línea del carrito lleva su foto. La miniatura es lo primero que se lee y responde en medio segundo lo que un nombre largo no responde nunca.</p>
+        <p>Cada monto sigue mostrando su cuenta debajo. Las galletas no suman: dicen <b>«Elegir ›»</b>, no un precio inventado.</p>
+        <span class="tag">Foto = confirmación</span>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>10:10</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja"><div class="lineas"></div></div>
+        <div class="sheet">
+          <span class="asa"></span>
+          <h4>Plátano de seda</h4>
+          <p class="sub">Escribiste «plátanos de seda» · hay 4 en Wong</p>
+          <div class="scroll">
+            <div class="opt elegida"><span class="th g"><svg width="56" height="56" viewBox="0 0 44 44"><use href="#i-platano"/></svg></span>
+              <div class="txt"><div class="nom">Plátano de seda x kg <span class="sello tuyo">el tuyo</span></div><div class="por">S/ 4.50 por kg</div></div><div class="pre">4.50</div></div>
+            <div class="opt"><span class="th g"><svg width="56" height="56" viewBox="0 0 44 44"><use href="#i-platano"/></svg></span>
+              <div class="txt"><div class="nom">Plátano de seda orgánico</div><div class="por">S/ 7.90 por kg</div></div><div class="pre">7.90</div></div>
+            <div class="opt"><span class="th g"><svg width="56" height="56" viewBox="0 0 44 44"><use href="#i-platano"/></svg></span>
+              <div class="txt"><div class="nom">Plátano de seda mano x6 <span class="sello barato">más barato</span></div><div class="por">S/ 3.80 por kg aprox.</div></div><div class="pre">3.20</div></div>
+          </div>
+          <div class="total"><button class="btn fantasma chico">Ninguno</button><button class="btn">Llevar este</button></div>
+        </div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>Hay varias marcas del mismo plátano. ¿Cuál?</h3>
+        <p>Tres opciones, nunca catorce. La que ya lleva va primero y marcada <b>«el tuyo»</b> — el orden es la recomendación, no un banner.</p>
+        <p>Debajo de cada precio, <b>el precio por kilo</b>: es lo único que hace comparables una mano de seis y un kilo suelto. Sin eso, «más barato» sería mentira.</p>
+        <span class="tag">Opciones</span>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>10:11</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja"><div class="lineas"></div></div>
+        <div class="sheet">
+          <span class="asa"></span>
+          <h4>Galletas para el lonche</h4>
+          <p class="sub">Escribiste algo abierto. Te muestro por dónde ir.</p>
+          <div class="scroll">
+            <div class="opt"><span class="th g"><svg width="56" height="56" viewBox="0 0 44 44"><use href="#i-galleta"/></svg></span>
+              <div class="txt"><div class="nom">Margarita pack x6 <span class="sello tuyo">la de siempre</span></div><div class="por">Marzo y abril · S/ 1.15 c/u</div></div><div class="pre">6.90</div></div>
+            <div class="opt"><span class="th g"><svg width="56" height="56" viewBox="0 0 44 44"><use href="#i-galleta"/></svg></span>
+              <div class="txt"><div class="nom">Soda Field pack x8</div><div class="por">S/ 0.95 c/u</div></div><div class="pre">7.60</div></div>
+            <div class="opt"><span class="th g"><svg width="56" height="56" viewBox="0 0 44 44"><use href="#i-galleta"/></svg></span>
+              <div class="txt"><div class="nom">Vainilla Gretel x6</div><div class="por">S/ 1.30 c/u</div></div><div class="pre">7.80</div></div>
+            <div class="eco" style="padding-top:8px">Nada de esto es. Escribe la marca y la busco.</div>
+          </div>
+          <div class="total"><button class="btn fantasma chico">Buscar otra</button><button class="btn">Llevar</button></div>
+        </div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Y algo tan vago como «galletas para el lonche»?</h3>
+        <p>No preguntamos «¿a qué te refieres?» — eso le devuelve el trabajo. Mostramos tres candidatas con foto y precio por unidad, y la que ya compró va primera con la razón visible: <b>«marzo y abril»</b>.</p>
+        <p>Y siempre la salida abierta abajo: escribir la marca. Nunca la encerramos en tres opciones que no incluyen la suya.</p>
+        <span class="tag">Salida abierta</span>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>10:12</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja"><div class="lineas"></div></div>
+        <div class="sheet">
+          <span class="asa"></span>
+          <h4>Leche Gloria azul</h4>
+          <p class="sub">La que llevas siempre · hoy no hay</p>
+          <div class="scroll">
+            <div class="opt fuera"><span class="th g agotado"><svg width="56" height="56" viewBox="0 0 44 44"><use href="#i-leche"/></svg></span>
+              <div class="txt"><div class="nom">Gloria evaporada azul 400 g <span class="sello no">agotado</span></div><div class="por">Se acabó en Wong hoy</div></div><div class="pre">4.60</div></div>
+            <div class="opt elegida"><span class="th g"><svg width="56" height="56" viewBox="0 0 44 44"><use href="#i-leche"/></svg></span>
+              <div class="txt"><div class="nom">Gloria azul pack x6</div><div class="por">S/ 4.75 c/u · misma leche, otro formato</div></div><div class="pre">28.50</div></div>
+            <div class="opt"><span class="th g"><svg width="56" height="56" viewBox="0 0 44 44"><use href="#i-leche"/></svg></span>
+              <div class="txt"><div class="nom">Ideal Cremosita 400 g</div><div class="por">S/ 4.20 · otra marca</div></div><div class="pre">4.20</div></div>
+          </div>
+          <div class="total"><button class="btn fantasma chico">Dejarlo anotado</button><button class="btn">Llevar el pack</button></div>
+        </div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Y si no hay stock?</h3>
+        <p>Lo agotado <b>se muestra, en gris y tachado de color</b>, no desaparece. Si lo escondemos, la familia cree que no la entendimos; viéndolo, entiende que el problema es la tienda.</p>
+        <p>Primero el mismo producto en otro formato; recién después otra marca — y decimos cuál de las dos cosas cambia. Sustituir en silencio sería romper el trato.</p>
+        <p><b>«Dejarlo anotado»</b> es la tercera salida: no comprarlo hoy sin perderlo.</p>
+        <span class="tag">Sin stock</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ ACTO 3 ============ -->
+<section class="acto">
+  <div class="acto-head">
+    <span class="acto-dia">Domingo · cerrar · Semana 2</span>
+    <h2>Comprar, y el eco de la semana siguiente</h2>
+    <p>El ciclo real no empieza cuando alguien abre la app. Empieza cuando termina la compra anterior.</p>
+  </div>
+  <div class="fila">
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="centro">
+          <div class="marca"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <div class="grande">Listo. Compraste<br>12 cosas.</div>
+          <div class="chico">Tu libreta quedó limpia. Las galletas siguen anotadas para la próxima.</div>
+          <div style="height:6px"></div>
+          <button class="btn">Volver a la libreta</button>
+          <button class="btn fantasma chico">Ver la boleta</button>
+        </div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Cómo se cierra una compra?</h3>
+        <p>Sin confeti ni puntos. Una marca en pino, dos frases y dos botones con jerarquía clara: uno lleno, uno fantasma.</p>
+        <p>La segunda frase es la que importa: <b>lo no comprado no se borra.</b></p>
+        <span class="tag">Confirmación</span>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>8:12</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja">
+          <div class="encabezado"><span class="titulo">Casa</span><span class="meta">lunes</span></div>
+          <div class="lineas">
+            <div class="ln d3">galletas para el lonche</div>
+            <div class="eco">quedó de la semana pasada</div>
+            <div class="aire"></div>
+            <div class="ln ultima"><span class="cursor"></span></div>
+          </div>
+        </div>
+        <div class="pie"><button class="btn fantasma">Hacer la compra</button></div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Cómo empieza la segunda semana?</h3>
+        <p>No en blanco: con lo único que quedó pendiente y una línea en lápiz que explica por qué sigue ahí.</p>
+        <p>Los doce productos comprados desaparecieron sin ceremonia. La libreta no es un archivo — es lo que falta.</p>
+        <span class="tag">HD-11</span>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>19:40</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja">
+          <div class="encabezado"><span class="titulo">Casa</span><span class="meta">jueves</span></div>
+          <div class="lineas">
+            <div class="ln d2">galletas para el lonche</div>
+            <div class="ln d3">jabón</div>
+            <div class="aire"></div>
+            <div class="ln ultima">yogurt</div>
+            <div class="eco"><span>Gloria fresa 1 L, 2 · como siempre</span>
+              <button class="btn chico" style="padding:6px 12px">Sí</button>
+              <button class="btn fantasma chico" style="padding:6px 12px">Otro</button></div>
+          </div>
+        </div>
+        <div class="pie"><button class="btn fantasma">Hacer la compra</button></div>
+        <div class="labio"><span class="asa"></span><span class="n">3 cosas anotadas</span><span class="monto">S/ 41</span></div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Cuándo el eco se gana el derecho a preguntar?</h3>
+        <p>Solo cuando ya vio el mismo producto dos veces. Recién ahí aparecen dos botones chiquitos — y «Otro» abre el campo libre, nunca una lista cerrada.</p>
+        <p>Sin foto: todavía estamos en la libreta. La foto llega al comprar.</p>
+        <span class="tag">C1 · el eco</span>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>19:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja"></div>
+        <div class="centro">
+          <div class="respira"></div>
+          <div class="grande">Buscando precios<br>en Wong</div>
+          <div class="chico">Tarda unos segundos. Puedes seguir escribiendo mientras tanto.</div>
+        </div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Cómo se espera sin ponerse nervioso?</h3>
+        <p>Un círculo que respira a 2,6 s — el ritmo de una exhalación, no el de un spinner. Sin barra de progreso: prometer un porcentaje es prometer un tiempo.</p>
+        <p>Escribir nunca se bloquea.</p>
+        <span class="tag">Carga</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ ACTO 4 ============ -->
+<section class="acto">
+  <div class="acto-head">
+    <span class="acto-dia">Los bordes</span>
+    <h2>Cuando algo falta o algo falla</h2>
+    <p>Los estados que deciden si una familia se queda dos años o desinstala el martes.</p>
+  </div>
+  <div class="fila">
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>13:02</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja">
+          <div class="encabezado"><span class="titulo">Casa</span><span class="meta">miércoles</span></div>
+          <div class="lineas">
+            <div class="ln d2">jabón</div>
+            <div class="aire"></div>
+            <div class="ln d4">2 kg de pollo</div>
+            <div class="esqueleto" style="width:72%"></div>
+            <div class="esqueleto" style="width:54%"></div>
+            <div class="ln ultima" style="opacity:.35">yogurt para la Vale</div>
+          </div>
+        </div>
+        <div class="pie"><button class="btn fantasma">Hacer la compra</button></div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Cómo se ve el producto pensando?</h3>
+        <p>Las líneas ya escritas nunca se tapan. El trabajo ocurre <em>entre</em> ellas, a la altura exacta de un renglón, para que nada salte al terminar.</p>
+        <p>Sin porcentajes, sin «Analizando con IA…». El producto no se explica a sí mismo.</p>
+        <span class="tag">Esqueleto</span>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja">
+          <div class="encabezado"><span class="titulo">Casa</span><span class="meta">martes</span></div>
+          <div class="lineas">
+            <div class="ln ultima"><span class="cursor"></span></div>
+            <div class="gesto">todo comprado 🎉 por ahora</div>
+          </div>
+        </div>
+        <div class="pie"><button class="btn fantasma">Hacer la compra</button></div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Y cuando de verdad no hay nada?</h3>
+        <p>El vacío real ocurre pocas veces y no merece una ilustración ni un mensaje motivacional. Merece cuatro palabras que digan que el vacío es un logro.</p>
+        <p><b>Aquí es donde me permití no ser tan seria:</b> un emoji, uno solo, en toda la app. El «por ahora» es el chiste — porque las dos sabemos cómo termina.</p>
+        <span class="tag">Estado vacío</span>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>10:11</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja">
+          <div class="encabezado"><span class="titulo">Casa</span><span class="meta">domingo</span></div>
+          <div class="lineas">
+            <div class="ln d2">2 kg de pollo</div>
+            <div class="ln d3">arroz costeño el grande</div>
+            <div class="ln ultima">plátanos de seda</div>
+          </div>
+        </div>
+        <div class="pie"><button class="btn fantasma">Hacer la compra</button></div>
+        <div class="labio" style="border-top-color:var(--ladrillo)">
+          <span class="asa"></span>
+          <span class="n" style="color:var(--ladrillo)">Wong no responde ahora</span>
+          <button class="btn fantasma chico">Reintentar</button>
+        </div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Qué ve si se cae el precio?</h3>
+        <p>El error vive en el labio del carrito, no encima de la hoja. Nada de modales: escribir sigue funcionando aunque el mundo esté caído.</p>
+        <p>Dice qué pasó y da el botón para resolverlo. No pide disculpas y no culpa a la conexión de la familia.</p>
+        <span class="tag">Error</span>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="phone">
+        <div class="papel-rayado"></div>
+        <div class="status"><span>10:14</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="hoja"><div class="lineas"></div></div>
+        <div class="sheet">
+          <span class="asa"></span>
+          <h4>Papel higiénico</h4>
+          <p class="sub">Buscando en Wong…</p>
+          <div class="scroll">
+            <div class="opt"><span class="th g" style="background:var(--renglon)"></span>
+              <div class="txt"><div class="esqueleto" style="width:80%;margin:2px 0"></div><div class="esqueleto" style="width:45%;height:10px;margin:6px 0 2px"></div></div></div>
+            <div class="opt"><span class="th g" style="background:var(--renglon)"></span>
+              <div class="txt"><div class="esqueleto" style="width:66%;margin:2px 0"></div><div class="esqueleto" style="width:38%;height:10px;margin:6px 0 2px"></div></div></div>
+            <div class="opt" style="opacity:.5"><span class="th g" style="background:var(--renglon)"></span>
+              <div class="txt"><div class="esqueleto" style="width:72%;margin:2px 0"></div><div class="esqueleto" style="width:42%;height:10px;margin:6px 0 2px"></div></div></div>
+          </div>
+          <div class="total"><span class="lab">Un momento</span><button class="btn fantasma chico">Cancelar</button></div>
+        </div>
+      </div>
+      <div class="cap">
+        <p class="q">Pregunta</p>
+        <h3>¿Y mientras cargan las fotos?</h3>
+        <p>Las tarjetas ya existen con su forma final: mismo alto, mismo hueco cuadrado para la foto. Cuando llegan los datos nada se mueve ni un píxel.</p>
+        <p>La tercera se ve más tenue — sugiere que hay más abajo sin prometer cuántas.</p>
+        <span class="tag">Carga de opciones</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ SISTEMA ============ -->
+<section class="sistema">
+  <div class="acto-head"><span class="acto-dia">Anexo</span><h2>El sistema visual, en una página</h2></div>
+  <div class="grid-s">
+    <div>
+      <h4>Color · sin cambios</h4>
+      <div class="sw"><span style="background:#F5F3ED"></span><span style="background:#223354"></span><span style="background:#7F8A80"></span><span style="background:#2E5D4B"></span><span style="background:#E0864B"></span><span style="background:#A8503C"></span></div>
+      <p><b>Papel hueso</b> — el fondo.<br><b>Tinta azul</b> — lo que escribe la familia.<br><b>Lápiz</b> — lo que dice SuperCarrito.<br><b>Pino</b> — dinero, confirmar, botón lleno.<br><b>Papaya</b> — el guiño: «más barato», el foco del teclado. Es lo nuevo, y aparece poco.<br><b>Ladrillo</b> — agotado y error. Dos veces en toda la app.</p>
+    </div>
+    <div>
+      <h4>Tipografía · adiós al serif</h4>
+      <p style="font-size:22px;color:var(--mesa-tinta);font-weight:600;letter-spacing:-.02em;margin-bottom:2px">Casa</p>
+      <p style="font-size:17px;color:var(--mesa-tinta);font-weight:500;margin-bottom:2px">2 kg de pollo</p>
+      <p style="font-size:12.5px;color:var(--lapiz)">la vez pasada llevaste Gloria azul</p>
+      <p style="margin-top:14px">Una sola familia redondeada del sistema, con tracking negativo en los tamaños grandes. La jerarquía la hacen <b>peso y color</b>: familia = 500 en tinta, producto = 400 en lápiz. Cifras tabulares en todo lo que sea plata.</p>
+    </div>
+    <div>
+      <h4>Botones</h4>
+      <p><b>Lleno</b> (pino, sombra doble, se hunde 1 px al tocar) — la acción principal de cada pantalla. Nunca hay dos.<br><b>Fantasma</b> (blanco, borde, sombra mínima) — la alternativa y todo lo que vive en la libreta.<br>Radio 13 px, 44 px de alto mínimo. Si algo se puede tocar, se ve tocable: se acabaron los textos subrayados.</p>
+    </div>
+    <div>
+      <h4>Fotos</h4>
+      <p>Tile blanco, radio 12 px, borde de 1 px. 46 px en el carrito, 60 px al elegir. Fondo blanco siempre — el papel hueso detrás de un packshot lo ensucia.</p>
+      <p><b>Dónde no van fotos: en la libreta.</b> Es la frontera entera del producto en una regla.</p>
+      <p style="color:var(--ladrillo)">Las de aquí son dibujos de relleno; en producción son las imágenes del catálogo de Wong.</p>
+    </div>
+    <div>
+      <h4>Cómo se ordenan las opciones</h4>
+      <p>Máximo tres, y siempre una salida abierta al final. Orden: <b>lo que ya compraste</b> → <b>el mismo producto en otro formato</b> → <b>otra marca</b>. Cada una dice en lápiz por qué está ahí.</p>
+      <p>Precio por unidad debajo de todo lo que venga en pack o al peso. Sin eso no hay comparación honesta.</p>
+    </div>
+    <div>
+      <h4>Lo que nunca se construye</h4>
+      <p>Badges con pendientes. Rachas. Barras de progreso. Ilustraciones de estado vacío. Sustituciones automáticas cuando algo se agota. Fotos dentro de la libreta. Cualquier pantalla que aparezca antes de ella.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<button class="tema" id="t">Cambiar tema</button>
+<script>
+  document.getElementById('t').addEventListener('click',function(){
+    var r=document.documentElement;
+    var oscuro = r.dataset.theme ? r.dataset.theme==='dark'
+      : matchMedia('(prefers-color-scheme: dark)').matches;
+    r.dataset.theme = oscuro ? 'light' : 'dark';
+  });
+</script>

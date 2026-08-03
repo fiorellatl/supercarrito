@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SuperCarrito · Arquitectura del producto</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#E7E3D9}
+  a{color:#2E5D4B;text-decoration:none;border-bottom:1px solid rgba(46,93,75,.35)}
+  a:hover{color:#3C7660}
+  @keyframes arq-cursor{0%,55%{opacity:1}56%,100%{opacity:0}}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 28px 140px;
+    font-family:ui-rounded,'SF Pro Rounded','Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,sans-serif;
+    color:#3A3B36;line-height:1.5}
+  .kicker{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#9A9A8E;margin:0 0 8px}
+  h2{font-weight:700;font-size:30px;letter-spacing:-.035em;margin:0 0 26px;color:#223354}
+  section{border-top:1px solid #DBD6C9;margin-top:60px;padding:42px 0 0}
+  .intro{font-size:15px;color:#6E6E64;margin:0 0 26px;max-width:58ch;text-wrap:pretty}
+  .grid{display:grid;gap:14px}
+  .hip-btn{text-align:left;font-family:inherit;border-radius:16px;padding:14px 16px;cursor:pointer;
+    display:block;width:100%;transition:background .14s ease,color .14s ease,border-color .14s ease}
+  .hip-btn:active{transform:translateY(1px)}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header style="padding:92px 0 44px;max-width:64ch">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:26px">
+      <svg viewBox="0 0 64 64" width="38" height="38" fill="none" stroke="#223354" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M52 12H22l26 14H20l24 14H14"></path>
+      </svg>
+      <span style="font-size:22px;font-weight:800;letter-spacing:-.045em;color:#223354">super<span style="color:#D9663D">carrito</span></span>
+    </div>
+    <p style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#6E6E64;margin:0 0 18px">Arquitectura del producto · marca provisional: S plegada</p>
+    <h1 style="font-weight:700;font-size:clamp(36px,5.4vw,58px);line-height:1.06;letter-spacing:-.04em;margin:0 0 22px;text-wrap:balance;color:#223354">Una casa vive aquí<br>durante meses.</h1>
+    <p style="font-size:18px;line-height:1.62;color:#6E6E64;margin:0;max-width:58ch;text-wrap:pretty">Nueve preguntas respondidas, cuatro hipótesis de Home puestas a prueba, el mapa completo de pantallas y qué le pasa a la aplicación en la semana 1, en el mes 3 y en el mes 6.</p>
+  </header>
+
+  <section style="margin-top:0">
+    <p class="kicker">01 · Las nueve preguntas</p>
+    <h2>Respuestas cortas, antes de dibujar nada</h2>
+    <div class="grid" id="nueve" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))"></div>
+  </section>
+
+  <section>
+    <p class="kicker">02 · El Home</p>
+    <h2 style="margin-bottom:8px">Cuatro hipótesis, una recomendación</h2>
+    <p class="intro">Tu intuición — el Home es un estado, no una pantalla — la puse a competir con las tres alternativas serias. Toca cada una para ver qué encuentra la madre al abrir el teléfono un martes a las 7:10.</p>
+
+    <div style="display:flex;gap:30px;flex-wrap:wrap;align-items:flex-start">
+      <div id="hip-lista" style="flex:0 0 auto;display:flex;flex-direction:column;gap:12px;width:300px"></div>
+
+      <div style="flex:0 0 auto;width:280px;height:560px;border-radius:36px;background:#F5F3ED;border:1px solid rgba(34,51,84,.10);box-shadow:0 18px 44px rgba(34,51,84,.13);overflow:hidden;display:flex;flex-direction:column;position:relative">
+        <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,transparent 0 37px,#E2DED2 37px 38px);opacity:.45"></div>
+        <div style="height:42px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between;padding:0 22px 4px;font-size:11px;color:#4A5A78;position:relative;z-index:2">
+          <span>7:10</span><span style="opacity:.45">martes</span>
+        </div>
+        <div style="padding:10px 22px 12px;position:relative;z-index:2">
+          <span id="p-titulo" style="font-size:20px;font-weight:700;color:#223354;letter-spacing:-.03em;display:block"></span>
+          <span id="p-sub" style="font-size:11.5px;color:#7F8A80"></span>
+        </div>
+        <div id="p-lineas" style="flex:1;min-height:0;overflow:hidden;padding:0 22px;position:relative;z-index:2"></div>
+        <div style="flex:0 0 auto;padding:12px 18px 20px;position:relative;z-index:2">
+          <div style="border:1px solid #E2DED2;background:#fff;border-radius:22px;padding:11px 16px;display:flex;align-items:center;gap:8px">
+            <span id="p-campo" style="font-size:14.5px;color:#A3ADA5"></span>
+            <i style="width:2px;height:17px;background:#D9663D;display:block;animation:arq-cursor 1.1s steps(1,end) infinite"></i>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:290px;display:flex;flex-direction:column;gap:14px">
+        <h3 id="d-t" style="font-size:22px;font-weight:700;letter-spacing:-.03em;color:#223354;margin:0"></h3>
+        <p id="d-d" style="font-size:15px;color:#3A3B36;margin:0;line-height:1.6;text-wrap:pretty"></p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="background:#EAF0EA;border-radius:14px;padding:14px 16px">
+            <p style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5C7A68;margin:0 0 8px">A favor</p>
+            <div id="d-pro"></div>
+          </div>
+          <div style="background:#F7EBE4;border-radius:14px;padding:14px 16px">
+            <p style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9A6A50;margin:0 0 8px">En contra</p>
+            <div id="d-con"></div>
+          </div>
+        </div>
+        <p id="d-veredicto" style="font-size:14px;margin:0;padding:14px 16px;border-radius:14px;line-height:1.55;text-wrap:pretty"></p>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;background:#223354;color:#F5F3ED;border-radius:20px;padding:28px 30px">
+      <p style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,243,237,.55);margin:0 0 10px">Recomendación fundamentada</p>
+      <p style="font-size:20px;font-weight:700;letter-spacing:-.025em;margin:0 0 12px;line-height:1.35;max-width:52ch">El Home es la libreta de esta semana. La posición dentro de ella es memoria, no destino.</p>
+      <p style="font-size:15px;color:rgba(245,243,237,.8);margin:0 0 16px;max-width:64ch;line-height:1.6;text-wrap:pretty">Tu hipótesis acierta en el espíritu y falla en el alcance. «Volver al último lugar» es correcto <b style="color:#fff">dentro</b> de la libreta — el scroll, la línea a medio escribir, el teclado abierto — y es peligroso <b style="color:#fff">entre</b> secciones: si te dejé revisando el carrito el domingo y abres el martes, te devuelvo a un carrito muerto en vez de a un renglón vivo. La libreta es lo único que siempre tiene sentido al abrir.</p>
+      <div class="grid" id="reglas" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px"></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="kicker">03 · Mapa</p>
+    <h2 style="margin-bottom:8px">Tres planos y dieciocho pantallas</h2>
+    <p class="intro">Ningún plano tiene tabs. Todo cuelga de la libreta: se baja a revisar y se sube a recordar.</p>
+    <div id="planos" style="display:flex;flex-direction:column;gap:16px"></div>
+  </section>
+
+  <section>
+    <p class="kicker">04 · Acciones</p>
+    <h2>Dónde vive cada acción</h2>
+    <div class="grid" id="acciones" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px"></div>
+  </section>
+
+  <section>
+    <p class="kicker">05 · Ritmo</p>
+    <h2>Qué aparece, qué desaparece, qué nunca cambia</h2>
+    <div class="grid" id="ritmo" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
+  </section>
+
+  <section>
+    <p class="kicker">06 · Meses</p>
+    <h2 style="margin-bottom:8px">La misma familia, medio año después</h2>
+    <p class="intro">La aplicación no crece en pantallas: crece en memoria. Cada hito quita trabajo en vez de añadir función.</p>
+    <div id="meses" style="display:flex;flex-direction:column"></div>
+  </section>
+
+  <section style="max-width:64ch">
+    <p class="kicker">Lo que queda abierto</p>
+    <div id="abierto"></div>
+  </section>
+
+</div>
+
+<script>
+const INK='#223354', PAPAYA='#D9663D', VERDE='#2E5D4B';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const L = (t,op,c)=>({t:t, op:op==null?1:op, c:c||INK});
+
+const hips = [
+  { k:'Hipótesis A', t:'Home = resumen de la semana',
+    titulo:'Esta semana', sub:'martes 14 · 3 pendientes', campo:'buscar en la casa',
+    lineas:[L('Carrito en revisión · 12 ítems',1,INK),L('2 sustituciones esperando',1,PAPAYA),L('Entrega jueves 9–11 h',.75),L('La casa · 3 aprendizajes nuevos',.6),L('Semana pasada · 24 ítems',.45)],
+    d:'Una pantalla puente que resume estado: carrito, entrega, pendientes, accesos. La libreta pasa a ser una sección más.',
+    pro:['Todo el estado visible de un vistazo.','Escala bien si mañana hay tres pedidos abiertos.','Fácil de explicar a un inversionista.'],
+    con:['Pone un peaje entre la mujer y el renglón: dos toques para escribir.','Se llena de tarjetas muertas los días sin pedido.','Es el patrón de cualquier app de delivery: mata la idea de libreta.'],
+    veredicto:'Descartada', vd:'convierte un producto de escritura en un tablero. Rompe el principio: el producto siempre espera una línea.',
+    vbg:'#F7EBE4', vfg:'#7A4A32' },
+  { k:'Hipótesis B', t:'Home = libreta, siempre desde arriba',
+    titulo:'Casa', sub:'martes 14 de abril', campo:'escribe lo que falta',
+    lineas:[L('leche'),L('pan integral'),L('papel higiénico'),L('detergente',.38),L('manzanas',.38)],
+    d:'Siempre abre en la libreta de esta semana, al inicio, con el teclado listo. Sin memoria de posición ni de sección.',
+    pro:['Predecible al 100 %: el mismo sitio, siempre.','Un solo gesto para escribir.','Trivial de construir y de explicar.'],
+    con:['Si venías revisando el carrito, pierdes el hilo.','En listas de 30 líneas obliga a rebuscar dónde ibas.','Ignora que la sesión de la noche continúa la de la mañana.'],
+    veredicto:'Base correcta, incompleta', vd:'acierta el destino y desperdicia la continuidad. Le falta memoria fina.',
+    vbg:'#EFE9DA', vfg:'#6E5B3A' },
+  { k:'Hipótesis C · tuya', t:'Home = el último lugar donde estuviste',
+    titulo:'Casa', sub:'martes 14 · seguías aquí', campo:'…papel higié',
+    lineas:[L('leche',.38),L('pan integral',.38),L('papel higiénico',.38),L('detergente'),L('manzanas')],
+    d:'La app restaura exactamente la sección, el scroll y la línea a medio escribir de la última vez.',
+    pro:['Es lo que hace una libreta física: la abres por donde la dejaste.','Convierte muchas sesiones cortas en una sola continua.','La línea a medio escribir jamás se pierde.'],
+    con:['Restaurada entre secciones te deja en un carrito ya entregado o en un ajuste.','Si pasaron cuatro días, el «último lugar» ya no significa nada.','Cuesta explicar por qué la app abre distinto cada vez.'],
+    veredicto:'Correcta con límites', vd:'la memoria funciona dentro de la libreta; entre secciones envejece mal. Hay que ponerle caducidad.',
+    vbg:'#EAF0EA', vfg:'#2E5D4B' },
+  { k:'Hipótesis D', t:'Home = según el momento de la semana',
+    titulo:'Jueves de entrega', sub:'llega entre 9 y 11 h', campo:'¿algo más para hoy?',
+    lineas:[L('El repartidor sale en 40 min',1,PAPAYA),L('12 ítems confirmados',.8),L('2 sustituidos',.8),L('Puedes añadir hasta las 8:30',.55),L('Ver el carrito',.45)],
+    d:'La pantalla de entrada cambia de cara según el día: escribir lunes–miércoles, revisar el jueves, recordar el domingo.',
+    pro:['Muy servicial el día de entrega.','Aprovecha que la compra es un ritual semanal.','Se siente vivo, casi conversacional.'],
+    con:['Impredecible: la app cambia bajo los pies del usuario.','Falla feo cuando la familia rompe su ritmo.','Multiplica los estados que hay que diseñar y probar.'],
+    veredicto:'Como capa, no como Home', vd:'lo temporal cabe en una franja arriba de la libreta, nunca en lugar de ella.',
+    vbg:'#F7EBE4', vfg:'#7A4A32' }
+];
+
+const nueve = [
+  {q:'¿Cuál es el Home?', a:'La libreta de esta semana.', d:'Un lienzo con renglones y el cursor esperando. No hay dashboard, no hay bienvenida, no hay tarjetas de estado.'},
+  {q:'¿Cuál es la navegación?', a:'Vertical: se baja a revisar, se sube a recordar.', d:'Sin barra de pestañas. El carrito vive debajo de la libreta; la casa y las semanas anteriores, arriba.'},
+  {q:'¿Cuáles son las pantallas principales?', a:'Libreta, Carrito, La casa.', d:'Tres. El resto son hojas, sábanas y estados temporales que se cierran solos.'},
+  {q:'¿Qué lugar ocupa cada una?', a:'Libreta = presente. Carrito = esta compra. Casa = memoria.', d:'Nunca compiten: cada una responde una pregunta distinta y sólo una está viva a la vez.'},
+  {q:'¿Cuál es la jerarquía?', a:'Escribir > resolver > recordar > configurar.', d:'Todo lo que no sea escribir cuesta al menos un gesto más. Ajustes está a tres.'},
+  {q:'¿Dónde vive cada acción?', a:'Donde ya está la mano.', d:'Añadir, en el renglón. Resolver, sobre la línea del carrito. Enseñar preferencias, en el momento en que aparecen — no en un formulario.'},
+  {q:'¿Qué aparece primero?', a:'El renglón vacío y el cursor.', d:'Antes que el saludo, antes que el estado del pedido, antes que el logo. La app carga escribible.'},
+  {q:'¿Qué desaparece?', a:'Lo resuelto, atenuándose — nunca borrándose.', d:'Las líneas cerradas bajan al 38 %, la semana anterior se pliega en una sola frase, los avisos caducan.'},
+  {q:'¿Qué nunca cambia?', a:'El renglón, el ritmo de 38 px y el lugar del cursor.', d:'Da igual el día, el estado del pedido o los meses de uso: el sitio donde escribes está siempre abajo y siempre listo.'}
+];
+
+const reglas = [
+  {t:'Siempre abre en la libreta', d:'Ninguna otra sección puede ser el destino de arranque. Es la única superficie que nunca está de más.'},
+  {t:'Memoria fina, no gruesa', d:'Se restaura el scroll y el texto sin enviar dentro de la libreta. No se restaura sección, hoja ni sábana.'},
+  {t:'Caduca a las 6 horas', d:'Pasado ese plazo la libreta abre en el renglón vivo de hoy. La sesión de anoche no manda sobre la mañana.'},
+  {t:'El estado se avisa, no se impone', d:'Si hay entrega hoy o algo espera respuesta, aparece una franja de una línea arriba. Se toca o se ignora.'}
+];
+
+const planos = [
+  {n:'Plano 1', t:'Superficie · escribir', rol:'99 % del tiempo', bg:'#F5F3ED',
+   d:'Todo lo que pasa sin salir de la libreta. Si una función no cabe aquí, probablemente no debería existir.',
+   pantallas:[
+     {t:'Libreta', d:'La semana en curso. Renglones, cursor, franja de estado si hace falta.', e:'entrada por defecto'},
+     {t:'Pegar mensaje', d:'Bloque citado que llega de WhatsApp y se descompone en líneas.', e:'pegar en el renglón'},
+     {t:'Soltar foto', d:'Captura o foto de despensa leída y convertida en líneas.', e:'compartir desde la galería'},
+     {t:'Línea en duda', d:'La app pregunta cantidad o marca en el sitio, sin abrir pantalla.', e:'toque en la línea'},
+     {t:'Dictar', d:'Voz a renglones, una línea por pausa.', e:'mantener el campo'},
+     {t:'Semana anterior', d:'Se despliega arriba, plegada en una frase; se tira de ella para copiar.', e:'tirar hacia abajo'}
+   ]},
+  {n:'Plano 2', t:'Revisión · resolver', rol:'una o dos veces por semana', bg:'#FFFFFF',
+   d:'Sólo se entra cuando hay algo que decidir. Se sale solo al terminar y devuelve a la libreta.',
+   pantallas:[
+     {t:'Carrito', d:'Las líneas convertidas en productos, con sus seis estados y el subtotal honesto.', e:'desde la franja o deslizando'},
+     {t:'Opciones', d:'Alternativas para una línea ambigua; máximo tres, con la razón de cada una.', e:'toque en una línea dudosa'},
+     {t:'Sustitución', d:'Qué falta y qué proponen en su lugar; aceptar o dejar fuera.', e:'aviso del supermercado'},
+     {t:'Confirmar', d:'Dirección, ventana de entrega y total con lo que aún no se sabe, dicho claro.', e:'al final del carrito'},
+     {t:'En camino', d:'Estado del pedido en una sola línea viva, sin mapa de juguete.', e:'franja de la libreta'},
+     {t:'Recibido', d:'Qué llegó, qué no, qué se sustituyó. Un toque para corregir.', e:'al entregar'}
+   ]},
+  {n:'Plano 3', t:'Memoria · recordar', rol:'una vez al mes, o nunca', bg:'#EFE9DA',
+   d:'Lo que la app aprendió, escrito en prosa. No es un panel de ajustes: es lo que sabe de la casa.',
+   pantallas:[
+     {t:'La casa', d:'Quiénes viven aquí, qué se come, qué no entra nunca. Editable frase a frase.', e:'desde el encabezado'},
+     {t:'Preferencias aprendidas', d:'«Siempre yogur sin azúcar.» Cada una con la compra que la enseñó.', e:'dentro de La casa'},
+     {t:'Semanas', d:'Historial plegado por semana; cada una se abre como la libreta que fue.', e:'dentro de La casa'},
+     {t:'Gasto', d:'Cuánto por semana, sin gráficas de banco: tres cifras y una frase.', e:'dentro de La casa'},
+     {t:'Quién escribe', d:'Los miembros de la casa y qué añadió cada uno.', e:'dentro de La casa'},
+     {t:'Cuenta y ayuda', d:'Direcciones, pago, salir. Lo más lejos posible.', e:'al pie de La casa'}
+   ]}
+];
+
+const acciones = [
+  {t:'Añadir algo', donde:'El renglón, siempre visible', d:'Enter cierra la línea y abre otra. Nunca hay un botón «+» flotante.'},
+  {t:'Pegar una conversación', donde:'El mismo renglón', d:'Pegar detecta el bloque y lo cita; la app lo descompone y pide confirmar sólo lo dudoso.'},
+  {t:'Corregir una línea', donde:'Sobre la línea', d:'Se toca y se edita en el sitio. Sin hoja modal, sin pantalla de detalle.'},
+  {t:'Quitar algo', donde:'Deslizar la línea', d:'Se atenúa y queda tachada esa semana; no se borra hasta cerrar la compra.'},
+  {t:'Resolver una duda', donde:'Carrito, sobre el ítem', d:'Máximo tres opciones y la razón. Si no se resuelve, el subtotal lo dice.'},
+  {t:'Aceptar una sustitución', donde:'Aviso en la libreta o en el carrito', d:'Dos respuestas: va bien / esta semana no. La segunda enseña una preferencia.'},
+  {t:'Repetir la semana pasada', donde:'Arriba de la libreta', d:'Se tira hacia abajo y las líneas caen como texto editable, no como carrito cerrado.'},
+  {t:'Enseñar una preferencia', donde:'Donde ocurre', d:'Nunca en un formulario: en el momento del rechazo o la corrección, con una frase.'},
+  {t:'Ver cuánto se gastó', donde:'La casa · Gasto', d:'Tres cifras. Sin gráficas, sin comparativas, sin metas.'},
+  {t:'Pagar', donde:'Confirmar, una sola vez', d:'Después vive en Cuenta y no vuelve a aparecer.'}
+];
+
+const ritmo = [
+  {t:'Aparece primero', bg:'#F5F3ED', items:[
+    {k:'El renglón.', d:'Con cursor, antes de que carguen datos.'},
+    {k:'Lo escrito hoy.', d:'Las líneas de la sesión actual, a plena opacidad.'},
+    {k:'Una franja de estado', d:'sólo si algo espera respuesta hoy.'},
+    {k:'Nada más.', d:'Sin saludo, sin nombre, sin ilustración de bienvenida.'}
+  ]},
+  {t:'Desaparece', bg:'#FFFFFF', items:[
+    {k:'Lo resuelto', d:'baja al 38 % y deja de pedir atención.'},
+    {k:'La semana anterior', d:'se pliega en una frase al empezar la nueva.'},
+    {k:'Los avisos', d:'caducan solos: nunca se acumulan como bandeja.'},
+    {k:'El onboarding', d:'no vuelve jamás; lo aprendido queda en La casa.'}
+  ]},
+  {t:'Nunca cambia', bg:'#EAF0EA', items:[
+    {k:'El renglón abajo', d:'y su cursor, en las dieciocho pantallas.'},
+    {k:'El ritmo de 38 px', d:'y la escala por opacidad.'},
+    {k:'La honestidad del total:', d:'si no se sabe, se dice.'},
+    {k:'Papaya sólo donde va el dedo', d:'— jamás como decoración.'}
+  ]}
+];
+
+const meses = [
+  {k:'Día 1', punto:PAPAYA, t:'Una línea y nada más', d:'No hay registro largo ni tour. Se escribe «papel higiénico» y la app pregunta lo mínimo: dirección y para cuándo. La casa está vacía y se nota poco.', cambio:'Aparece: el renglón. Nada más.'},
+  {k:'Semana 2', punto:PAPAYA, t:'El primer eco', d:'Al abrir la libreta nueva, la semana pasada está arriba plegada en una frase. Tirar de ella devuelve las once líneas como texto editable.', cambio:'Aparece: semana anterior plegada.'},
+  {k:'Mes 1', punto:VERDE, t:'La casa empieza a saber', d:'Tres preferencias aprendidas de rechazos reales: yogur sin azúcar, nada de cilantro, la marca de café. Ya no pregunta esas tres cosas.', cambio:'Desaparecen: tres preguntas por compra.'},
+  {k:'Mes 3', punto:VERDE, t:'Escribir menos que nunca', d:'La libreta llega con seis líneas ya sugeridas en gris, por frecuencia; se aceptan tocándolas. La madre escribe cuatro cosas en vez de dieciséis.', cambio:'Aparece: sugerencias tenues. Desaparece: la mitad del tecleo.'},
+  {k:'Mes 4', punto:INK, t:'Escriben dos personas', d:'El hijo añade desde su teléfono y la línea entra con su inicial al margen, tenue. El carrito ya no es de una sola persona.', cambio:'Aparece: autoría al margen. Nunca aparece: un chat.'},
+  {k:'Mes 6', punto:INK, t:'La libreta casi se escribe sola', d:'La compra base se propone entera el domingo por la noche y se confirma en un gesto. La app pasa de herramienta de escritura a acuerdo tácito: sólo se toca para lo raro.', cambio:'Desaparece: la compra como tarea. Nunca cambia: el renglón sigue esperando.'}
+];
+
+const abierto = [
+  {t:'Dos personas escribiendo a la vez.', d:'Resuelto en el mapa como autoría al margen, sin diseñar todavía el conflicto: dos manos en la misma línea el mismo minuto.'},
+  {t:'La franja de estado.', d:'Es el único elemento nuevo que introduce esta arquitectura. Hay que probar que no se convierte en una bandeja de notificaciones disfrazada.'},
+  {t:'Caducidad de seis horas.', d:'Número elegido por criterio, no por dato. Es lo primero que mediría con familias reales.'},
+  {t:'Sugerencias del mes 3.', d:'La línea entre ayudar y decidir por la casa. Si la sugerencia se acepta sin leerse, dejamos de ser una libreta.'}
+];
+
+const $ = id => document.getElementById(id);
+
+$('nueve').innerHTML = nueve.map(q => `
+  <div style="background:#F5F3ED;border:1px solid #DBD6C9;border-radius:16px;padding:18px 20px">
+    <p style="font-size:12px;color:#A3ADA5;margin:0 0 8px">${esc(q.q)}</p>
+    <p style="font-size:16.5px;font-weight:700;color:#223354;margin:0 0 8px;letter-spacing:-.02em;line-height:1.32">${esc(q.a)}</p>
+    <p style="font-size:13.5px;color:#6E6E64;margin:0;line-height:1.55;text-wrap:pretty">${esc(q.d)}</p>
+  </div>`).join('');
+
+$('reglas').innerHTML = reglas.map(r => `
+  <div style="background:rgba(245,243,237,.08);border-radius:12px;padding:14px 16px">
+    <p style="font-size:12.5px;font-weight:700;color:#F5F3ED;margin:0 0 5px">${esc(r.t)}</p>
+    <p style="font-size:12.5px;color:rgba(245,243,237,.72);margin:0;line-height:1.5">${esc(r.d)}</p>
+  </div>`).join('');
+
+$('planos').innerHTML = planos.map(p => `
+  <div style="border:1px solid #DBD6C9;border-radius:20px;background:${p.bg};padding:24px 26px">
+    <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+      <span style="font-size:11px;color:#A3ADA5;font-variant-numeric:tabular-nums">${esc(p.n)}</span>
+      <h3 style="font-size:22px;font-weight:700;letter-spacing:-.03em;color:#223354;margin:0">${esc(p.t)}</h3>
+      <span style="font-size:12.5px;color:#7F8A80">${esc(p.rol)}</span>
+    </div>
+    <p style="font-size:14px;color:#6E6E64;margin:0 0 18px;max-width:70ch;line-height:1.55;text-wrap:pretty">${esc(p.d)}</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px">
+      ${p.pantallas.map(s => `
+        <div style="background:#fff;border:1px solid #E2DED2;border-radius:13px;padding:13px 15px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:14.5px;font-weight:700;color:#223354;letter-spacing:-.015em">${esc(s.t)}</span>
+          <span style="font-size:12.5px;color:#6E6E64;line-height:1.45">${esc(s.d)}</span>
+          <span style="font-size:11px;color:#A3ADA5;border-top:1px dashed #E2DED2;padding-top:6px">${esc(s.e)}</span>
+        </div>`).join('')}
+    </div>
+  </div>`).join('');
+
+$('acciones').innerHTML = acciones.map(a => `
+  <div style="background:#fff;border:1px solid #E2DED2;border-radius:14px;padding:15px 17px">
+    <p style="font-size:15px;font-weight:700;color:#223354;margin:0 0 6px;letter-spacing:-.015em">${esc(a.t)}</p>
+    <p style="font-size:13px;color:#2E5D4B;margin:0 0 6px">↳ ${esc(a.donde)}</p>
+    <p style="font-size:12.5px;color:#6E6E64;margin:0;line-height:1.45;text-wrap:pretty">${esc(a.d)}</p>
+  </div>`).join('');
+
+$('ritmo').innerHTML = ritmo.map(r => `
+  <div style="border:1px solid #DBD6C9;border-radius:18px;padding:20px 22px;background:${r.bg}">
+    <p style="font-size:17px;font-weight:700;color:#223354;margin:0 0 12px;letter-spacing:-.02em">${esc(r.t)}</p>
+    ${r.items.map(i => `<p style="font-size:13.5px;color:#3A3B36;margin:0 0 9px;line-height:1.5;text-wrap:pretty"><b style="font-weight:700;color:#223354">${esc(i.k)}</b> ${esc(i.d)}</p>`).join('')}
+  </div>`).join('');
+
+$('meses').innerHTML = meses.map((m,idx) => `
+  <div style="display:flex;gap:20px;align-items:flex-start">
+    <div style="flex:0 0 96px;text-align:right;padding-top:16px">
+      <span style="font-size:13px;font-weight:700;color:#223354">${esc(m.k)}</span>
+    </div>
+    <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;align-self:stretch">
+      <i style="width:11px;height:11px;border-radius:50%;background:${m.punto};margin-top:19px;flex:0 0 auto;display:block"></i>
+      <i style="width:2px;flex:1;background:${idx===meses.length-1?'transparent':'#DBD6C9'};display:block"></i>
+    </div>
+    <div style="flex:1;padding:12px 0 26px">
+      <p style="font-size:17px;font-weight:700;color:#223354;margin:0 0 6px;letter-spacing:-.02em">${esc(m.t)}</p>
+      <p style="font-size:14.5px;color:#6E6E64;margin:0 0 8px;line-height:1.6;max-width:66ch;text-wrap:pretty">${esc(m.d)}</p>
+      <p style="font-size:13px;color:#2E5D4B;margin:0">${esc(m.cambio)}</p>
+    </div>
+  </div>`).join('');
+
+$('abierto').innerHTML = abierto.map(o => `
+  <p style="font-size:15px;color:#3A3B36;margin:0 0 12px;line-height:1.6;text-wrap:pretty"><b style="font-weight:700;color:#223354">${esc(o.t)}</b> ${esc(o.d)}</p>`).join('');
+
+let activa = 2;
+
+function pintar(){
+  const h = hips[activa];
+
+  $('hip-lista').innerHTML = hips.map((x,i) => `
+    <button class="hip-btn" data-i="${i}" aria-pressed="${i===activa}"
+      style="border:1px solid ${i===activa?INK:'#E2DED2'};background:${i===activa?INK:'#fff'};color:${i===activa?'#F5F3ED':'#3A3B36'}">
+      <span style="display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin-bottom:5px">${esc(x.k)}</span>
+      <span style="display:block;font-size:15.5px;font-weight:700;letter-spacing:-.02em;line-height:1.3">${esc(x.t)}</span>
+    </button>`).join('');
+
+  $('p-titulo').textContent = h.titulo;
+  $('p-sub').textContent = h.sub;
+  $('p-campo').textContent = h.campo;
+  $('p-lineas').innerHTML = h.lineas.map(l => `
+    <div style="font-size:15.5px;font-weight:500;color:${l.c};line-height:38px;letter-spacing:-.015em;opacity:${l.op};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.t)}</div>`).join('');
+
+  $('d-t').textContent = h.t;
+  $('d-d').textContent = h.d;
+  $('d-pro').innerHTML = h.pro.map(t => `<p style="font-size:13.5px;color:#3A3B36;margin:0 0 6px;line-height:1.45">${esc(t)}</p>`).join('');
+  $('d-con').innerHTML = h.con.map(t => `<p style="font-size:13.5px;color:#3A3B36;margin:0 0 6px;line-height:1.45">${esc(t)}</p>`).join('');
+  const v = $('d-veredicto');
+  v.style.background = h.vbg; v.style.color = h.vfg;
+  v.innerHTML = `<b style="font-weight:700">${esc(h.veredicto)}</b> — ${esc(h.vd)}`;
+}
+
+$('hip-lista').addEventListener('click', e => {
+  const b = e.target.closest('.hip-btn');
+  if (!b) return;
+  activa = Number(b.dataset.i);
+  pintar();
+});
+
+pintar();
+</script>
+</body>
+</html>

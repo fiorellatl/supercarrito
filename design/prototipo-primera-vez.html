@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SuperCarrito · Los primeros 30 segundos</title>
+<style>
+:root{
+  --papel:#F5F3ED; --papel-2:#EFEDE5; --blanco:#FFFFFF;
+  --tinta:#223354; --tinta-2:#4A5A78;
+  --lapiz:#7F8A80; --lapiz-2:#A3ADA5; --renglon:#E2DED2;
+  --pino:#2E5D4B; --pino-alto:#3C7660; --papaya:#E0864B; --ladrillo:#A8503C;
+  --mesa:#E7E3D9; --mesa-2:#DBD6C9; --mesa-tinta:#3A3B36; --mesa-suave:#6E6E64;
+  --sombra: 0 1px 2px rgba(34,51,84,.05), 0 12px 28px -12px rgba(34,51,84,.22), 0 32px 60px -30px rgba(34,51,84,.28);
+  --btn-sombra: 0 1px 0 rgba(255,255,255,.18) inset, 0 2px 5px rgba(34,51,84,.18), 0 1px 1px rgba(34,51,84,.12);
+  --sans:ui-rounded,'SF Pro Rounded','Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --papel:#16191C; --papel-2:#1D2125; --blanco:#252A2E;
+  --tinta:#E6E2D8; --tinta-2:#B3B0A6;
+  --lapiz:#8E9A92; --lapiz-2:#6B7570; --renglon:#282D31;
+  --pino:#84C4A6; --pino-alto:#9BD3B8; --papaya:#EDA271; --ladrillo:#D98A72;
+  --mesa:#0D0F11; --mesa-2:#15181B; --mesa-tinta:#DCD8CE; --mesa-suave:#8B8F8A;
+  --sombra: 0 1px 2px rgba(0,0,0,.5), 0 18px 40px -16px rgba(0,0,0,.7);
+  --btn-sombra: 0 1px 0 rgba(255,255,255,.12) inset, 0 2px 6px rgba(0,0,0,.45);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--mesa);color:var(--mesa-tinta);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;line-height:1.55;
+  display:flex;flex-direction:column;align-items:center;padding:30px 16px 70px;gap:18px}
+
+.rotulo{max-width:560px;text-align:center}
+.rotulo h1{font-size:20px;font-weight:600;letter-spacing:-.02em;margin:0 0 5px}
+.rotulo p{margin:0;font-size:13px;color:var(--mesa-suave)}
+.rotulo em{color:var(--pino);font-style:normal}
+
+/* línea de tiempo (andamio, no producto) */
+.linea{display:flex;gap:0;flex-wrap:wrap;justify-content:center;max-width:640px}
+.linea button{font-family:inherit;font-size:11px;padding:7px 11px;cursor:pointer;
+  background:transparent;border:0;border-bottom:2px solid var(--mesa-2);color:var(--mesa-suave);white-space:nowrap}
+.linea button:hover{color:var(--mesa-tinta)}
+.linea button.on{color:var(--pino);border-bottom-color:var(--pino);font-weight:600}
+
+.phone{width:360px;height:700px;background:var(--papel);border-radius:36px;
+  box-shadow:var(--sombra);position:relative;overflow:hidden;display:flex;flex-direction:column;
+  border:1px solid rgba(0,0,0,.06)}
+.papel-rayado{position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:repeating-linear-gradient(to bottom,transparent 0 33px,var(--renglon) 33px 34px);
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 12%,#000 88%,transparent 100%);
+          mask-image:linear-gradient(to bottom,transparent 0,#000 12%,#000 88%,transparent 100%)}
+.status{position:relative;display:flex;justify-content:space-between;align-items:center;
+  padding:14px 24px 2px;font-size:11.5px;color:var(--lapiz);font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:3px}.dots i{width:4px;height:4px;border-radius:50%;background:var(--lapiz-2)}
+
+.nota{max-width:560px;font-size:12.5px;color:var(--mesa-suave);text-align:center;min-height:52px}
+.nota b{color:var(--mesa-tinta);font-weight:600}
+.nota .aud{display:block;margin-top:5px;font-size:11.5px;color:var(--pino)}
+
+/* ---------- LIBRETA ---------- */
+.vista{position:relative;flex:1;display:flex;flex-direction:column;min-height:0}
+.hoja{position:relative;flex:1;padding:6px 24px 0;overflow-y:auto;min-height:0}
+.hoja::-webkit-scrollbar{width:0}
+.encabezado{padding:8px 0 18px}
+.encabezado .titulo{font-size:13px;font-weight:600;color:var(--lapiz)}
+
+.ln{font-size:17px;font-weight:500;color:var(--tinta);line-height:34px;letter-spacing:-.01em;cursor:text}
+.ln.reposa{color:var(--tinta-2);opacity:.74}
+.aire{height:34px}.aire.doble{height:68px}
+.pegado{border-left:2px solid var(--lapiz-2);padding-left:11px;margin-left:-13px}
+
+.editor{font-family:inherit;font-size:17px;font-weight:500;color:var(--tinta);
+  line-height:34px;letter-spacing:-.01em;background:transparent;border:0;outline:0;
+  width:100%;resize:none;padding:0;caret-color:var(--papaya);overflow:hidden;display:block}
+.editor::placeholder{color:var(--lapiz-2);font-weight:400}
+
+.eco{font-size:12.5px;color:var(--lapiz);line-height:26px;display:flex;align-items:center;gap:8px;
+  animation:aparece .18s ease-out}
+@keyframes aparece{from{opacity:0}to{opacity:1}}
+.eco .toca{font-family:inherit;font-size:12.5px;color:var(--lapiz);background:transparent;
+  border:0;padding:0;cursor:pointer;text-align:left}
+.eco .toca:hover{color:var(--pino)}
+.eco .glifo{color:var(--lapiz-2)}
+.eco .mini{margin-left:auto;display:flex;gap:6px}
+
+.pie{position:relative;padding:12px 24px 10px;display:flex;justify-content:center}
+.labio{position:relative;border-top:1px solid var(--renglon);background:var(--papel-2);
+  padding:11px 24px 14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.labio .asa{position:absolute;top:5px;left:50%;transform:translateX(-50%);
+  width:34px;height:3.5px;border-radius:999px;background:var(--lapiz-2);opacity:.55}
+.labio .n{font-size:12.5px;color:var(--lapiz)}
+.labio .monto{margin-left:auto;font-size:12.5px;color:var(--lapiz);font-variant-numeric:tabular-nums}
+.labio .monto.nuevo{animation:aparece .18s ease-out}
+
+/* oferta del portapapeles */
+.oferta{position:relative;margin:10px 0 0;background:var(--blanco);border:1px solid var(--renglon);
+  border-radius:13px;padding:12px 14px;box-shadow:0 1px 2px rgba(34,51,84,.05);
+  animation:aparece .22s ease-out}
+.oferta .t{font-size:13px;color:var(--tinta);margin-bottom:9px}
+.oferta .prev{font-size:12px;color:var(--lapiz);margin-bottom:10px;line-height:1.45;
+  border-left:2px solid var(--renglon);padding-left:9px}
+.oferta .acc{display:flex;gap:7px}
+
+/* botones */
+.btn{font-family:inherit;font-size:14.5px;font-weight:500;min-height:44px;padding:11px 20px;
+  border-radius:13px;cursor:pointer;border:1px solid transparent;transition:transform .06s,opacity .3s}
+.btn:active{transform:translateY(1px)}
+.btn.lleno{background:var(--pino);color:#fff;box-shadow:var(--btn-sombra);width:100%}
+.btn.fantasma{background:var(--blanco);color:var(--tinta);border-color:var(--renglon);
+  box-shadow:0 1px 2px rgba(34,51,84,.06)}
+.btn.chico{min-height:32px;padding:5px 12px;font-size:12.5px;border-radius:9px}
+.btn.apagado{opacity:.34;cursor:default;box-shadow:none}
+
+/* ---------- CARRITO ---------- */
+.carrito{position:absolute;left:0;right:0;bottom:0;height:76%;background:var(--papel);
+  border-radius:22px 22px 36px 36px;box-shadow:var(--sombra);
+  transform:translateY(102%);transition:transform .32s cubic-bezier(.32,.72,0,1);
+  display:flex;flex-direction:column;z-index:5}
+.carrito.arriba{transform:translateY(0)}
+.carrito .asa{width:34px;height:3.5px;border-radius:999px;background:var(--lapiz-2);opacity:.55;
+  margin:9px auto 4px;flex:0 0 auto;cursor:pointer}
+.carrito h2{font-size:13px;font-weight:600;color:var(--lapiz);margin:0;padding:2px 22px 12px}
+.lista{flex:1;overflow-y:auto;padding:0 22px}
+.lista::-webkit-scrollbar{width:0}
+.item{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--renglon);flex-wrap:wrap}
+.tile{width:46px;height:46px;flex:0 0 auto;background:var(--blanco);border:1px solid var(--renglon);
+  border-radius:12px;display:grid;place-items:center;font-size:19px}
+.item .txt{flex:1;min-width:0}
+.item .nom{font-size:14px;font-weight:500;color:var(--tinta);line-height:1.3}
+.item .calc{font-size:13px;color:var(--tinta-2);margin-top:2px;font-variant-numeric:tabular-nums}
+.item .conf{font-size:11.5px;color:var(--lapiz);margin-top:1px}
+.item .monto{font-size:14px;font-weight:600;color:var(--pino);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pregunta{width:100%;padding-top:9px}
+.pregunta .p{font-size:12.5px;color:var(--lapiz);margin-bottom:7px}
+.ops{display:flex;gap:6px;flex-wrap:wrap}
+.carrito .cierre{padding:14px 22px 22px;border-top:1px solid var(--renglon);background:var(--papel-2)}
+.tot{display:flex;justify-content:space-between;font-size:14px;color:var(--tinta);
+  font-variant-numeric:tabular-nums;margin-bottom:3px}
+.tot b{font-weight:600}
+.pend{font-size:12px;color:var(--lapiz);margin-bottom:11px}
+
+/* pantallas completas */
+.centro{position:absolute;inset:0;background:var(--papel);z-index:9;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;padding:0 42px;text-align:center}
+.marca{width:44px;height:44px;border-radius:50%;border:1.6px solid var(--pino);color:var(--pino);
+  display:grid;place-items:center;margin-bottom:8px}
+.grande{font-size:22px;font-weight:600;color:var(--tinta);letter-spacing:-.02em;line-height:1.25}
+.chico{font-size:13.5px;color:var(--lapiz);line-height:1.55;max-width:26ch}
+.centro .btn{margin-top:12px;width:100%}
+.respira{width:34px;height:34px;border-radius:50%;background:var(--pino);opacity:.18;
+  animation:respira 2.6s ease-in-out infinite;margin-bottom:10px}
+@keyframes respira{0%,100%{transform:scale(.82);opacity:.14}50%{transform:scale(1.12);opacity:.3}}
+.apagada{position:absolute;inset:0;background:#0B0D0E;z-index:12;display:flex;
+  align-items:center;justify-content:center;color:#3A4046;font-size:12.5px;cursor:pointer}
+
+.toast{position:absolute;left:16px;right:16px;bottom:78px;background:var(--tinta);color:var(--papel);
+  border-radius:13px;padding:11px 14px;display:flex;align-items:center;gap:10px;font-size:12.5px;z-index:8;
+  animation:sube .2s ease-out}
+@keyframes sube{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.toast .u{margin-left:auto;font-family:inherit;font-size:12px;background:rgba(255,255,255,.14);
+  color:var(--papel);border:0;border-radius:8px;padding:5px 10px;cursor:pointer}
+.oculto{display:none !important}
+</style>
+
+<div class="rotulo">
+  <h1>Los primeros 30 segundos</h1>
+  <p>Del folio en blanco al <em>«ah, ya entendí»</em> · y de ahí a los seis meses</p>
+</div>
+
+<div class="linea" id="linea"></div>
+
+<div class="phone">
+  <div class="papel-rayado"></div>
+  <div class="status"><span id="reloj">20:14</span><span class="dots"><i></i><i></i><i></i></span></div>
+
+  <div class="vista">
+    <div class="hoja" id="hoja">
+      <div class="encabezado"><span class="titulo">Casa</span></div>
+      <div id="ecosArriba"></div>
+      <div id="lineas"></div>
+      <textarea class="editor" id="editor" rows="1"></textarea>
+      <div id="ecos"></div>
+      <div class="oferta oculto" id="oferta">
+        <div class="t">Tienes algo copiado. ¿Lo suelto aquí?</div>
+        <div class="prev" id="ofertaPrev"></div>
+        <div class="acc">
+          <button class="btn fantasma chico" id="ofertaSi">Sí</button>
+          <button class="btn fantasma chico" id="ofertaNo">No</button>
+        </div>
+      </div>
+      <div style="height:44px"></div>
+    </div>
+    <div class="pie"><button class="btn fantasma" id="irCarrito">Hacer la compra</button></div>
+    <div class="labio" id="labio"><span class="asa"></span>
+      <span class="n" id="labioN">—</span><span class="monto" id="labioM">—</span></div>
+  </div>
+
+  <div class="carrito" id="carrito">
+    <div class="asa" id="asa"></div>
+    <h2>Tu compra de hoy</h2>
+    <div class="lista" id="listaCarrito"></div>
+    <div class="cierre">
+      <div class="tot"><span id="rotuloTot">Subtotal confirmado</span><b id="totalTxt">S/ 0.00</b></div>
+      <div class="pend" id="pendTxt"></div>
+      <button class="btn lleno" id="confirmar">Confirmar la compra</button>
+    </div>
+  </div>
+
+  <div class="centro oculto" id="cargando">
+    <div class="respira"></div>
+    <div class="grande">Buscando precios<br>en Wong</div>
+    <div class="chico">Tarda unos segundos. Puedes seguir escribiendo mientras tanto.</div>
+  </div>
+
+  <div class="centro oculto" id="hecho">
+    <div class="marca"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+    <div class="grande" id="hechoTitulo">Listo.</div>
+    <div class="chico" id="hechoSub"></div>
+    <button class="btn lleno" id="volver">Volver a la libreta</button>
+  </div>
+
+  <div class="apagada oculto" id="apagada">cerró la app · toca para volver</div>
+
+  <div class="toast oculto" id="toast"><span id="toastTxt"></span><button class="u" id="deshacer">Deshacer</button></div>
+</div>
+
+<div class="nota" id="nota"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const editor = $('editor'), lineasEl = $('lineas');
+
+const PRECIOS = {
+  'papel higiénico':6.90,'papel higienico':6.90,'papel':6.90,'detergente':7.30,
+  'pollo':18.50,'2 kg de pollo':18.50,'leche':4.20,'leche gloria':4.20,'pan':3.80,
+  'atún':4.10,'atun':4.10,'yogurt':8.90,'yogurt para la vale':8.90,'arroz':5.60,
+  'jabón':3.20,'jabon':3.20,'galletas para el lonche':4.50,'huevos':9.90,'aceite':10.90,
+};
+const precioDe = t => PRECIOS[t.trim().toLowerCase()] ?? 5.40;
+
+const PEGADO = ['mami compra 2 kg de pollo','arroz costeño el grande','y yogurt para la Vale 🙏'];
+
+let G = {lineas:[], ecos:[], ecosArriba:[], placeholder:false, oferta:false, labioVivo:false};
+
+// ─────────── pintar ───────────
+function pinta(){
+  lineasEl.innerHTML=''; let bloque=null;
+  G.lineas.forEach((l,i)=>{
+    if(l.aire){const a=document.createElement('div');a.className='aire'+(l.doble?' doble':'');
+      lineasEl.appendChild(a);bloque=null;return;}
+    const d=document.createElement('div'); d.className='ln reposa'; d.textContent=l.t;
+    d.onclick=()=>{editor.value=l.t;G.lineas.splice(i,1);pinta();editor.focus();auto();};
+    if(l.pegado){ if(!bloque){bloque=document.createElement('div');bloque.className='pegado';lineasEl.appendChild(bloque);} bloque.appendChild(d); }
+    else { bloque=null; lineasEl.appendChild(d); }
+    if(l.eco){const e=document.createElement('div');e.className='eco';
+      e.innerHTML='<span class="glifo">⌁</span><span>'+l.eco+'</span>';lineasEl.appendChild(e);}
+  });
+  pintaEcos($('ecos'), G.ecos);
+  pintaEcos($('ecosArriba'), G.ecosArriba);
+  pintaLabio();
+  editor.placeholder = G.placeholder && G.lineas.length===0 ? 'lo que se te acabó' : '';
+  $('oferta').classList.toggle('oculto', !G.oferta);
+}
+
+function pintaEcos(cont, arr){
+  cont.innerHTML='';
+  arr.forEach((e,i)=>{
+    const d=document.createElement('div'); d.className='eco';
+    const b=document.createElement('button'); b.className='toca';
+    b.innerHTML='<span class="glifo">⌁</span> '+e.t+(e.nota?' <span style="opacity:.75">· '+e.nota+'</span>':'');
+    b.onclick=()=>{arr.splice(i,1); anota(e.t);};
+    d.appendChild(b);
+    if(e.pregunta){
+      const m=document.createElement('span'); m.className='mini';
+      const si=document.createElement('button'); si.className='btn lleno chico'; si.style.width='auto'; si.textContent='Sí';
+      si.onclick=()=>{arr.splice(i,1); anota(e.t);};
+      const ot=document.createElement('button'); ot.className='btn fantasma chico'; ot.textContent='Otro';
+      ot.onclick=()=>{arr.splice(i,1); pinta(); editor.focus();
+        nota('«Otro» abre el campo libre, nunca una lista cerrada. <b>Toda pregunta cerrada tiene salida abierta.</b>');};
+      m.append(si,ot); d.appendChild(m);
+    }
+    cont.appendChild(d);
+  });
+}
+
+function pintaLabio(){
+  const reales = G.lineas.filter(l=>!l.aire);
+  const n = reales.length;
+  const total = reales.reduce((s,l)=>s+precioDe(l.t),0);
+  const vacio = n===0;
+  $('labioN').textContent = vacio ? '—' : n+' · falta en casa';
+  const m=$('labioM');
+  const txt = vacio ? '—' : 'S/ '+total.toFixed(2);
+  if(m.textContent!==txt){ m.textContent=txt; if(!vacio && !G.labioVivo){ m.classList.add('nuevo'); G.labioVivo=true;
+      nota('⭐ <b>El momento.</b> El labio decía «—». Ahora dice un monto real de Wong. Nadie explicó nada y ya sabe tres cosas: la entendió, sabe precios, y hay algo debajo.<span class="aud">🔍 ¿Entiende qué hacer? Sí — y no tiene que hacer nada.</span>');
+      setTimeout(()=>m.classList.remove('nuevo'),400); } }
+  if(vacio) G.labioVivo=false;
+  const b=$('irCarrito');
+  b.classList.toggle('apagado', vacio); b.disabled = vacio;
+}
+
+function anota(t){
+  const s=(t||'').trim(); if(!s) return;
+  s.split('\n').forEach(x=>x.trim()&&G.lineas.push({t:x.trim()}));
+  editor.value=''; auto(); pinta();
+}
+function auto(){editor.style.height='auto';editor.style.height=editor.scrollHeight+'px';}
+function nota(html){$('nota').innerHTML=html;}
+
+// ─────────── entrada ───────────
+editor.addEventListener('input',()=>{
+  auto();
+  if(G.oferta){G.oferta=false;pinta();}   // escribir retira la oferta, sin decir nada
+  const v=editor.value.trim().toLowerCase();
+  if(v==='yogurt' && !G.ecos.some(e=>e.pregunta)){
+    G.ecos=[{t:'Gloria fresa 1 L, 2',nota:'como siempre',pregunta:true}]; pinta();
+    nota('El eco solo se gana el derecho a <b>preguntar</b> cuando ya vio el mismo producto dos veces.');
+  }
+});
+editor.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();anota(editor.value);}});
+editor.addEventListener('paste',e=>{
+  e.preventDefault();
+  const t=(e.clipboardData||window.clipboardData).getData('text')||PEGADO.join('\n');
+  suelta(t.split('\n').filter(x=>x.trim()));
+});
+function suelta(arr){
+  G.deshacerN=arr.length; G.oferta=false;
+  if(G.lineas.length) G.lineas.push({aire:true});
+  arr.forEach(x=>G.lineas.push({t:x.trim(),pegado:true}));
+  pinta(); toast('Pegado tal cual. Yo lo ordeno cuando compres.');
+}
+function toast(t){$('toastTxt').textContent=t;$('toast').classList.remove('oculto');
+  clearTimeout(toast._t);toast._t=setTimeout(()=>$('toast').classList.add('oculto'),6000);}
+$('deshacer').onclick=()=>{G.lineas.splice(-G.deshacerN);
+  if(G.lineas.length&&G.lineas[G.lineas.length-1].aire)G.lineas.pop();
+  $('toast').classList.add('oculto');pinta();};
+
+$('ofertaSi').onclick=()=>suelta(PEGADO);
+$('ofertaNo').onclick=()=>{G.oferta=false;pinta();editor.focus();
+  nota('Si no se toca, se va sola y no vuelve a insistir. <b>Siempre oferta, nunca lectura.</b>');};
+
+// ─────────── carrito ───────────
+const CARRITO=[
+  {ico:'🧻',nom:'Papel Higiénico Suave Doble Hoja 12 un',calc:'1 paquete × S/ 6.90',conf:'Lo acabas de confirmar',monto:6.90},
+  {ico:'🧴',nom:'Detergente Ariel Poder & Cuidado 780 g',calc:'1 × S/ 7.30',conf:'Lo acabas de confirmar',monto:7.30},
+  {ico:'🍗',nom:'Pollo Entero Fresco',calc:null,conf:null,monto:null,
+   pregunta:'¿Cuánto compras normalmente?',ops:['1 kg','2 kg','2,5 kg','Otra cantidad…'],precioKg:9.25},
+];
+let estadoC=null;
+$('irCarrito').onclick=()=>{ if($('irCarrito').disabled) return;
+  $('cargando').classList.remove('oculto');
+  setTimeout(()=>{$('cargando').classList.add('oculto');
+    estadoC=CARRITO.map(x=>({...x})); pintaCarrito(); $('carrito').classList.add('arriba');
+    nota('⭐ <b>El segundo «ya entendí», y el grande.</b> Sus palabras sueltas son productos con foto, precio y multiplicación visible. El carrito es una hoja que se levanta: la libreta sigue arriba.<span class="aud">🔍 Riesgo: es el primer momento que le PIDE algo. La pregunta solo aparece si el monto sería deshonesto sin ella.</span>');
+  },1400); };
+$('labio').onclick=()=>{if(!$('irCarrito').disabled)$('irCarrito').click();};
+$('asa').onclick=()=>{$('carrito').classList.remove('arriba');
+  nota('Nunca sales de tu libreta. Un lugar, dos alturas.');};
+
+function pintaCarrito(){
+  const c=$('listaCarrito'); c.innerHTML=''; let total=0,pend=0;
+  estadoC.forEach(p=>{
+    const d=document.createElement('div'); d.className='item';
+    const tile='<div class="tile">'+p.ico+'</div>';
+    if(p.monto===null){
+      pend++;
+      d.innerHTML=tile+'<div class="txt"><div class="nom">'+p.nom+'</div><div class="conf">Pendiente de confirmar</div></div>';
+      const q=document.createElement('div'); q.className='pregunta';
+      q.innerHTML='<div class="p">'+p.pregunta+'<br><span style="opacity:.8">Lo recordaré para tus próximas compras.</span></div>';
+      const ops=document.createElement('div'); ops.className='ops';
+      p.ops.forEach(o=>{
+        const b=document.createElement('button'); b.className='btn fantasma chico'; b.textContent=o;
+        b.onclick=()=>{
+          let kg;
+          if(o==='Otra cantidad…'){const g=prompt('¿Cuántos gramos?','1200'); if(!g)return; kg=(parseFloat(g)||0)/1000; if(!kg)return;}
+          else kg=parseFloat(o.replace(',','.'));
+          p.calc=String(kg).replace('.',',')+' kg × S/ '+p.precioKg.toFixed(2)+'/kg';
+          p.monto=Math.round(kg*p.precioKg*100)/100; p.conf='Lo acabas de confirmar';
+          pintaCarrito();
+          nota('El monto se ve <b>como multiplicación, nunca como resultado</b>. Y las opciones son múltiplos reales del mínimo de venta, con salida abierta siempre.');
+        };
+        ops.appendChild(b);
+      });
+      q.appendChild(ops); d.appendChild(q);
+    } else {
+      total+=p.monto;
+      d.innerHTML=tile+'<div class="txt"><div class="nom">'+p.nom+'</div><div class="calc">'+p.calc+
+        '</div><div class="conf">'+p.conf+'</div></div><div class="monto">S/ '+p.monto.toFixed(2)+'</div>';
+    }
+    c.appendChild(d);
+  });
+  $('totalTxt').textContent='S/ '+total.toFixed(2);
+  $('rotuloTot').textContent=pend?'Subtotal confirmado':'Total';
+  $('pendTxt').textContent=pend?pend+(pend===1?' producto pendiente':' productos pendientes'):'';
+}
+$('confirmar').onclick=()=>{
+  const n=estadoC.filter(p=>p.monto!==null).length;
+  $('carrito').classList.remove('arriba');
+  $('hechoTitulo').innerHTML='Listo. Compraste<br>'+n+' cosas.';
+  $('hechoSub').textContent='Tu libreta quedó limpia. Lo que no compraste sigue anotado para la próxima.';
+  $('hecho').classList.remove('oculto');
+};
+$('volver').onclick=()=>{$('hecho').classList.add('oculto'); ir(7);};   // ⑧ el lunes
+$('apagada').onclick=()=>{$('apagada').classList.add('oculto'); ir(4);}; // ⑤ dos horas
+
+// ─────────── los ocho momentos ───────────
+const MOMENTOS=[
+ {k:'① segundo 0',   hora:'20:14', n:'<b>Primera apertura.</b> Sin login, sin bienvenida, sin tres formas de empezar. Cuatro cosas: el cursor, cuatro palabras tenues, «Hacer la compra» apagado —promete un después— y la oferta del portapapeles, solo porque hay algo copiado.<span class="aud">🔍 ¿Entiende qué hacer? Sí: hay un cursor y nada más que tocar.</span>',
+  s(){G.lineas=[];G.placeholder=true;G.oferta=true;$('ofertaPrev').textContent=PEGADO.join(' · ');}},
+
+ {k:'② sin portapapeles', hora:'20:14', n:'<b>El caso duro, y no tiene red.</b> Sin nada copiado no hay oferta, y no la sustituye nada: lo que ocuparía ese sitio sería una explicación. Cuatro palabras contra el folio en blanco.<span class="aud">🔍 HD-20: ¿escribe, o se queda mirando? Este es el fallo más probable del día 1.</span>',
+  s(){G.lineas=[];G.placeholder=true;G.oferta=false;}},
+
+ {k:'③ escribe',     hora:'20:14', n:'Escribe una línea (prueba «papel higiénico») y mira <b>el labio de abajo</b>. Ahí ocurre el «ya entendí», en el segundo 12 y sin tocar nada.',
+  s(){G.lineas=[];G.placeholder=true;G.oferta=false;setTimeout(()=>editor.focus(),80);}},
+
+ {k:'④ cierra',      hora:'20:15', n:'<b>No pasa nada.</b> Ni «¿seguro que quieres salir?», ni resumen, ni notificación. Que no pase nada <b>es</b> la funcionalidad: es la primera demostración de que este producto no exige.',
+  s(){G.lineas=[{t:'papel higiénico'}];G.placeholder=false;G.oferta=false;$('apagada').classList.remove('oculto');}},
+
+ {k:'⑤ dos horas',   hora:'22:31', n:'<b>Lo único que cambia es nada.</b> Ni «hace 2 horas», ni «bienvenida de nuevo», ni badge. Ver su texto es la prueba de que se guardó, y esa prueba no admite palabras encima. Cursor sí, teclado no.<span class="aud">🔍 Sí entiende — y ahora sabe que puede irse sin coste.</span>',
+  s(){G.lineas=[{t:'papel higiénico'}];G.placeholder=false;G.oferta=false;}},
+
+ {k:'⑥ tres días',   hora:'19:52', n:'<b>El punto ciego del recorrido.</b> Dos líneas, sin compra hecha: esta pantalla es casi idéntica a la del día 1. Lo único que creció es el labio. Sin eco —porque el eco necesita historial de compra, y no lo hay.<span class="aud">🔍 HD-16 se juega aquí: si volvió, el producto vive. Y no tenemos nada que ofrecerle. Ver §5.2 de la crítica.</span>',
+  s(){G.lineas=[{t:'papel higiénico'},{t:'detergente'},{aire:true}];G.placeholder=false;G.oferta=false;}},
+
+ {k:'⑦ primera compra', hora:'10:07', n:'Toca «Hacer la compra». Tres palabras sueltas se vuelven tres productos reales. Aquí aparece la <b>primera foto</b> y la <b>primera pregunta</b> del producto.',
+  s(){G.lineas=[{t:'papel higiénico'},{t:'detergente'},{t:'2 kg de pollo'}];G.placeholder=false;G.oferta=false;}},
+
+ {k:'⑧ el lunes',    hora:'8:12',  n:'<b>El tercer «ya entendí», y el único que crea hábito.</b> Los dos anteriores demostraron competencia. Este demuestra memoria: el eco es lo primero que el producto sabe sin que ella se lo haya dicho hoy.',
+  s(){G.lineas=[{t:'detergente',eco:'quedó de la semana pasada'},{aire:true,doble:true}];
+      G.ecos=[{t:'papel higiénico',nota:'',pregunta:false}];G.placeholder=false;G.oferta=false;}},
+
+ {k:'⑨ seis meses',  hora:'7:48',  n:'<b>La misma pantalla. Exactamente la misma.</b> No se desbloqueó nada, no hay modos, no aprendió nada nuevo. Lo que cambió es que su casa tiene historia — y vuelve en lápiz, nunca confundible con su tinta. Escribe menos y confirma más.<span class="aud">🔍 HD-21: ¿distingue el lápiz de lo suyo sin que nadie se lo explique?</span>',
+  s(){G.ecosArriba=[{t:'atún',nota:'',pregunta:false},{t:'leche',nota:'sueles los jueves',pregunta:false},
+        {t:'papel higiénico',nota:'',pregunta:false}];
+      G.lineas=[{t:'galletas para el lonche'},{t:'huevos'},{t:'aceite'},{aire:true},
+                {t:'yogurt para la Vale'}];G.placeholder=false;G.oferta=false;}},
+];
+
+function ir(i){
+  const m=MOMENTOS[i];
+  ['cargando','hecho','toast','apagada'].forEach(x=>$(x).classList.add('oculto'));
+  $('carrito').classList.remove('arriba');
+  editor.value=''; auto();
+  G={lineas:[],ecos:[],ecosArriba:[],placeholder:false,oferta:false,labioVivo:false};
+  m.s(); $('reloj').textContent=m.hora; pinta(); nota(m.n);
+  [...$('linea').children].forEach((b,j)=>b.classList.toggle('on',j===i));
+  if(i!==3) setTimeout(()=>editor.focus({preventScroll:true}),60);
+}
+
+MOMENTOS.forEach((m,i)=>{
+  const b=document.createElement('button'); b.textContent=m.k; b.onclick=()=>ir(i);
+  $('linea').appendChild(b);
+});
+ir(0);
+</script>
+</html>

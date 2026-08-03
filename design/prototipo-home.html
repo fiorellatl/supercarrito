@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SuperCarrito · Prototipo del Home</title>
+<style>
+:root{
+  --papel:#F5F3ED; --papel-2:#EFEDE5; --blanco:#FFFFFF;
+  --tinta:#223354; --tinta-2:#4A5A78;
+  --lapiz:#7F8A80; --lapiz-2:#A3ADA5; --renglon:#E2DED2;
+  --pino:#2E5D4B; --pino-alto:#3C7660; --papaya:#E0864B; --ladrillo:#A8503C;
+  --mesa:#E7E3D9; --mesa-2:#DBD6C9; --mesa-tinta:#3A3B36; --mesa-suave:#6E6E64;
+  --sombra: 0 1px 2px rgba(34,51,84,.05), 0 12px 28px -12px rgba(34,51,84,.22), 0 32px 60px -30px rgba(34,51,84,.28);
+  --btn-sombra: 0 1px 0 rgba(255,255,255,.18) inset, 0 2px 5px rgba(34,51,84,.18), 0 1px 1px rgba(34,51,84,.12);
+  --sans:ui-rounded,'SF Pro Rounded','Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --papel:#16191C; --papel-2:#1D2125; --blanco:#252A2E;
+  --tinta:#E6E2D8; --tinta-2:#B3B0A6;
+  --lapiz:#8E9A92; --lapiz-2:#6B7570; --renglon:#282D31;
+  --pino:#84C4A6; --pino-alto:#9BD3B8; --papaya:#EDA271; --ladrillo:#D98A72;
+  --mesa:#0D0F11; --mesa-2:#15181B; --mesa-tinta:#DCD8CE; --mesa-suave:#8B8F8A;
+  --sombra: 0 1px 2px rgba(0,0,0,.5), 0 18px 40px -16px rgba(0,0,0,.7);
+  --btn-sombra: 0 1px 0 rgba(255,255,255,.12) inset, 0 2px 6px rgba(0,0,0,.45);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--mesa);color:var(--mesa-tinta);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;line-height:1.55;
+  display:flex;flex-direction:column;align-items:center;padding:34px 16px 80px;gap:22px}
+
+/* ---------- marco y andamio (no es producto) ---------- */
+.rotulo{max-width:430px;text-align:center}
+.rotulo h1{font-size:20px;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}
+.rotulo p{margin:0;font-size:13px;color:var(--mesa-suave)}
+.rotulo em{color:var(--pino);font-style:normal}
+
+.phone{width:360px;height:720px;background:var(--papel);border-radius:36px;
+  box-shadow:var(--sombra);position:relative;overflow:hidden;display:flex;flex-direction:column;
+  border:1px solid rgba(0,0,0,.06)}
+.papel-rayado{position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:repeating-linear-gradient(to bottom,transparent 0 33px,var(--renglon) 33px 34px);
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 12%,#000 88%,transparent 100%);
+          mask-image:linear-gradient(to bottom,transparent 0,#000 12%,#000 88%,transparent 100%)}
+.status{position:relative;display:flex;justify-content:space-between;align-items:center;
+  padding:14px 24px 2px;font-size:11.5px;color:var(--lapiz);font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:3px}.dots i{width:4px;height:4px;border-radius:50%;background:var(--lapiz-2)}
+
+.pista{max-width:430px;font-size:12.5px;color:var(--mesa-suave);text-align:center;min-height:34px}
+.pista b{color:var(--mesa-tinta);font-weight:600}
+.andamio{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:430px}
+.andamio button{font-family:inherit;font-size:11.5px;padding:6px 12px;border-radius:999px;cursor:pointer;
+  background:var(--mesa-2);border:1px solid transparent;color:var(--mesa-tinta)}
+.andamio button:hover{border-color:var(--mesa-suave)}
+
+/* ---------- LIBRETA (el Home) ---------- */
+.vista{position:relative;flex:1;display:flex;flex-direction:column;min-height:0}
+.hoja{position:relative;flex:1;padding:6px 24px 0;overflow-y:auto;min-height:0}
+.hoja::-webkit-scrollbar{width:0}
+.encabezado{display:flex;align-items:baseline;justify-content:space-between;
+  padding:8px 0 18px}
+.encabezado .titulo{font-size:13px;font-weight:600;color:var(--lapiz);letter-spacing:.02em}
+
+.ln{font-size:17px;font-weight:500;color:var(--tinta);line-height:34px;letter-spacing:-.01em;
+  position:relative;cursor:text}
+.ln.reposa{color:var(--tinta-2);opacity:.72}          /* A2 · la última línea */
+.aire{height:34px}.aire.doble{height:68px}
+.pegado{border-left:2px solid var(--lapiz-2);padding-left:11px;margin-left:-13px}
+.pegado .ln{font-size:16.5px}
+
+.editor{font-family:inherit;font-size:17px;font-weight:500;color:var(--tinta);
+  line-height:34px;letter-spacing:-.01em;background:transparent;border:0;outline:0;
+  width:100%;resize:none;padding:0;caret-color:var(--papaya);overflow:hidden;display:block}
+.editor::placeholder{color:var(--lapiz-2);font-weight:400}
+
+.eco{font-size:12.5px;color:var(--lapiz);line-height:26px;display:flex;align-items:center;gap:8px;
+  animation:aparece .18s ease-out}
+@keyframes aparece{from{opacity:0}to{opacity:1}}
+.eco .toca{font-family:inherit;font-size:12.5px;color:var(--lapiz);background:transparent;
+  border:0;padding:0;cursor:pointer;text-align:left}
+.eco .toca:hover{color:var(--pino)}
+.eco .glifo{color:var(--lapiz-2)}
+.eco .mini{margin-left:auto;display:flex;gap:6px}
+
+.gesto{font-size:12px;color:var(--lapiz-2);padding-top:10px}
+
+.pie{position:relative;padding:12px 24px 10px;display:flex;justify-content:center}
+.labio{position:relative;border-top:1px solid var(--renglon);background:var(--papel-2);
+  padding:11px 24px 14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.labio .asa{position:absolute;top:5px;left:50%;transform:translateX(-50%);
+  width:34px;height:3.5px;border-radius:999px;background:var(--lapiz-2);opacity:.55}
+.labio .n{font-size:12.5px;color:var(--lapiz)}
+.labio .monto{margin-left:auto;font-size:12.5px;color:var(--lapiz);font-variant-numeric:tabular-nums}
+
+/* ---------- botones ---------- */
+.btn{font-family:inherit;font-size:14.5px;font-weight:500;min-height:44px;padding:11px 20px;
+  border-radius:13px;cursor:pointer;border:1px solid transparent;transition:transform .06s}
+.btn:active{transform:translateY(1px)}
+.btn.lleno{background:var(--pino);color:#fff;box-shadow:var(--btn-sombra);width:100%}
+.btn.fantasma{background:var(--blanco);color:var(--tinta);border-color:var(--renglon);
+  box-shadow:0 1px 2px rgba(34,51,84,.06)}
+.btn.chico{min-height:32px;padding:5px 12px;font-size:12.5px;border-radius:9px}
+
+/* ---------- CARRITO (la hoja que se levanta) ---------- */
+.carrito{position:absolute;left:0;right:0;bottom:0;height:78%;background:var(--papel);
+  border-radius:22px 22px 36px 36px;box-shadow:var(--sombra);
+  transform:translateY(102%);transition:transform .32s cubic-bezier(.32,.72,0,1);
+  display:flex;flex-direction:column;z-index:5}
+.carrito.arriba{transform:translateY(0)}
+.carrito .asa{width:34px;height:3.5px;border-radius:999px;background:var(--lapiz-2);opacity:.55;
+  margin:9px auto 4px;flex:0 0 auto;cursor:pointer}
+.carrito h2{font-size:13px;font-weight:600;color:var(--lapiz);margin:0;padding:2px 22px 12px}
+.lista{flex:1;overflow-y:auto;padding:0 22px}
+.lista::-webkit-scrollbar{width:0}
+.item{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--renglon)}
+.tile{width:46px;height:46px;flex:0 0 auto;background:var(--blanco);border:1px solid var(--renglon);
+  border-radius:12px;display:grid;place-items:center;font-size:19px}
+.item .txt{flex:1;min-width:0}
+.item .nom{font-size:14px;font-weight:500;color:var(--tinta);line-height:1.3}
+.item .calc{font-size:13px;color:var(--tinta-2);margin-top:2px;font-variant-numeric:tabular-nums}
+.item .conf{font-size:11.5px;color:var(--lapiz);margin-top:1px}
+.item .monto{font-size:14px;font-weight:600;color:var(--pino);font-variant-numeric:tabular-nums;white-space:nowrap}
+.item.pendiente{flex-wrap:wrap}
+.pregunta{width:100%;padding-top:9px}
+.pregunta .p{font-size:12.5px;color:var(--lapiz);margin-bottom:7px}
+.ops{display:flex;gap:6px;flex-wrap:wrap}
+.item.agotado .nom{color:var(--lapiz-2);text-decoration:line-through}
+.sello{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ladrillo);
+  border:1px solid var(--ladrillo);border-radius:999px;padding:1px 7px;display:inline-block;margin-top:4px}
+.carrito .cierre{padding:14px 22px 22px;border-top:1px solid var(--renglon);background:var(--papel-2)}
+.tot{display:flex;justify-content:space-between;font-size:14px;color:var(--tinta);
+  font-variant-numeric:tabular-nums;margin-bottom:3px}
+.tot b{font-weight:600}
+.pend{font-size:12px;color:var(--lapiz);margin-bottom:11px}
+
+/* ---------- CIERRE ---------- */
+.centro{position:absolute;inset:0;background:var(--papel);z-index:9;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:9px;padding:0 42px;text-align:center}
+.marca{width:44px;height:44px;border-radius:50%;border:1.6px solid var(--pino);color:var(--pino);
+  display:grid;place-items:center;margin-bottom:8px}
+.grande{font-size:22px;font-weight:600;color:var(--tinta);letter-spacing:-.02em;line-height:1.25}
+.chico{font-size:13.5px;color:var(--lapiz);line-height:1.55;max-width:26ch}
+.centro .btn{margin-top:10px;width:100%}
+.respira{width:34px;height:34px;border-radius:50%;background:var(--pino);opacity:.18;
+  animation:respira 2.6s ease-in-out infinite;margin-bottom:10px}
+@keyframes respira{0%,100%{transform:scale(.82);opacity:.14}50%{transform:scale(1.12);opacity:.3}}
+
+/* ---------- aviso ---------- */
+.toast{position:absolute;left:16px;right:16px;bottom:78px;background:var(--tinta);color:var(--papel);
+  border-radius:13px;padding:11px 14px;display:flex;align-items:center;gap:10px;font-size:12.5px;z-index:8;
+  animation:sube .2s ease-out}
+@keyframes sube{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.toast .u{margin-left:auto;font-family:inherit;font-size:12px;background:rgba(255,255,255,.14);
+  color:var(--papel);border:0;border-radius:8px;padding:5px 10px;cursor:pointer}
+.oculto{display:none !important}
+</style>
+
+<div class="rotulo">
+  <h1>El Home de SuperCarrito</h1>
+  <p>Prototipo navegable · <em>lo que falta en casa</em> · libreta + carrito en un solo lugar</p>
+</div>
+
+<div class="phone">
+  <div class="papel-rayado"></div>
+  <div class="status"><span id="reloj">19:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+
+  <!-- ===== LIBRETA · el Home ===== -->
+  <div class="vista">
+    <div class="hoja" id="hoja">
+      <div class="encabezado"><span class="titulo">Casa</span></div>
+      <div id="lineas"></div>
+      <textarea class="editor" id="editor" rows="1" placeholder=""></textarea>
+      <div id="ecos"></div>
+      <div class="gesto" id="gesto">escribe · pega · suelta una foto</div>
+      <div style="height:40px"></div>
+    </div>
+    <div class="pie"><button class="btn fantasma" id="irCarrito">Hacer la compra</button></div>
+    <div class="labio" id="labio"><span class="asa"></span>
+      <span class="n" id="labioN">nada anotado todavía</span><span class="monto">—</span></div>
+  </div>
+
+  <!-- ===== CARRITO · la hoja que se levanta ===== -->
+  <div class="carrito" id="carrito">
+    <div class="asa" id="asa"></div>
+    <h2>Tu compra de hoy</h2>
+    <div class="lista" id="listaCarrito"></div>
+    <div class="cierre">
+      <div class="tot"><span id="rotuloTot">Subtotal confirmado</span><b id="totalTxt">S/ 0.00</b></div>
+      <div class="pend" id="pendTxt"></div>
+      <button class="btn lleno" id="confirmar">Confirmar la compra</button>
+    </div>
+  </div>
+
+  <!-- ===== estados de pantalla completa ===== -->
+  <div class="centro oculto" id="cargando">
+    <div class="respira"></div>
+    <div class="grande">Buscando precios<br>en Wong</div>
+    <div class="chico">Tarda unos segundos. Puedes seguir escribiendo mientras tanto.</div>
+  </div>
+
+  <div class="centro oculto" id="hecho">
+    <div class="marca"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+    <div class="grande" id="hechoTitulo">Listo.</div>
+    <div class="chico" id="hechoSub"></div>
+    <button class="btn lleno" id="volver">Volver a la libreta</button>
+    <button class="btn fantasma chico" style="width:100%">Ver la boleta</button>
+  </div>
+
+  <div class="toast oculto" id="toast"><span id="toastTxt"></span><button class="u" id="deshacer">Deshacer</button></div>
+</div>
+
+<div class="pista" id="pista"></div>
+<div class="andamio">
+  <button data-ir="martes">① martes · lo que falta</button>
+  <button data-ir="pegar">② pegar un WhatsApp</button>
+  <button data-ir="eco2">③ el eco pregunta</button>
+  <button data-ir="carrito">④ levantar el carrito</button>
+  <button data-ir="semana2">⑤ el lunes siguiente</button>
+  <button data-ir="vacio">⑥ el primer día</button>
+</div>
+
+<script>
+// ─────────── estado del prototipo (no es arquitectura, es un guion) ───────────
+const G = {
+  lineas: [],          // {t:texto, pegado:bool, eco:string|null}
+  ecos: [],            // {t:texto, nota:string, pregunta:bool}
+  comprado: false,
+  deshacerN: 0,
+};
+
+const ECO_REPOSO = [
+  {t:'leche',            nota:'sueles el jueves',  pregunta:false},
+  {t:'papel higiénico',  nota:'cada dos semanas',  pregunta:false},
+];
+
+const PEGADO = ['mami compra 2 kg de pollo','arroz costeño el grande','y yogurt para la Vale 🙏'];
+
+const CARRITO = [
+  {ico:'🍪', nom:'Galletas Margarita Vainilla 6 un', calc:'1 paquete × S/ 4.50', conf:'Basado en tu compra anterior', monto:4.50},
+  {ico:'🧼', nom:'Jabón Bolívar Floral 3 un',        calc:'2 × S/ 3.20',        conf:'Lo acabas de confirmar',       monto:6.40},
+  {ico:'🐟', nom:'Trucha Deshuesada Corte Mariposa', calc:null, conf:null, monto:null, min:400,
+   pregunta:'¿Cuánto compras normalmente?', ops:['400 g','800 g','2 kg','Otra cantidad…'], precioKg:31.50},
+  {ico:'🥛', nom:'Leche Gloria Entera 1 L',          calc:null, conf:null, monto:null, agotado:true},
+];
+
+// ─────────── pintar la libreta ───────────
+const $ = id => document.getElementById(id);
+const lineasEl = $('lineas'), ecosEl = $('ecos'), editor = $('editor');
+
+function pintaLibreta(){
+  lineasEl.innerHTML = '';
+  let bloquePegado = null;
+  G.lineas.forEach((l, i) => {
+    if(l.aire){ const a=document.createElement('div'); a.className='aire'+(l.doble?' doble':'');
+      lineasEl.appendChild(a); bloquePegado=null; return; }
+    const d = document.createElement('div');
+    d.className = 'ln reposa';
+    d.textContent = l.t;
+    d.onclick = () => { editor.value = l.t; G.lineas.splice(i,1); pintaLibreta(); editor.focus(); auto(); };
+    if(l.pegado){
+      if(!bloquePegado){ bloquePegado=document.createElement('div'); bloquePegado.className='pegado';
+        lineasEl.appendChild(bloquePegado); }
+      bloquePegado.appendChild(d);
+    } else { bloquePegado=null; lineasEl.appendChild(d); }
+    if(l.eco){ const e=document.createElement('div'); e.className='eco';
+      e.innerHTML = '<span class="glifo">⌁</span><span>'+l.eco+'</span>';
+      lineasEl.appendChild(e); }
+  });
+  pintaEcos(); pintaLabio();
+}
+
+function pintaEcos(){
+  ecosEl.innerHTML = '';
+  G.ecos.forEach((e, i) => {
+    const d = document.createElement('div'); d.className='eco';
+    const b = document.createElement('button'); b.className='toca';
+    b.innerHTML = '<span class="glifo">⌁</span> ' + e.t + (e.nota ? ' <span style="opacity:.75">· '+e.nota+'</span>' : '');
+    b.onclick = () => { G.ecos.splice(i,1); anota(e.t); };
+    d.appendChild(b);
+    if(e.pregunta){
+      const m = document.createElement('span'); m.className='mini';
+      const si = document.createElement('button'); si.className='btn lleno chico'; si.style.width='auto'; si.textContent='Sí';
+      si.onclick = () => { G.ecos.splice(i,1); anota(e.t); };
+      const otro = document.createElement('button'); otro.className='btn fantasma chico'; otro.textContent='Otro';
+      otro.onclick = () => { G.ecos.splice(i,1); pintaEcos(); editor.focus();
+        pista('«Otro» abre el campo libre, nunca una lista cerrada. <b>Toda pregunta cerrada tiene salida abierta.</b>'); };
+      m.append(si, otro); d.appendChild(m);
+    }
+    ecosEl.appendChild(d);
+  });
+}
+
+function pintaLabio(){
+  const n = G.lineas.filter(l => !l.aire).length;
+  $('labioN').textContent = n === 0 ? 'nada anotado todavía' : n + ' · falta en casa';
+  $('gesto').classList.toggle('oculto', n > 0);
+  $('irCarrito').disabled = n === 0;
+  $('irCarrito').style.opacity = n === 0 ? .45 : 1;
+}
+
+function anota(texto){
+  const t = texto.trim(); if(!t) return;
+  t.split('\n').forEach(x => x.trim() && G.lineas.push({t:x.trim()}));
+  editor.value=''; auto(); pintaLibreta();
+}
+
+// ─────────── escribir ───────────
+function auto(){ editor.style.height='auto'; editor.style.height=editor.scrollHeight+'px'; }
+editor.addEventListener('input', () => {
+  auto();
+  const v = editor.value.trim().toLowerCase();
+  if(v === 'yogurt' && !G.ecos.some(e=>e.pregunta)){
+    G.ecos = [{t:'Gloria fresa 1 L, 2', nota:'como siempre', pregunta:true}];
+    pintaEcos();
+    pista('El eco solo se gana el derecho a <b>preguntar</b> cuando ya vio el mismo producto dos veces.');
+  }
+});
+editor.addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); anota(editor.value); }
+});
+editor.addEventListener('paste', e => {
+  e.preventDefault();
+  const txt = (e.clipboardData || window.clipboardData).getData('text') || PEGADO.join('\n');
+  soltar(txt.split('\n').filter(x=>x.trim()));
+});
+function soltar(arr){
+  G.deshacerN = arr.length;
+  if(G.lineas.length) G.lineas.push({aire:true});
+  arr.forEach(x => G.lineas.push({t:x.trim(), pegado:true}));
+  pintaLibreta();
+  toast('Pegado tal cual. Yo lo ordeno cuando compres.');
+}
+function toast(txt){
+  $('toastTxt').textContent = txt; $('toast').classList.remove('oculto');
+  clearTimeout(toast._t); toast._t = setTimeout(()=>$('toast').classList.add('oculto'), 6000);
+}
+$('deshacer').onclick = () => { G.lineas.splice(-G.deshacerN);
+  if(G.lineas.length && G.lineas[G.lineas.length-1].aire) G.lineas.pop();
+  $('toast').classList.add('oculto'); pintaLibreta(); };
+
+// ─────────── el carrito: se levanta, no navega ───────────
+const carrito = $('carrito');
+let estadoCarrito = null;
+
+$('irCarrito').onclick = () => {
+  $('cargando').classList.remove('oculto');
+  setTimeout(() => {
+    $('cargando').classList.add('oculto');
+    abreCarrito();
+  }, 1500);
+};
+$('labio').onclick = () => { if(!$('irCarrito').disabled) $('irCarrito').click(); };
+$('asa').onclick = cierraCarrito;
+
+function abreCarrito(){
+  estadoCarrito = CARRITO.map(x => ({...x}));
+  pintaCarrito(); carrito.classList.add('arriba');
+  pista('El carrito es una <b>hoja que se levanta</b>, no otra pantalla. La libreta sigue ahí arriba. Baja con el asa.');
+}
+function cierraCarrito(){ carrito.classList.remove('arriba');
+  pista('Nunca sales de tu libreta. Un lugar, dos alturas.'); }
+
+function pintaCarrito(){
+  const cont = $('listaCarrito'); cont.innerHTML = '';
+  let total = 0, pend = 0;
+  estadoCarrito.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'item' + (p.agotado ? ' agotado' : '') + (p.monto === null && !p.agotado ? ' pendiente' : '');
+    const tile = '<div class="tile">'+p.ico+'</div>';
+    if(p.agotado){
+      d.innerHTML = tile + '<div class="txt"><div class="nom">'+p.nom+'</div>'+
+        '<div class="sello">agotado hoy</div>'+
+        '<div class="conf">Gloria Entera 900 ml sí hay — <b>lo que cambia es el formato</b>.</div></div>';
+      const alt = document.createElement('button'); alt.className='btn fantasma chico';
+      alt.textContent='Cambiar'; alt.style.alignSelf='center';
+      const dej = document.createElement('button'); dej.className='btn fantasma chico';
+      dej.textContent='Dejar anotado'; dej.style.alignSelf='center';
+      dej.onclick = () => { estadoCarrito.splice(i,1); pintaCarrito();
+        pista('Lo agotado no se sustituye en silencio: se muestra, y siempre hay una tercera salida — <b>dejarlo anotado</b>.'); };
+      alt.onclick = () => { p.agotado=false; p.nom='Leche Gloria Entera 900 ml'; p.calc='1 × S/ 4.20';
+        p.conf='Lo acabas de confirmar'; p.monto=4.20; pintaCarrito(); };
+      const box=document.createElement('div'); box.style.cssText='display:flex;flex-direction:column;gap:6px';
+      box.append(alt, dej); d.appendChild(box);
+    } else if(p.monto === null){
+      pend++;
+      d.innerHTML = tile + '<div class="txt"><div class="nom">'+p.nom+'</div>'+
+        '<div class="conf">Pendiente de confirmar</div></div>';
+      const q = document.createElement('div'); q.className='pregunta';
+      q.innerHTML = '<div class="p">'+p.pregunta+'<br><span style="opacity:.8">Lo recordaré para tus próximas compras.</span></div>';
+      const ops = document.createElement('div'); ops.className='ops';
+      p.ops.forEach(o => {
+        const b = document.createElement('button'); b.className='btn fantasma chico'; b.textContent=o;
+        b.onclick = () => {
+          let kg;
+          if(o === 'Otra cantidad…'){
+            const g = prompt('¿Cuántos gramos?', '1200');
+            if(!g) return; kg = (parseFloat(g)||0)/1000;
+            if(!kg) return;
+          } else kg = o.includes('kg') ? parseFloat(o) : parseFloat(o)/1000;
+          p.calc = String(kg).replace('.', ',') + ' kg × S/ ' + p.precioKg.toFixed(2) + '/kg';
+          p.monto = Math.round(kg * p.precioKg * 100) / 100;
+          p.conf = 'Lo acabas de confirmar';
+          pintaCarrito();
+          pista('El monto se ve <b>como multiplicación, nunca como resultado</b>. Y las opciones son múltiplos reales del mínimo de venta.');
+        };
+        ops.appendChild(b);
+      });
+      q.appendChild(ops); d.appendChild(q);
+    } else {
+      total += p.monto;
+      d.innerHTML = tile + '<div class="txt"><div class="nom">'+p.nom+'</div>'+
+        '<div class="calc">'+p.calc+'</div><div class="conf">'+p.conf+'</div></div>'+
+        '<div class="monto">S/ '+p.monto.toFixed(2)+'</div>';
+    }
+    cont.appendChild(d);
+  });
+  $('totalTxt').textContent = 'S/ ' + total.toFixed(2);
+  $('rotuloTot').textContent = pend ? 'Subtotal confirmado' : 'Total';
+  $('pendTxt').textContent = pend ? pend + (pend===1?' producto pendiente':' productos pendientes') : '';
+}
+
+// ─────────── confirmar y cerrar el ciclo ───────────
+$('confirmar').onclick = () => {
+  const comprados = estadoCarrito.filter(p => p.monto !== null).length;
+  const quedan = G.lineas.filter(l => !l.aire).length - comprados;
+  carrito.classList.remove('arriba');
+  $('hechoTitulo').innerHTML = 'Listo. Compraste<br>'+comprados+' cosas.';
+  $('hechoSub').textContent = quedan > 0
+    ? 'Tu libreta quedó limpia. Lo que no compraste sigue anotado para la próxima.'
+    : 'Tu libreta quedó limpia.';
+  $('hecho').classList.remove('oculto');
+  G.comprado = true; G._quedan = Math.max(quedan, 0);
+};
+
+$('volver').onclick = () => {
+  $('hecho').classList.add('oculto');
+  escena('semana2');
+};
+
+// ─────────── escenas del guion ───────────
+const PISTAS = {
+  martes:  'Un martes cualquiera. <b>Abrir y no escribir nada también es una visita exitosa</b>: la prueba de que no tienes que acordarte. Los ecos en lápiz son lo que falta y hoy no está anotado.',
+  pegar:   'Pega de verdad con <b>Ctrl+V</b>, o mira lo que ya entró: llega entero, con emojis y con «mami». El ruido se atenúa, no se borra.',
+  eco2:    'Escribe <b>yogurt</b> y mira lo que pasa debajo de la línea.',
+  carrito: 'Toca «Hacer la compra» o el labio de abajo.',
+  semana2: 'La libreta no se vació: <b>se resolvió</b>. Lo comprado se fue sin ceremonia; lo que quedó lleva una línea en lápiz que explica por qué sigue ahí. Sin fechas, sin culpa.',
+  vacio:   'El primer día. Ni bienvenida, ni tutorial, ni tres formas de empezar. <b>El cursor y nada más.</b>',
+};
+function pista(html){ $('pista').innerHTML = html; }
+
+function escena(n){
+  carrito.classList.remove('arriba');
+  ['cargando','hecho','toast'].forEach(x => $(x).classList.add('oculto'));
+  editor.value=''; auto();
+  G.ecos = [];
+  if(n === 'vacio'){
+    G.lineas = []; $('reloj').textContent='21:14'; editor.placeholder='';
+  }
+  if(n === 'martes'){
+    G.lineas = [{t:'galletas para el lonche'},{t:'jabón'},{aire:true}];
+    G.ecos = ECO_REPOSO.map(x=>({...x})); $('reloj').textContent='19:41';
+  }
+  if(n === 'pegar'){
+    G.lineas = [{t:'galletas para el lonche'},{t:'jabón'},{aire:true}];
+    soltar(PEGADO); $('reloj').textContent='13:02';
+  }
+  if(n === 'eco2'){
+    G.lineas = [{t:'galletas para el lonche'},{t:'jabón'},{aire:true}];
+    $('reloj').textContent='19:40';
+  }
+  if(n === 'carrito'){
+    G.lineas = [{t:'galletas para el lonche'},{t:'jabón'},{t:'trucha'},{t:'leche gloria'}];
+    $('reloj').textContent='10:07';
+  }
+  if(n === 'semana2'){
+    G.lineas = [{t:'galletas para el lonche', eco:'quedó de la semana pasada'},{aire:true,doble:true}];
+    G.ecos = [{t:'leche', nota:'sueles el jueves', pregunta:false}];
+    $('reloj').textContent='8:12';
+  }
+  pintaLibreta(); pista(PISTAS[n] || '');
+  if(n !== 'vacio') setTimeout(()=>editor.focus({preventScroll:true}), 60);
+}
+
+document.querySelectorAll('.andamio button').forEach(b => b.onclick = () => escena(b.dataset.ir));
+escena('martes');
+</script>
+</html>
