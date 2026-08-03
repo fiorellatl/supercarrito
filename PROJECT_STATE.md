@@ -2324,3 +2324,43 @@ marcada. Toda pregunta cerrada tiene salida abierta.
 El directorio de puntos de retiro trae **también los Metro de Cencosud** —misma
 cuenta de VTEX—. Se filtran a propósito: el producto todavía no sabe atenderlos.
 Es el camino natural por el que esta preferencia crecerá a otras cadenas.
+
+---
+
+## J · Congelar y salir a probar (2026-08-03)
+
+Cambia la forma de trabajar: **se acabaron los documentos**. A partir de aquí,
+todo problema encontrado se anota en este archivo —no en `design/`—, no abre un
+sprint y no rediseña el flujo. Solo se arregla si impide usar el producto.
+
+Y cada cambio de UX importante termina con **commit desplegado + invitación
+explícita a probarlo** antes de abrir nada más.
+
+### Verificación de la versión que sale a la calle
+
+Los siete cambios de UX pedidos —home de primera vez, bienvenida, elección de
+tienda, carrito con precios reales, productos sin stock, paso a Wong, perfil—
+**ya estaban construidos y desplegados** en `7d323bd`. Esta revisión no añadió
+funcionalidad: comprobó que se puede vivir con ellos.
+
+- Repositorio limpio, sincronizado con `origin/main`.
+- `tsc --noEmit` exit 0 · `npm run build` exit 0, con `.next` borrado.
+- **Recorrido completo en pantalla de teléfono (375×812)** sobre la versión
+  desplegada, casa nueva: bienvenida → home → libreta → revisión → tienda →
+  carrito → entrega. **Sin desbordes horizontales en ninguna pantalla.**
+- El total de la entrega en el móvil decía **S/ 63.10** y la simulación de Wong
+  para Wong Óvalo Gutiérrez devolvió **`Items: 6310`**. El mismo número.
+- Enlace de 4 SKUs con `sc=70`. Consola limpia.
+
+### Anotado, no arreglado
+
+- Dos objetivos táctiles por debajo de 40 px: el monograma de la casa (36 px) y
+  la flecha de volver (34 px). No impiden usar el producto.
+- Las ocho observaciones de la sesión 1 siguen en `design/bitacora-de-uso.md`
+  sin tocar, por decisión de la PO: primero evidencia repetida, después
+  solución. El eje declarado para las próximas observaciones es **comprensión de
+  la intención** —¿entendió qué parte del mensaje era una compra?—, no matching.
+- **Riesgo conocido en el móvil:** la app de Wong reclama todas las URLs del
+  dominio. Si el teléfono tiene la app instalada, el enlace puede abrirla y
+  perder los parámetros. Sin verificar con `sc=70`; es lo primero que se sabrá
+  usándolo.
