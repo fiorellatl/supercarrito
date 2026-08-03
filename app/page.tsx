@@ -301,6 +301,7 @@ export default function App() {
   const [preciosDeTienda, setPreciosDeTienda] = useState<boolean | null>(null);
   const [totalTienda, setTotalTienda] = useState<number | null>(null);
   const [sinTienda, setSinTienda] = useState(false); // "ahora no", solo esta sesión
+  const [copiado, setCopiado] = useState(false);
 
   const compRef = useRef<HTMLInputElement>(null);
   const archivoRef = useRef<HTMLInputElement>(null);
@@ -1322,47 +1323,42 @@ export default function App() {
                   </Boton>
                 </a>
 
-                {/* La salida para el teléfono. La app de Wong reclama todas las
-                    URLs del dominio: si está instalada, se abre ella y descarta
-                    los productos —comprobado con una cuenta real—. Desde dentro
-                    de la app ya no se puede copiar nada, así que la copia tiene
-                    que estar AQUÍ, antes del salto. No es un truco: es la única
-                    forma que hoy tiene una familia con la app de llevarse su
-                    compra. */}
-                <div style={{ ...lapiz, marginTop: 10, textAlign: "center" }}>
-                  ¿Se te abrió la app de Wong con el carrito vacío?{" "}
-                  <button
-                    onClick={async () => {
-                      const url = entrega.url!;
-                      try {
-                        await navigator.clipboard.writeText(url);
-                      } catch {
-                        // Sin permiso de portapapeles: el truco de toda la vida.
-                        const t = document.createElement("textarea");
-                        t.value = url;
-                        t.style.position = "fixed";
-                        t.style.opacity = "0";
-                        document.body.appendChild(t);
-                        t.select();
-                        document.execCommand("copy");
-                        document.body.removeChild(t);
-                      }
-                      setAviso({ texto: "Enlace copiado. Pégalo en tu navegador." });
-                    }}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      font: "inherit",
-                      color: color.tinta,
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Copia el enlace
-                  </button>{" "}
-                  y ábrelo en tu navegador.
-                </div>
+                {/* La salida para el teléfono, y NO es letra pequeña. La app de
+                    Wong reclama todas las URLs del dominio: si está instalada
+                    —en Android, siempre— se abre ella y descarta los productos.
+                    Entonces el botón verde de arriba no lleva a ninguna parte y
+                    ESTE es el único camino que le queda a la familia. Un camino
+                    que funciona no puede vivir en un pie de página subrayado;
+                    el sistema ya lo decía: si algo se puede tocar, se ve
+                    tocable. Y la copia tiene que estar aquí, antes del salto,
+                    porque desde dentro de la app ya no se puede copiar nada. */}
+                <Boton
+                  style={{ width: "100%", marginTop: 8 }}
+                  onClick={async () => {
+                    const url = entrega.url!;
+                    try {
+                      await navigator.clipboard.writeText(url);
+                    } catch {
+                      // Sin permiso de portapapeles: el truco de toda la vida.
+                      const t = document.createElement("textarea");
+                      t.value = url;
+                      t.style.position = "fixed";
+                      t.style.opacity = "0";
+                      document.body.appendChild(t);
+                      t.select();
+                      document.execCommand("copy");
+                      document.body.removeChild(t);
+                    }
+                    setCopiado(true);
+                    setTimeout(() => setCopiado(false), 4000);
+                  }}
+                >
+                  {copiado ? "✓ Copiado — pégalo en tu navegador" : "Copiar el enlace"}
+                </Boton>
+
+                <p style={{ ...lapiz, marginTop: 8, textAlign: "center" }}>
+                  Si se abre la app de Wong con el carrito vacío, usa el enlace.
+                </p>
               </>
             ) : (
               <p style={{ ...lapiz, textAlign: "center" }}>
