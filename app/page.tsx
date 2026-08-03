@@ -944,7 +944,7 @@ export default function App() {
                     </span>
                   </span>
                   <Boton variante="lleno" onClick={() => ir("entregar")}>
-                    Llevar a Wong
+                    Terminar mi compra
                   </Boton>
                 </div>
               </>
@@ -958,25 +958,24 @@ export default function App() {
           de Wong, con la compra ya empezada— es donde se pierde la confianza. */}
       {ruta === "entregar" && (
         <Pantalla
-          titulo="Llevar a Wong"
+          titulo="Tu compra"
           onVolver={() => ir("compra")}
           cuerpo={
             <>
+              {/* Lo que decimos aquí es exactamente lo que podemos cumplir.
+                  Hasta hoy prometíamos llenarle el carrito a Wong; no podemos
+                  —Wong no autoriza a terceros a escribir en un carrito— y
+                  prometerlo llevaba a una pantalla de error suya. Una función
+                  menos y ninguna mentira. */}
               <p style={{ lineHeight: 1.55, margin: "2px 0 10px", color: color.tinta }}>
-                Abro tu carrito en Wong con {entrega.viajan.length}{" "}
-                {entrega.viajan.length === 1 ? "producto" : "productos"} dentro. Pagas
-                allá, con tu cuenta de siempre. Nosotros no tocamos tu tarjeta.
+                Tu compra está decidida: {entrega.viajan.length}{" "}
+                {entrega.viajan.length === 1 ? "producto" : "productos"}, con marca,
+                cantidad y precio de hoy.
               </p>
-
-              {/* Avisar del login ANTES de saltar. Wong pedirá la sesión cuando
-                  le apetezca, y eso no lo controlamos; lo que sí controlamos es
-                  que no parezca que fallamos nosotros. Una familia advertida
-                  inicia sesión; una familia sorprendida cierra la pestaña.
-                  Se dice como posibilidad —«si te pide»— porque prometer que
-                  ocurrirá, o que no, sería inventarnos lo que hará Wong. */}
               <p style={{ ...lapiz, margin: "0 0 16px" }}>
-                Si Wong te pide iniciar sesión, es normal: el carrito se arma
-                dentro de tu cuenta, no de la nuestra.
+                Todavía no podemos dejártelos puestos en el carrito de Wong: su
+                tienda no lo permite desde fuera. Toca cada producto en tu lista
+                para abrirlo allá.
               </p>
 
               <div
@@ -990,7 +989,7 @@ export default function App() {
                 }}
               >
                 <span>
-                  <span style={{ ...rotulo, display: "block" }}>Lo que llevas</span>
+                  <span style={{ ...rotulo, display: "block" }}>Lo que vas a comprar</span>
                   <span style={{ ...lapiz, fontSize: 12 }}>
                     precios de la web de Wong · el total lo confirma tu tienda
                   </span>
@@ -1017,7 +1016,7 @@ export default function App() {
 
               {entrega.sequedan.length > 0 && (
                 <div>
-                  <Seccion>Esto no cruza</Seccion>
+                  <Seccion>Esto no lo pude resolver</Seccion>
                   {entrega.sequedan.map((s) => (
                     <p key={s.nombre} style={{ ...lapiz, margin: "4px 0" }}>
                       {s.nombre} — {s.motivo}. Sigue anotado.
@@ -1028,22 +1027,13 @@ export default function App() {
             </>
           }
           pie={
-            entrega.url ? (
-              // Un enlace de verdad, no un onClick: el salto lo da la familia y
-              // el navegador lo abre con SU sesión de Wong —su tienda, su zona,
-              // su login—. Por eso el enlace no fija política comercial: heredar
-              // su contexto es más correcto que imponerle uno nuestro.
-              <a
-                href={entrega.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={entregar}
-                style={{ textDecoration: "none", display: "block" }}
-              >
-                <Boton variante="lleno" style={{ width: "100%" }}>
-                  Abrir mi carrito en Wong
-                </Boton>
-              </a>
+            entrega.viajan.length > 0 ? (
+              // El botón ya no promete un carrito: cierra la compra aquí. Cuando
+              // exista una vía de entrega autorizada, `entrega.url` volverá a
+              // traer un enlace y este pie volverá a ser un salto.
+              <Boton variante="lleno" style={{ width: "100%" }} onClick={entregar}>
+                Guardar esta compra
+              </Boton>
             ) : (
               <p style={{ ...lapiz, textAlign: "center" }}>
                 Todavía no hay nada que llevar.
@@ -1053,19 +1043,19 @@ export default function App() {
         />
       )}
 
-      {/* Ya no decimos "compraste": no compró nada aquí. Decimos dónde está su
-          compra ahora y qué le falta hacer. El final del recorrido está en Wong,
-          no en esta pantalla. */}
+      {/* Ni "compraste" ni "tu compra está en Wong": ninguna de las dos es
+          verdad. Compró nada aquí, y nosotros no dejamos nada allá. Lo que sí
+          hizo —decidir la compra entera— es real y es lo que se le devuelve. */}
       {ruta === "entregado" && (
         <PantallaCalma
           estado="listo"
-          titulo={`Tu compra está en Wong: ${ultimaCompra?.n ?? 0} ${
+          titulo={`Tu compra está decidida: ${ultimaCompra?.n ?? 0} ${
             ultimaCompra?.n === 1 ? "producto" : "productos"
           }.`}
           texto={
             (ultimaCompra?.quedaron ?? 0) > 0
-              ? "Termina el pago allá. Lo que no cruzó sigue anotado aquí para la próxima."
-              : "Solo te falta pagar allá. Tu libreta quedó limpia."
+              ? "La guardé en tus compras. Lo que no encontré sigue anotado para la próxima."
+              : "La guardé en tus compras. Tu libreta quedó limpia."
           }
           accion={{ texto: "Volver a mi compra", onClick: () => ir("libreta") }}
         />

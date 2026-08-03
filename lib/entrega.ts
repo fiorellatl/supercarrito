@@ -6,26 +6,39 @@
 // el producto no conoce a Wong, conoce `EntregaEnTienda`. Cambiar de tienda es
 // escribir otra implementación.
 //
-// Mecanismo elegido (verificado contra www.wong.pe el 2026-08-03):
-//   GET /checkout/cart/add?sku=<id>&qty=<n>&seller=1  [&sku&qty&seller ...]
-//   -> 302 /checkout/#/cart
-// `sku`, `qty` y `seller` se repiten por producto. Deliberadamente NO enviamos
-// `sc` (política comercial): el enlace se abre en el navegador de la familia y
-// hereda SU sesión —su tienda asignada, su zona, su login—. Fijar un `sc`
-// nuestro sería sobrescribir su contexto con uno que no conocemos.
+// ⛔ EL ENLACE DE CARRITO NO FUNCIONA. Falsado el 2026-08-03 con la cuenta real
+// de una familia, después de haberlo dado por bueno durante dos sprints.
 //
-// Descartado con evidencia, para que nadie lo reintente:
-//   · API pública de Checkout (orderForm): crear carrito anónimo devuelve 200,
-//     pero añadirle ítems devuelve 401, y la cookie de propiedad del carrito
-//     (CheckoutOrderFormOwnership, HttpOnly + SameSite=Strict, dominio wong.pe)
-//     hace imposible traspasarle ese carrito al navegador de la familia.
+//   · `/checkout/cart/add?sku&qty&seller` SIN `sc`  -> HTTP 500.
+//   · con `sc=2`  -> 302 a /checkout/#/cart y el carrito VACÍO: el catálogo de
+//     esa política comercial no contiene nuestros SKUs (buscar con sc=2 devuelve
+//     cero productos).
+//
+// LA LECCIÓN, que vale más que el código: **un 302 no era prueba de nada** —un
+// SKU inexistente también lo devuelve—. En VTEX un código de éxito no significa
+// que la operación hiciera algo. La única prueba de una entrega es leer el
+// carrito de una cuenta real.
+//
+// Descartado con evidencia (ver design/integracion-wong-investigacion.md):
+//   · API pública de Checkout: crear carrito da 200, pero añadir ítems da 401
+//     «Seller no autorizado 1 con la política comercial 1»; con sc=2 da 200 y
+//     añade CERO. Además la propiedad del carrito viaja en una cookie
+//     HttpOnly+SameSite=Strict que no podemos traspasar.
 //   · APIs de administración de VTEX: exigen appKey/appToken emitidos por Wong.
 //     Es un acuerdo comercial, no una decisión técnica.
+//   · En móvil da igual: la app de Wong reclama todas las URLs del dominio
+//     (assetlinks.json, `handle_all_urls`) y descarta los parámetros.
+//
+// Lo que este archivo SIGUE haciendo bien, y por eso no se borra: traducir la
+// compra al idioma de la tienda —redondeos al múltiplo de venta, qué cruza y
+// qué no, y a qué precio— que es la parte difícil y la que seguirá valiendo
+// cuando exista una vía de entrega de verdad.
 
 import type { ProductoWong, UnidadVenta } from "@/lib/catalog";
 
-const WONG = "https://www.wong.pe";
-const SELLER = "1";
+// Nota para quien retome esto: `seller=1` era correcto —la API de catálogo
+// devuelve `sellerId: "1"`, `sellerName: "WongIO"`—. Lo que no está autorizado
+// no es el vendedor, somos nosotros escribiendo en su política comercial.
 
 // Lo que el producto le pide a la entrega: una línea ya decidida.
 export type LineaAEntregar = {
@@ -92,7 +105,6 @@ export const wongDeepLink: EntregaEnTienda = {
   preparar(lineas) {
     const viajan: LineaViajera[] = [];
     const sequedan: LineaQueSeQueda[] = [];
-    const partes: string[] = [];
 
     for (const { producto, ingrediente, cantidad } of lineas) {
       const nombre = producto.nombre ?? ingrediente;
@@ -108,6 +120,8 @@ export const wongDeepLink: EntregaEnTienda = {
         continue;
       }
 
+      // `qty` en el idioma de la tienda: cuántas unidades mínimas de venta. Hoy
+      // no sale de aquí, pero es la traducción que cualquier entrega necesitará.
       const qty = unidadesDeVenta(cantidad, producto);
       const cruza = Math.round(qty * pasoDe(producto) * 1000) / 1000;
 
@@ -124,14 +138,16 @@ export const wongDeepLink: EntregaEnTienda = {
             : undefined,
       });
 
-      partes.push(
-        `sku=${encodeURIComponent(producto.sku)}&qty=${qty}&seller=${SELLER}`
-      );
     }
 
     return {
       tienda: "Wong",
-      url: partes.length ? `${WONG}/checkout/cart/add?${partes.join("&")}` : null,
+      // ⛔ `null` a propósito, no por falta de implementación. El enlace que
+      // había aquí —`/checkout/cart/add?sku&qty&seller`— llevaba a un error de
+      // Wong o a un carrito vacío. Preferimos una función menos que una promesa
+      // rota. El contrato mantiene el campo porque el día que exista una vía de
+      // entrega autorizada, volverá a llenarse y la pantalla ya sabe usarlo.
+      url: null,
       viajan,
       sequedan,
     };
