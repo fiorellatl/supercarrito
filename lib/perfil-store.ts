@@ -12,6 +12,7 @@
 import { perfilVacio, type Perfil } from "@/lib/preferencias";
 import { historialVacio, registrar, type Hecho, type Historial } from "@/lib/historial";
 import { libretaVacia, type Libreta } from "@/lib/libreta";
+import { casaVacia, type Casa } from "@/lib/casa";
 
 export interface RepositorioPerfil {
   cargar(): Promise<Perfil>;
@@ -200,3 +201,42 @@ export class ComprasLocalStorage implements RepositorioCompras {
 }
 
 export const repositorioCompras: RepositorioCompras = new ComprasLocalStorage();
+
+// --- La casa: quién entra ----------------------------------------------------
+// Mismo puerto, misma disciplina. Sin contraseñas y sin servidor: hoy es un
+// nombre en este navegador. El día que haya cuentas de verdad, esto se convierte
+// en `CasaApi` y ni la UI ni el modelo cambian una línea.
+
+export interface RepositorioCasa {
+  cargar(): Promise<Casa>;
+  guardar(casa: Casa): Promise<void>;
+}
+
+const CLAVE_CASA = "supercarrito.casa.v1";
+
+export class CasaLocalStorage implements RepositorioCasa {
+  async cargar(): Promise<Casa> {
+    if (typeof window === "undefined") return casaVacia();
+    try {
+      const crudo = window.localStorage.getItem(CLAVE_CASA);
+      if (!crudo) return casaVacia();
+      const c = JSON.parse(crudo) as Casa;
+      if (c?.version !== 1 || typeof c.nombre !== "string") return casaVacia();
+      return c;
+    } catch {
+      return casaVacia();
+    }
+  }
+
+  async guardar(casa: Casa): Promise<void> {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(CLAVE_CASA, JSON.stringify(casa));
+    } catch {
+      // Si no se puede guardar el nombre, se entra igual: la identidad nunca
+      // puede ser un muro entre la familia y su compra.
+    }
+  }
+}
+
+export const repositorioCasa: RepositorioCasa = new CasaLocalStorage();

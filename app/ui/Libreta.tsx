@@ -124,36 +124,3 @@ export const Compositor = forwardRef<
     />
   );
 });
-
-// --- Las cuatro puertas -------------------------------------------------------
-// No navegan: dicen qué acepta este lienzo. Van en lápiz, en voz baja, y
-// desaparecen de la vista en cuanto hay algo escrito — su trabajo era enseñar
-// el gesto, no quedarse.
-
-export function Puertas({ puertas }: { puertas: { texto: string; onClick: () => void }[] }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 10, flexWrap: "wrap" }}>
-      {puertas.map((p, i) => (
-        <span key={p.texto} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-          {i > 0 && <span style={{ ...lapiz, color: color.lapiz2 }}>·</span>}
-          <button
-            onClick={p.onClick}
-            className="sc-boton"
-            style={{
-              ...lapiz,
-              border: 0,
-              background: "none",
-              padding: "6px 0",
-              minHeight: 32,
-              cursor: "pointer",
-              fontFamily: fuente,
-              color: color.lapiz,
-            }}
-          >
-            {p.texto}
-          </button>
-        </span>
-      ))}
-    </div>
-  );
-}

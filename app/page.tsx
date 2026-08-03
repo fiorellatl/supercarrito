@@ -7,16 +7,24 @@
 // pantalla necesita un color, un tamaño o un tiempo, está mal: lo pide al
 // sistema.
 //
-// ARQUITECTURA (ARQ-3): tres lugares y cuatro gestos.
-//   · Libreta — el Home. 95 % del uso. Se abre aquí, con el cursor puesto.
-//   · Compra  — el carrito honesto. Una vez por semana. Cuelga de la libreta.
-//   · Casa    — lo aprendido y las compras anteriores. Detrás del monograma.
-// Las cuatro puertas (escribir · pegar · foto · menú) NO son pestañas: son
-// gestos sobre la libreta. La familia nunca clasifica su evidencia.
+// ARQUITECTURA: tres lugares y cuatro formas de empezar.
+//   · Mi compra — el Home. Donde se prepara. 95 % del uso.
+//   · Carrito   — la compra ya con precios de Wong. Una vez por semana.
+//   · Mi casa   — lo aprendido y las compras anteriores.
 //
-// Lo que esta pantalla NO hace, por principio: fotos o precios dentro de la
-// libreta · barra de pestañas · badges · contadores de progreso · pedir cuenta
-// antes de comprar · sumar al total algo cuya cantidad no conocemos.
+// 🗣 VOCABULARIO (decisión de la PO, 2026-08-02): de cara a la familia esto es
+// **su compra**, nunca "la libreta". La libreta es cómo está hecho por dentro
+// —`lib/libreta.ts`, la ruta `"libreta"`— y ese nombre no sale a pantalla: nadie
+// abre una aplicación pensando "voy a usar mi libreta".
+//
+// ⚖️ NINGÚN CAMINO ES EL PRINCIPAL. Escribir, pegar un WhatsApp, importar una
+// compra y cargar un menú son equivalentes: mismo peso visual, ningún "también
+// puedes" que subordine, y el cursor NO se pone solo en una compra vacía.
+//
+// Lo que esta pantalla NO hace, por principio: fotos o precios mientras se
+// prepara · badges · contadores de progreso · pedir cuenta antes de comprar ·
+// sumar al total algo cuya cantidad no conocemos · sugerir que hay una forma
+// correcta de escribir.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -43,6 +51,7 @@ import {
   aPedidos,
   deshacerUltimoBloque,
   editar,
+  esContexto,
   libretaVacia,
   origenLegible,
   partir,
@@ -52,21 +61,29 @@ import {
 } from "@/lib/libreta";
 import type { LineaExtraida } from "@/lib/evidencia";
 import type { ProductoWong } from "@/lib/catalog";
+import { wongDeepLink } from "@/lib/entrega";
+
+import { casaVacia, crearCasa, monograma, saludo, tieneCasa, type Casa } from "@/lib/casa";
+import { repositorioCasa } from "@/lib/perfil-store";
 
 import { color, lapiz, plata, rotulo, soles } from "@/app/ui/sistema";
+import Acciones from "@/app/ui/Acciones";
 import Aviso from "@/app/ui/Aviso";
+import Bienvenida from "@/app/ui/Bienvenida";
+import Cabecera from "@/app/ui/Cabecera";
+import Navegacion from "@/app/ui/Navegacion";
+import Resumen from "@/app/ui/Resumen";
 import Boton from "@/app/ui/Boton";
-import Campo from "@/app/ui/Campo";
 import Fila from "@/app/ui/Fila";
 import Hoja from "@/app/ui/Hoja";
 import HojaCantidad from "@/app/ui/HojaCantidad";
 import HojaOpciones from "@/app/ui/HojaOpciones";
-import { Compositor, Lapiz, LineaLibreta, Puertas } from "@/app/ui/Libreta";
+import { Compositor, Lapiz, LineaLibreta } from "@/app/ui/Libreta";
 import LineaCarrito, { type EstadoLinea } from "@/app/ui/LineaCarrito";
 import { Pantalla, Seccion, Vacio } from "@/app/ui/Pantalla";
 import PantallaCalma from "@/app/ui/PantallaCalma";
 
-type Ruta = "libreta" | "revision" | "compra" | "confirmar" | "hecho" | "casa" | "boleta";
+type Ruta = "libreta" | "revision" | "compra" | "entregar" | "entregado" | "casa" | "boleta";
 
 type Item = ProductoWong & {
   alternativa: boolean;
@@ -133,12 +150,29 @@ function resolver(data: CarritoApi, perfil: Perfil) {
 // Orden de prioridad, del más fuerte al más débil: lo que acaba de responder ·
 // lo que traía la evidencia (si habla la misma unidad) · lo que ya sabemos de
 // esta casa · nada, y entonces el producto queda PENDIENTE.
+//
+// Lo envasado ya no está clavado en 1. Antes esta función devolvía 1 para todo
+// lo que no fuera peso, y esa línea convertía "cuánto llevo" en una decisión que
+// el producto tomaba por la familia: nadie compra un solo yogur. Ahora 1 es solo
+// el último recurso —el valor por defecto más honesto— y se puede cambiar.
 function cantidadDe(it: ItemResuelto, perfil: Perfil): number | undefined {
   const unidad = it.elegido?.unidadVenta ?? "un";
   if (it.cantidadElegida != null) return it.cantidadElegida;
-  if (unidad === "un") return 1;
-  if (it.cantidadPedida != null && it.unidadPedida === "kg") return it.cantidadPedida;
-  return preferenciaDe(perfil, it.ingrediente)?.cantidadHabitual;
+  if (it.cantidadPedida != null && it.unidadPedida === unidad) return it.cantidadPedida;
+
+  const pref = preferenciaDe(perfil, it.ingrediente);
+  const habitual = pref?.cantidadHabitual;
+
+  // El hábito se guarda en la unidad de venta del producto con el que se
+  // aprendió. Si hoy el producto se vende de otra forma, "0,4" unidades no es
+  // una cantidad: es un dato traído de otro mundo. Preferimos no usarlo.
+  // (Los perfiles antiguos no guardaban la unidad: ahí se deduce por la forma
+  // del número, que para unidades solo puede ser un entero.)
+  const otraUnidad = pref?.unidadHabitual != null && pref.unidadHabitual !== unidad;
+  if (otraUnidad) return unidad === "un" ? 1 : undefined;
+
+  if (unidad === "un") return Number.isInteger(habitual) && habitual! >= 1 ? habitual : 1;
+  return habitual;
 }
 
 function subtotalDe(it: ItemResuelto, perfil: Perfil): number | undefined {
@@ -218,6 +252,12 @@ export default function App() {
   // El trabajo del usuario no se pierde jamás: se guarda al cerrar, no al teclear.
   const [editando, setEditando] = useState<{ id: string; texto: string } | null>(null);
 
+  const [casa, setCasa] = useState<Casa>(casaVacia());
+  // Hasta que sepamos si esta casa ya existe no se pinta nada: enseñar la
+  // bienvenida a alguien que lleva tres semanas usando el producto sería peor
+  // que esperar 50 ms.
+  const [listo, setListo] = useState(false);
+
   const [perfil, setPerfil] = useState<Perfil>(perfilVacio());
   const [compras, setCompras] = useState<CompraCerrada[]>([]);
   const [verCompra, setVerCompra] = useState<CompraCerrada | null>(null);
@@ -238,6 +278,10 @@ export default function App() {
 
   // --- Persistencia. El trabajo no se pierde jamás: se guarda en cada cambio.
   useEffect(() => {
+    void repositorioCasa.cargar().then((c) => {
+      setCasa(c);
+      setListo(true);
+    });
     void repositorioPerfil.cargar().then(setPerfil);
     void repositorioCompras.cargar().then(setCompras);
     void repositorioLibreta.cargar().then((l) => {
@@ -256,8 +300,14 @@ export default function App() {
 
   // El cursor ya está puesto: abrir y escribir son el mismo gesto.
   useEffect(() => {
-    if (ruta === "libreta" && !editando) compRef.current?.focus({ preventScroll: true });
-  }, [ruta, editando]);
+    // El cursor se pone solo cuando ya hay algo empezado: volver a añadir una
+    // línea es el gesto más frecuente y no debe costar un toque. Pero en una
+    // compra vacía NO se enfoca —abrir el teclado de golpe convertiría escribir
+    // en el camino principal, y escribir, pegar, importar y cargar un menú son
+    // formas equivalentes de empezar (decisión de la PO, 2026-08-02).
+    if (ruta === "libreta" && !editando && libreta.lineas.length > 0)
+      compRef.current?.focus({ preventScroll: true });
+  }, [ruta, editando, libreta.lineas.length]);
 
   // Los avisos caducan solos: nunca se acumulan como una bandeja.
   useEffect(() => {
@@ -275,6 +325,61 @@ export default function App() {
   }, []);
 
   const { total, pendientes } = useMemo(() => totalDe(items ?? [], perfil), [items, perfil]);
+
+  // La entrega se deriva del carrito, no se guarda: no hay un segundo estado
+  // que se pueda desincronizar de lo que la familia está viendo.
+  const entrega = useMemo(() => {
+    const vivos = (items ?? []).filter((it) => !it.fuera);
+    const decididos = vivos.filter(
+      (it) => it.elegido?.encontrado && cantidadDe(it, perfil) != null
+    );
+    const listos = new Set(decididos.map((it) => it.ingrediente));
+
+    const preparada = wongDeepLink.preparar(
+      decididos.map((it) => ({
+        ingrediente: it.ingrediente,
+        producto: it.elegido!,
+        cantidad: cantidadDe(it, perfil)!,
+      }))
+    );
+
+    // Lo que no llegó ni a la puerta: nunca lo encontramos, o sigue sin
+    // cantidad. Se dice aquí y no del otro lado.
+    const nuncaLlegaron = vivos
+      .filter((it) => !listos.has(it.ingrediente))
+      .map((it) => ({
+        nombre: it.elegido?.nombre ?? it.ingrediente,
+        motivo: it.elegido?.encontrado
+          ? "falta saber cuánto llevas"
+          : "no lo encontré en Wong",
+      }));
+
+    return { ...preparada, sequedan: [...nuncaLlegaron, ...preparada.sequedan] };
+  }, [items, perfil]);
+
+  // Wong vende en múltiplos: 500 g de trucha que se vende de 400 en 400 son 800.
+  // Si la cantidad cambia, se enseña antes de saltar. Nunca en silencio.
+  const ajustes = useMemo(
+    () =>
+      entrega.viajan
+        .filter((v) => v.cantidadQueCruza !== v.cantidad)
+        .map((v) => ({
+          nombre: v.nombre,
+          pedida: formatearCantidad(v.cantidad, v.unidad),
+          cruza: formatearCantidad(v.cantidadQueCruza, v.unidad),
+        })),
+    [entrega]
+  );
+
+  // El total de la entrega NO es el del carrito: es el de lo que de verdad
+  // cruza. Cuando hay redondeo son distintos, y el que vale es este.
+  const totalEntrega = useMemo(
+    () =>
+      Math.round(
+        entrega.viajan.reduce((s, v) => s + (v.subtotalQueCruza ?? 0), 0) * 100
+      ) / 100,
+    [entrega]
+  );
 
   const ir = (r: Ruta) => setRuta(r);
 
@@ -383,8 +488,24 @@ export default function App() {
     setItems((xs) =>
       (xs ?? []).map((it) => (it.ingrediente === ingrediente ? { ...it, cantidadElegida: cantidad } : it))
     );
-    actualizarPerfil((p) => aprenderCantidad(p, ingrediente, cantidad));
+    const unidad = items?.find((it) => it.ingrediente === ingrediente)?.elegido?.unidadVenta;
+    actualizarPerfil((p) => aprenderCantidad(p, ingrediente, cantidad, unidad));
     setHoja(null);
+  }
+
+  // Restar y sumar con los pasos reales de la tienda. Nunca baja de un paso:
+  // "cero" no es una cantidad, es "dejarlo anotado", y para eso ya hay un gesto
+  // con su propio nombre.
+  function moverCantidad(it: ItemResuelto, direccion: 1 | -1) {
+    const unidad = it.elegido?.unidadVenta ?? "un";
+    const paso =
+      unidad === "kg" && it.elegido?.cantidadMinima && it.elegido.cantidadMinima > 0
+        ? it.elegido.cantidadMinima
+        : 1;
+    const actual = cantidadDe(it, perfil) ?? paso;
+    const nueva = Math.round((actual + paso * direccion) * 1000) / 1000;
+    if (nueva < paso) return;
+    responderCantidad(it.ingrediente, nueva);
   }
 
   // La captura de señal: corregir es el mecanismo de aprendizaje, no un fallo.
@@ -411,63 +532,109 @@ export default function App() {
     actualizarPerfil((p) => aprenderDeCorreccion(p, ingrediente, nuevo, candidatos));
   }
 
-  function comprar() {
-    const vivos = (items ?? []).filter((it) => !it.fuera);
-    const comprados = vivos.filter(
-      (it) => subtotalDe(it, perfil) !== undefined && it.elegido?.encontrado
-    );
+  // El salto ocurrió: la compra pasa a ser un hecho del historial y la libreta
+  // se resuelve. Lo registramos al ABRIR el enlace, que es lo último que
+  // podemos observar: si paga o no, ya no es asunto nuestro y no lo fingimos.
+  function entregar() {
+    // Se compró lo que CRUZÓ, ni uno más. Antes dábamos por comprado todo lo
+    // que sumaba al total; ahora la única fuente de verdad es el enlace que la
+    // familia acaba de abrir. Lo que no cruzó no se resuelve de la libreta.
+    const cruzaron = new Set(entrega.viajan.map((v) => v.ingrediente));
+    const comprados = (items ?? []).filter((it) => cruzaron.has(it.ingrediente));
 
+    // El historial es HECHO, y el hecho es lo que cruzó: cantidades y montos de
+    // la entrega, no los del carrito. Si Wong vendió 800 g donde pediste 500,
+    // lo que pasó fueron 800 g — guardar 500 sería inventarle un recuerdo.
     const compra: CompraCerrada = {
       ts: Date.now(),
-      total,
-      lineas: comprados.map((it) => {
-        const u = it.elegido?.unidadVenta ?? "un";
-        const c = cantidadDe(it, perfil) ?? 1;
-        return {
-          nombre: it.elegido?.nombre ?? it.ingrediente,
-          cuenta: `${formatearCantidad(c, u)} × ${soles(it.elegido?.precio ?? 0)}${etiquetaUnitaria(u)}`,
-          monto: subtotalDe(it, perfil) ?? 0,
-        };
-      }),
+      total: totalEntrega,
+      lineas: entrega.viajan.map((v) => ({
+        nombre: v.nombre,
+        cuenta: `${formatearCantidad(v.cantidadQueCruza, v.unidad)} × ${soles(
+          v.precio ?? 0
+        )}${etiquetaUnitaria(v.unidad)}`,
+        monto: v.subtotalQueCruza ?? 0,
+      })),
     };
     void repositorioCompras.agregar(compra);
     setCompras((cs) => [compra, ...cs]);
 
-    // La libreta no se vacía: se resuelve. Sobrevive lo que no se compró.
+    // La libreta no se vacía: se resuelve. Sobrevive lo que no cruzó.
     const nueva = resolverCompra(libreta, comprados.map((it) => it.ingrediente));
     setLibreta(nueva);
     setUltimaCompra({ n: comprados.length, quedaron: nueva.lineas.length });
     setItems(null);
-    ir("hecho");
+    ir("entregado");
   }
 
   // ---------------------------------------------------------------------------
 
   const nPrefs = Object.keys(perfil.preferencias).length;
   const vacia = libreta.lineas.length === 0;
+  // Lo que se va a buscar de verdad: la libreta menos sus encabezados.
+  const aBuscar = libreta.lineas.filter((l) => !esContexto(l.texto));
   // Una libreta vacía la primera vez y una vacía porque acabas de comprar no son
   // el mismo vacío: una necesita que le enseñen el gesto, la otra es un logro.
   const primeraVez = vacia && compras.length === 0 && nPrefs === 0;
   const itemHoja = hoja ? items?.find((it) => it.ingrediente === hoja.ingrediente) : undefined;
 
+  const marco: React.CSSProperties = {
+    maxWidth: 460,
+    margin: "0 auto",
+    minHeight: "100dvh",
+    padding: "0 22px",
+    boxSizing: "border-box",
+    background: color.papel,
+  };
+
+  // Antes de saber quién entra no se pinta nada. El papel ya está, así que no
+  // hay parpadeo ni spinner: simplemente todavía no hay contenido.
+  if (!listo) return <main className="sc-papel" style={marco} />;
+
+  // La puerta. Solo la ve quien nunca ha entrado aquí.
+  if (!tieneCasa(casa))
+    return (
+      <main className="sc-papel" style={marco}>
+        <Bienvenida
+          onEntrar={(nombre) => {
+            const nueva = crearCasa(nombre);
+            setCasa(nueva);
+            void repositorioCasa.guardar(nueva);
+            // Sin foco automático: al entrar por primera vez, las cuatro formas
+            // de empezar tienen que verse antes que un teclado abierto.
+          }}
+        />
+      </main>
+    );
+
   return (
-    <main
-      className="sc-papel"
-      style={{
-        maxWidth: 460,
-        margin: "0 auto",
-        minHeight: "100dvh",
-        padding: "0 22px",
-        boxSizing: "border-box",
-        background: color.papel,
-      }}
-    >
+    <main className="sc-papel" style={marco}>
       {ruta === "libreta" && (
         <Pantalla
-          titulo="Casa"
-          casa={() => ir("casa")}
+          encabezado={
+            <Cabecera monograma={monograma(casa)} nombre={casa.nombre} onCasa={() => ir("casa")} />
+          }
+          navegacion={
+            <Navegacion
+              activo="lista"
+              cuantos={items?.filter((i) => !i.fuera).length}
+              onIr={(l) => ir(l === "lista" ? "libreta" : l)}
+            />
+          }
           cuerpo={
             <>
+              {/* ¿Qué es esto? · ¿Qué pasó desde la última vez? */}
+              <Resumen
+                nombre={saludo(casa)}
+                primeraVez={primeraVez}
+                novedad={{
+                  ultimaCompra: compras.length ? cuando(compras[0].ts).toLowerCase() : undefined,
+                  quedaron: libreta.lineas.filter((l) => l.quedo).length || undefined,
+                  aMedias: !!items,
+                  anotadas: libreta.lineas.length || undefined,
+                }}
+              />
+
               {libreta.lineas.map((l) =>
                 editando?.id === l.id ? (
                   <Compositor
@@ -490,10 +657,14 @@ export default function App() {
                 )
               )}
 
+              {/* La caja no prescribe un formato. "Escribe aquí tu lista de
+                  compras" hacía sentir que existe una forma correcta de
+                  escribir; el normalizador ya se encarga de interpretar, así que
+                  la interfaz no tiene por qué pedir nada. */}
               <Compositor
                 ref={compRef}
                 valor={borrador}
-                marcador={primeraVez ? "lo que se te acabó" : undefined}
+                marcador={vacia ? "escribe o pega lo que sea" : undefined}
                 onEscribir={setBorrador}
                 onEnter={() => {
                   if (anotarTexto(borrador)) setBorrador("");
@@ -501,29 +672,46 @@ export default function App() {
                 onPegar={alPegar}
               />
 
-              {/* Vaciar la libreta comprando no es lo mismo que no haber
-                  empezado nunca. Aquí el vacío es un logro, y se dice una vez.
-                  El único emoji de la aplicación; el chiste está en el "por
-                  ahora". */}
+              {/* Comprarlo todo no es lo mismo que no haber empezado nunca.
+                  Aquí el vacío es un logro, y se dice una vez. El único emoji de
+                  la aplicación; el chiste está en el "por ahora". */}
               {vacia && !primeraVez && <Lapiz>todo comprado 🎉 por ahora</Lapiz>}
 
-              {/* Las cuatro puertas, siempre. Estaban solo cuando la libreta
-                  estaba vacía, y eso dejaba `foto` y `menú` **inalcanzables** en
-                  cuanto se escribía una línea: no era una decisión de estilo,
-                  era una capacidad que se perdía. Siguen en lápiz y siguen sin
-                  navegar a ningún sitio: describen qué acepta este lienzo. */}
-              <Puertas
-                puertas={[
-                  { texto: "escribe", onClick: () => compRef.current?.focus() },
+              {/* Cuatro formas EQUIVALENTES de empezar. Ninguna es la principal:
+                  escribir aparece entre las otras tres y con el mismo peso, y no
+                  las encabeza ningún "también puedes" que las subordine. Las
+                  cuatro desembocan en la misma compra — cambia el gesto, no la
+                  tarea. */}
+              <Acciones
+                titulo={vacia ? "Puedes empezar por donde quieras:" : undefined}
+                acciones={[
                   {
-                    texto: "pega",
+                    clave: "escribir",
+                    icono: "✎",
+                    nombre: "Escribir",
+                    onClick: () => compRef.current?.focus(),
+                  },
+                  {
+                    clave: "pegar",
+                    icono: "⌘",
+                    nombre: "Pegar un mensaje",
                     onClick: () => {
                       compRef.current?.focus();
                       setAviso({ texto: "Pega aquí lo que sea: un WhatsApp, una lista, un menú." });
                     },
                   },
-                  { texto: "foto", onClick: () => archivoRef.current?.click() },
-                  { texto: "menú", onClick: () => setHojaMenus(true) },
+                  {
+                    clave: "foto",
+                    icono: "◫",
+                    nombre: "Importar una compra",
+                    onClick: () => archivoRef.current?.click(),
+                  },
+                  {
+                    clave: "menu",
+                    icono: "☰",
+                    nombre: "Cargar un menú",
+                    onClick: () => setHojaMenus(true),
+                  },
                 ]}
               />
 
@@ -532,42 +720,26 @@ export default function App() {
           }
           pie={
             <>
-              {/* El labio. Dice el estado real de la casa —una compra a medias,
-                  o cuándo fue la última— y si no hay nada que decir, calla.
-                  Nunca cuenta cuántas cosas hay anotadas: un número que sube es
-                  lo más parecido a una evaluación que puede tener esta pantalla. */}
-              {items ? (
-                <button
+              {/* ¿Cuál es el siguiente paso natural? Uno solo, y con el nombre
+                  de lo que va a pasar. Si hay una compra a medias, seguirla es
+                  el paso — volver a "hacer la compra" perdería las correcciones
+                  que ya hizo. */}
+              {items && (
+                <Boton
+                  variante="fantasma"
                   onClick={() => ir("compra")}
-                  className="sc-boton"
-                  style={{
-                    ...lapiz,
-                    display: "block",
-                    width: "100%",
-                    textAlign: "left",
-                    border: 0,
-                    background: "none",
-                    padding: "0 0 8px",
-                    minHeight: 32,
-                    cursor: "pointer",
-                    font: "inherit",
-                    color: color.lapiz,
-                  }}
+                  style={{ width: "100%", marginBottom: 8 }}
                 >
-                  tu compra está a medias · seguir donde la dejaste
-                </button>
-              ) : compras.length > 0 ? (
-                <div style={{ ...lapiz, paddingBottom: 8 }}>
-                  la última compra fue {cuando(compras[0].ts).toLowerCase()}
-                </div>
-              ) : null}
+                  Seguir con mi carrito
+                </Boton>
+              )}
 
               {/* ⚠️ Fantasma, jamás verde. Comprar no es un CTA: si el botón
                   grita, el producto deja de acompañar y empieza a empujar. */}
               <Boton
                 variante="fantasma"
                 onClick={() => ir("revision")}
-                disabled={vacia}
+                disabled={aBuscar.length === 0}
                 style={{ width: "100%" }}
               >
                 Hacer la compra
@@ -586,7 +758,11 @@ export default function App() {
               <p style={{ ...lapiz, margin: "0 0 12px" }}>
                 Esto es lo que voy a buscar. Quita lo que no quieras; nada se ha comprado todavía.
               </p>
-              {libreta.lineas.map((l) => (
+              {/* Aquí solo aparece lo que de verdad se va a buscar. El «Mami» y
+                  el «lista del mercado» del mensaje siguen escritos en la
+                  libreta —son suyos— pero prometer que los buscamos sería
+                  mentir, y una sola línea así delata al producto entero. */}
+              {aBuscar.map((l) => (
                 <Fila
                   key={l.id}
                   titulo={l.texto}
@@ -599,16 +775,16 @@ export default function App() {
                 />
               ))}
               {vacia && (
-                <Vacio titulo="Quitaste todo." texto="La libreta te espera igual." />
+                <Vacio titulo="Quitaste todo." texto="Tu compra te espera igual." />
               )}
             </>
           }
           pie={
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ ...lapiz, flex: 1 }}>
-                {libreta.lineas.length} {libreta.lineas.length === 1 ? "cosa" : "cosas"}
+                {aBuscar.length} {aBuscar.length === 1 ? "cosa" : "cosas"}
               </span>
-              <Boton variante="lleno" onClick={buscarPrecios} disabled={vacia}>
+              <Boton variante="lleno" onClick={buscarPrecios} disabled={aBuscar.length === 0}>
                 Buscar precios
               </Boton>
             </div>
@@ -618,8 +794,15 @@ export default function App() {
 
       {ruta === "compra" && (
         <Pantalla
-          titulo="Tu compra"
+          titulo="El carrito"
           onVolver={() => ir(items ? "revision" : "libreta")}
+          navegacion={
+            <Navegacion
+              activo="compra"
+              cuantos={items?.filter((i) => !i.fuera).length}
+              onIr={(l) => ir(l === "lista" ? "libreta" : l)}
+            />
+          }
           cuerpo={
             buscando ? (
               <PantallaCalma
@@ -629,11 +812,11 @@ export default function App() {
               />
             ) : !items ? (
               <Vacio
-                titulo="Aquí verás tu compra cuando la hagas."
-                texto="Se arma sola con lo que anotes en la libreta."
+                titulo="Aquí verás tu carrito cuando busques precios."
+                texto="Se arma sola con lo que vayas anotando."
                 accion={
                   <Boton variante="fantasma" onClick={() => ir("libreta")}>
-                    Ir a la libreta
+                    Ir a mi compra
                   </Boton>
                 }
               />
@@ -685,6 +868,16 @@ export default function App() {
                       confianza={it.fuera ? undefined : confianzaDe(it, perfil, estado)}
                       acciones={acciones}
                       atenuada={it.fuera}
+                      onCantidad={
+                        estado === "confirmado" && !it.fuera
+                          ? {
+                              menos: () => moverCantidad(it, -1),
+                              mas: () => moverCantidad(it, 1),
+                              abrir: () =>
+                                setHoja({ tipo: "cantidad", ingrediente: it.ingrediente }),
+                            }
+                          : undefined
+                      }
                     />
                   );
                 })}
@@ -716,8 +909,8 @@ export default function App() {
                       {soles(total)}
                     </span>
                   </span>
-                  <Boton variante="lleno" onClick={() => ir("confirmar")}>
-                    Comprar
+                  <Boton variante="lleno" onClick={() => ir("entregar")}>
+                    Llevar a Wong
                   </Boton>
                 </div>
               </>
@@ -726,58 +919,124 @@ export default function App() {
         />
       )}
 
-      {ruta === "confirmar" && (
+      {/* La entrega. NO es un checkout: es el traspaso. Aquí se enseña qué cruza
+          y qué no ANTES de saltar, porque descubrirlo del otro lado —en la web
+          de Wong, con la compra ya empezada— es donde se pierde la confianza. */}
+      {ruta === "entregar" && (
         <Pantalla
-          titulo="Confirmar"
+          titulo="Llevar a Wong"
           onVolver={() => ir("compra")}
           cuerpo={
             <>
+              <p style={{ lineHeight: 1.55, margin: "2px 0 16px", color: color.tinta }}>
+                Abro tu carrito en Wong con {entrega.viajan.length}{" "}
+                {entrega.viajan.length === 1 ? "producto" : "productos"} dentro. Pagas
+                allá, con tu cuenta de siempre. Nosotros no tocamos tu tarjeta.
+              </p>
+
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "flex-end",
-                  margin: "4px 0 18px",
+                  paddingBottom: 14,
+                  marginBottom: 14,
+                  borderBottom: `1px solid ${color.renglon}`,
                 }}
               >
-                <span style={rotulo}>Total</span>
-                <span style={{ ...plata, fontSize: 25, letterSpacing: "-0.03em" }}>{soles(total)}</span>
+                <span>
+                  <span style={{ ...rotulo, display: "block" }}>Lo que llevas</span>
+                  <span style={{ ...lapiz, fontSize: 12 }}>
+                    precios de la web de Wong · el total lo confirma tu tienda
+                  </span>
+                </span>
+                <span style={{ ...plata, fontSize: 25, letterSpacing: "-0.03em" }}>
+                  {soles(totalEntrega)}
+                </span>
               </div>
-              <Campo etiqueta="¿A dónde te lo llevamos?" placeholder="Av. Primavera 1234, Surco" />
-              <Campo etiqueta="¿Cuándo?" defecto="jueves, 9–11 h" />
-              <Campo etiqueta="Tu correo, para la boleta" tipo="email" placeholder="rosa@correo.com" />
-              <p style={{ ...lapiz, lineHeight: 1.55 }}>
-                Con esto queda creada tu cuenta. No te pedimos nada antes porque no hacía falta.
-              </p>
+
+              {/* Redondeos a la vista. Wong vende la trucha de 400 en 400 g: si
+                  pediste 500, cruzan 800. Siempre hacia arriba —quedarse corto
+                  no se arregla en la cocina— y jamás en silencio. */}
+              {ajustes.length > 0 && (
+                <div style={{ marginBottom: 14 }}>
+                  <Seccion>Lo que subí para que Wong pueda venderlo</Seccion>
+                  {ajustes.map((a) => (
+                    <p key={a.nombre} style={{ ...lapiz, margin: "4px 0" }}>
+                      {a.nombre}: pediste {a.pedida} · van {a.cruza} (Wong lo vende
+                      así)
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              {entrega.sequedan.length > 0 && (
+                <div>
+                  <Seccion>Esto no cruza</Seccion>
+                  {entrega.sequedan.map((s) => (
+                    <p key={s.nombre} style={{ ...lapiz, margin: "4px 0" }}>
+                      {s.nombre} — {s.motivo}. Sigue anotado.
+                    </p>
+                  ))}
+                </div>
+              )}
             </>
           }
           pie={
-            <Boton variante="lleno" onClick={comprar} style={{ width: "100%" }}>
-              Comprar
-            </Boton>
+            entrega.url ? (
+              // Un enlace de verdad, no un onClick: el salto lo da la familia y
+              // el navegador lo abre con SU sesión de Wong —su tienda, su zona,
+              // su login—. Por eso el enlace no fija política comercial: heredar
+              // su contexto es más correcto que imponerle uno nuestro.
+              <a
+                href={entrega.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={entregar}
+                style={{ textDecoration: "none", display: "block" }}
+              >
+                <Boton variante="lleno" style={{ width: "100%" }}>
+                  Abrir mi carrito en Wong
+                </Boton>
+              </a>
+            ) : (
+              <p style={{ ...lapiz, textAlign: "center" }}>
+                Todavía no hay nada que llevar.
+              </p>
+            )
           }
         />
       )}
 
-      {ruta === "hecho" && (
+      {/* Ya no decimos "compraste": no compró nada aquí. Decimos dónde está su
+          compra ahora y qué le falta hacer. El final del recorrido está en Wong,
+          no en esta pantalla. */}
+      {ruta === "entregado" && (
         <PantallaCalma
           estado="listo"
-          titulo={`Listo. Compraste ${ultimaCompra?.n ?? 0} ${
-            ultimaCompra?.n === 1 ? "cosa" : "cosas"
+          titulo={`Tu compra está en Wong: ${ultimaCompra?.n ?? 0} ${
+            ultimaCompra?.n === 1 ? "producto" : "productos"
           }.`}
           texto={
             (ultimaCompra?.quedaron ?? 0) > 0
-              ? "Lo que no compraste sigue anotado para la próxima. Tu libreta te espera igual."
-              : "Tu libreta quedó limpia."
+              ? "Termina el pago allá. Lo que no cruzó sigue anotado aquí para la próxima."
+              : "Solo te falta pagar allá. Tu libreta quedó limpia."
           }
-          accion={{ texto: "Volver a la libreta", onClick: () => ir("libreta") }}
+          accion={{ texto: "Volver a mi compra", onClick: () => ir("libreta") }}
         />
       )}
 
       {ruta === "casa" && (
         <Pantalla
-          titulo="La casa"
+          titulo={casa.nombre}
           onVolver={() => ir("libreta")}
+          navegacion={
+            <Navegacion
+              activo="casa"
+              cuantos={items?.filter((i) => !i.fuera).length}
+              onIr={(l) => ir(l === "lista" ? "libreta" : l)}
+            />
+          }
           cuerpo={
             nPrefs === 0 && compras.length === 0 ? (
               <Vacio
@@ -975,7 +1234,11 @@ function fraseDe(clave: string, pref: Preferencia): string {
   if (pref.marca && pref.formato) return `${cosa} es ${pref.marca}, ${pref.formato}`;
   if (pref.marca) return `${cosa} es ${pref.marca}`;
   if (pref.sensibilidadPrecio === "mas_barato") return `${cosa}, siempre lo más barato`;
-  if (pref.cantidadHabitual != null) return `${cosa}, ${pref.cantidadHabitual} de siempre`;
+  if (pref.cantidadHabitual != null)
+    return `${cosa}, ${formatearCantidad(
+      pref.cantidadHabitual,
+      pref.unidadHabitual ?? "un"
+    )} de siempre`;
   return cosa;
 }
 

@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { buscarEnWong, type ProductoWong } from "@/lib/wong";
+import { sinEncabezado } from "@/lib/libreta";
 
 type Menus = Record<string, { nombre: string; platos: string[] }>;
 type Recipes = Record<string, string[]>;
@@ -188,7 +189,11 @@ function cantidadAplicable(p: ProductoWong, pedido: Pedido): number | undefined 
 const SUFIJO_DE_VENTA = /\s+(?:x|por)\s+(?:kg|kilo|kilos|un|und|unid|unidad|unidades)\.?\s*$/i;
 
 export function terminoDeBusqueda(texto: string): string {
-  return texto.replace(SUFIJO_DE_VENTA, "").replace(/\s+/g, " ").trim() || texto.trim();
+  // Y por delante, el encabezado del mensaje: "mami compra 2 kg de pollo" se
+  // busca como "2 kg de pollo". Ver `sinEncabezado` — lista cerrada, solo al
+  // principio, y solo para BUSCAR: la línea escrita no se toca.
+  const sinCabeza = sinEncabezado(texto) || texto;
+  return sinCabeza.replace(SUFIJO_DE_VENTA, "").replace(/\s+/g, " ").trim() || texto.trim();
 }
 
 function unidadDelSufijo(texto: string): "kg" | "un" | undefined {

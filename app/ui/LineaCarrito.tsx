@@ -32,6 +32,7 @@ export default function LineaCarrito({
   acciones,
   mostrarPara,
   atenuada,
+  onCantidad,
 }: {
   ingrediente: string;
   producto?: ProductoWong;
@@ -42,6 +43,11 @@ export default function LineaCarrito({
   acciones?: { texto: string; onClick: () => void }[];
   mostrarPara?: boolean;
   atenuada?: boolean; // "dejarlo anotado": sigue a la vista, ya no compra
+  // Elegir el producto y decidir cuánto llevas son dos decisiones distintas, y
+  // la tarjeta permite las dos. Vale para TODO lo que se puede comprar, no solo
+  // para lo que se vende al peso: que algo venga envasado no significa que la
+  // familia lleve uno. (Encontrado usándolo, 2026-08-03.)
+  onCantidad?: { menos: () => void; mas: () => void; abrir: () => void };
 }) {
   const agotado = estado === "agotado";
 
@@ -91,25 +97,52 @@ export default function LineaCarrito({
           {producto?.nombre ?? ingrediente}
         </div>
 
-        {/* La multiplicación. Nunca el resultado a secas. */}
+        {/* La multiplicación. Nunca el resultado a secas. La cantidad es el
+            único número tocable: es la decisión que la familia sigue teniendo
+            en la mano después de que nosotros elegimos el producto. */}
         <div
           style={{
             ...lapiz,
             fontSize: 11.5,
-            marginTop: 2,
+            marginTop: 3,
             fontVariantNumeric: "tabular-nums",
             color: agotado ? color.ladrillo : color.lapiz,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            flexWrap: "wrap",
           }}
         >
-          {agotado
-            ? "hoy no hay en Wong"
-            : subtotal === undefined
-              ? `${producto?.precio != null ? soles(producto.precio) : "—"}${etiquetaUnitaria(
-                  producto?.unidadVenta ?? "un"
-                )} · falta la cantidad`
-              : `${cantidad != null ? formatearCantidad(cantidad, producto?.unidadVenta ?? "un") : "—"} × ${
-                  producto?.precio != null ? soles(producto.precio) : "—"
-                }${etiquetaUnitaria(producto?.unidadVenta ?? "un")}`}
+          {agotado ? (
+            "hoy no hay en Wong"
+          ) : subtotal === undefined ? (
+            `${producto?.precio != null ? soles(producto.precio) : "—"}${etiquetaUnitaria(
+              producto?.unidadVenta ?? "un"
+            )} · falta la cantidad`
+          ) : (
+            <>
+              {onCantidad ? (
+                <Contador
+                  texto={
+                    cantidad != null
+                      ? formatearCantidad(cantidad, producto?.unidadVenta ?? "un")
+                      : "—"
+                  }
+                  {...onCantidad}
+                />
+              ) : (
+                <span>
+                  {cantidad != null
+                    ? formatearCantidad(cantidad, producto?.unidadVenta ?? "un")
+                    : "—"}
+                </span>
+              )}
+              <span>
+                × {producto?.precio != null ? soles(producto.precio) : "—"}
+                {etiquetaUnitaria(producto?.unidadVenta ?? "un")}
+              </span>
+            </>
+          )}
         </div>
 
         {(producto?.marca || producto?.presentacion) && (
@@ -160,6 +193,96 @@ export default function LineaCarrito({
         {subtotal === undefined || agotado ? "—" : soles(subtotal)}
       </Monto>
     </Fila>
+  );
+}
+
+// El contador vive DENTRO de la multiplicación, no al lado: cambiar la cantidad
+// y ver cómo cambia la cuenta tienen que ser el mismo gesto. Los pasos son los
+// de la tienda (400 en 400 g la trucha), así que restar y sumar nunca produce
+// una cantidad que Wong no venda. El número central abre la hoja para escribir
+// cualquier otra — la salida abierta de toda pregunta cerrada.
+function Contador({
+  texto,
+  menos,
+  mas,
+  abrir,
+}: {
+  texto: string;
+  menos: () => void;
+  mas: () => void;
+  abrir: () => void;
+}) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 1,
+        border: `1px solid ${color.renglon}`,
+        borderRadius: 999,
+        background: color.blanco,
+        padding: 1,
+      }}
+    >
+      <Paso onClick={menos} etiqueta="Llevar menos">
+        −
+      </Paso>
+      <button
+        type="button"
+        onClick={abrir}
+        aria-label={`Cambiar cantidad, ahora ${texto}`}
+        style={{
+          ...plata,
+          border: "none",
+          background: "none",
+          cursor: "pointer",
+          color: color.tinta,
+          fontSize: 12,
+          minWidth: 42,
+          minHeight: 26,
+          padding: "0 2px",
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {texto}
+      </button>
+      <Paso onClick={mas} etiqueta="Llevar más">
+        +
+      </Paso>
+    </span>
+  );
+}
+
+function Paso({
+  children,
+  onClick,
+  etiqueta,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  etiqueta: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={etiqueta}
+      style={{
+        border: "none",
+        background: "none",
+        cursor: "pointer",
+        color: color.lapiz,
+        fontSize: 15,
+        lineHeight: 1,
+        width: 26,
+        height: 26,
+        borderRadius: 999,
+        display: "grid",
+        placeItems: "center",
+      }}
+    >
+      {children}
+    </button>
   );
 }
 

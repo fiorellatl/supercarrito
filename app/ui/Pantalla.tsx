@@ -14,17 +14,26 @@ export function Pantalla({
   titulo,
   onVolver,
   casa,
+  encabezado,
+  navegacion,
   cuerpo,
   pie,
 }: {
-  titulo: string;
+  titulo?: string;
   onVolver?: () => void;
   casa?: () => void; // el monograma: la única puerta a la casa
+  // El Home trae su propia cabecera (identidad + casa) y su propia navegación.
+  // Los lugares de dentro siguen con título y la misma flecha en la misma
+  // esquina: entrar es distinto en cada sitio, volver es siempre igual.
+  encabezado?: React.ReactNode;
+  navegacion?: React.ReactNode;
   cuerpo: React.ReactNode;
   pie?: React.ReactNode;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
+      {encabezado}
+      {!encabezado && (
       <header
         style={{
           display: "flex",
@@ -120,6 +129,7 @@ export function Pantalla({
           </button>
         )}
       </header>
+      )}
 
       <div className="sc-scroll" style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 1 }}>
         {cuerpo}
@@ -140,6 +150,8 @@ export function Pantalla({
           {pie}
         </div>
       )}
+
+      {navegacion}
     </div>
   );
 }

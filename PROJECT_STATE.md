@@ -1778,3 +1778,301 @@ carrito honesto → comprar → la libreta se resuelve.
 
 **Lo único que sigue sin backend es Confirmar:** es un formulario que no manda
 nada. Para las entrevistas sirve; para cobrar, no. Es deuda declarada, no olvido.
+
+---
+
+## 🔗 §C · Integración del Home en la aplicación real (2026-08-02)
+
+Sprint de integración, no de producto. Cero funcionalidades nuevas, cero
+hipótesis nuevas, cero rediseño. Solo conectar el Home con estado que **ya
+existía** y borrar duplicación.
+
+### Integrado
+
+| Qué | De dónde sale el dato |
+|---|---|
+| **Las cuatro puertas, siempre visibles** | — (arreglo de capacidad, ver abajo) |
+| **El labio: "tu compra está a medias · seguir donde la dejaste"** | `items !== null` — un carrito construido y no comprado |
+| **El labio: "la última compra fue hoy / hace dos semanas"** | `compras[0].ts` vía `cuando()` |
+| **"todo comprado 🎉 por ahora"** | `libreta` vacía **y** `compras.length > 0` |
+| **"lo que se te acabó"** | `primeraVez`: sin líneas, sin compras y sin perfil |
+| **`Fila`** — una sola fila para revisión, perfil, compras y boleta | sustituye cuatro bloques de estilos casi iguales |
+
+### 🐞 Capacidad perdida que la integración destapó
+
+`Puertas` se renderizaba solo con la libreta vacía (*"enseñan el gesto y se
+van"*). Consecuencia real: **en cuanto había una línea escrita, `foto` y `menú`
+quedaban inalcanzables** — dos de las cuatro puertas del producto, muertas
+después del primer uso. No era una decisión de estilo, era una funcionalidad que
+desaparecía. Ahora están siempre, en lápiz y sin navegar a ningún sitio.
+
+### Simplificado a propósito
+
+- **El labio no cuenta cuántas cosas hay anotadas.** El diseño de
+  `design/pantallas.html` ya lo había quitado: *un número que sube es lo más
+  parecido a una evaluación*. Dice el estado de la casa o calla.
+- **El eco (C1) no se implementó.** Requiere frecuencia de compra, que no existe
+  (dimensión 5, declarada sin lógica). Fingirlo sería inventar datos. Queda un
+  comentario en su sitio exacto de `app/page.tsx`.
+- **Ninguna barra de pestañas.** La navegación vigente es la de la aplicación:
+  Compra cuelga de la libreta, Casa detrás del monograma.
+
+### Backlog (encontrado integrando · NO implementado)
+
+1. **El carrito no se persiste.** Recargar a media compra pierde las
+   correcciones; la libreta sí sobrevive. Roza *"el trabajo del usuario no se
+   pierde jamás"*. Es el único hueco serio que queda.
+2. `design/prototipo-app.html` enseña una barra de pestañas que el producto ya no
+   tiene: como artefacto de diseño, hoy contradice la implementación.
+3. `/api/data` escribe al filesystem: no sobrevive un deploy serverless.
+4. `playwright` sigue en `package.json`.
+
+### Auditoría de cierre
+
+`npm run build` limpio (9 rutas) · `tsc --noEmit` limpio · sin componentes
+huérfanos en `app/ui/` · sin estilos de fila sueltos en `app/page.tsx` · flujo
+completo verificado contra Wong real con los cuatro estados del Home: día 1 ·
+con líneas · compra a medias · después de comprar.
+
+---
+
+## 🧷 Encabezados de mensaje: contexto, no productos (2026-08-03)
+
+Último arreglo antes de las entrevistas. Un solo bug, elegido porque no es de
+precisión sino de credibilidad.
+
+**El fallo.** Un WhatsApp real casi nunca empieza por un producto: empieza por a
+quién va dirigido («Mami») y por lo que se pide hacer («compra…», «lista del
+mercado»). Cada una de esas líneas viajaba al buscador como si fuera comida, y
+«Mami» volvía convertido en *Pizza Don Mamino*. Basta una para que la familia
+deje de creer que el producto entiende su mensaje.
+
+**La solución, deliberadamente pequeña.** `sinEncabezado()` en `lib/libreta.ts`:
+una lista cerrada de palabras que solo se quitan **al principio** de la línea y
+solo mientras se encadenen; en cuanto aparece cualquier otra cosa se para. No es
+un motor, no aprende y no toca el normalizador. Tres consecuencias:
+
+- `aPedidos()` no manda las líneas que son solo encabezado.
+- `terminoDeBusqueda()` busca «2 kg de pollo», no «mami compra 2 kg de pollo».
+- «Antes de comprar» solo enumera lo que de verdad se va a buscar. Prometer que
+  buscamos «Mami» y no hacerlo sería peor que el bug.
+
+**Lo que NO cambia:** la línea sigue escrita, literal, en la libreta. No se
+borra, no se corrige y no se le reprocha haber quedado pendiente al comprar.
+*Nunca ajustamos un dato del usuario en silencio.*
+
+**Fuera de la lista a propósito: «papa» y «papi».** En Perú *papa* es un producto
+semanal; confundirlo con un vocativo sería mucho peor que el fallo que estamos
+arreglando.
+
+Verificado: 16 casos en `sinEncabezado` (incluidos «papa», «papa amarilla» y
+«una piña», que deben sobrevivir intactos) y el flujo completo contra Wong real
+— pegar el mensaje de cinco líneas deja cinco líneas escritas, tres cosas por
+buscar y S/ 29.90 de tres productos correctos.
+
+---
+
+## 🚪 §D · La entrada al producto — rediseñada (2026-08-02)
+
+> **Decisión de la PO, explícita:** *"En este caso el producto está por encima
+> del diseño."* El Home reflejaba bien el estado interno pero no ayudaba a
+> entender qué es SuperCarrito. Se rediseña la entrada.
+
+### Tres principios de §4 quedan revertidos, a conciencia
+
+| Antes (§4) | Ahora | Por qué |
+|---|---|---|
+| *Ninguna pantalla aparece antes de la libreta* | **Bienvenida con identidad** | Un folio en blanco no explica nada a quien llega de cero |
+| *Sin bienvenida, sin títulos* | *"Te damos la bienvenida"* + *"Escribe aquí tu lista de compras"* | La primera pantalla decía **"Casa"**, que es el nombre de una pantalla, no el de un producto |
+| *🚫 Sin barra de pestañas* | **Mi lista · Mi compra · Mi casa** | La compra colgaba de un pie y la casa de un monograma: dos capacidades que solo encontraba quien ya sabía que estaban |
+
+Lo que **no** se tocó: lógica de negocio, Wong, extracción, normalización,
+libreta, perfil, historial, carrito y montos explicables.
+
+### Qué contesta el Home ahora, y con qué
+
+| Pregunta | Respuesta en pantalla |
+|---|---|
+| ¿Qué es esta aplicación? | Logo + *"Apunta lo que falta en casa y nosotros lo convertimos en tu compra de Wong, con precios de hoy"* |
+| ¿Qué puedo hacer aquí? | Cuatro botones con nombre: Pegar un mensaje · Subir una foto · Cargar un menú · Seguir escribiendo |
+| ¿Qué pasó desde la última vez? | `Resumen`, del estado real: compra a medias · cuándo compraste · qué quedó sin comprar |
+| ¿Cuál es el siguiente paso? | Un solo botón: *Hacer la compra*, o *Seguir mi compra* si quedó a medias |
+
+### Piezas nuevas
+
+`lib/casa.ts` (identidad: un nombre, sin contraseñas ni correo) ·
+`RepositorioCasa` · `Bienvenida` · `Logo` · `Cabecera` · `Navegacion` ·
+`Resumen` · `Acciones`. Eliminado `Puertas`, que `Acciones` sustituye.
+
+### ⚠️ Nota operativa para las entrevistas
+
+**Dos veces** el servidor de desarrollo quedó sirviendo *chunks* en 404 tras un
+error de compilación transitorio: la página se renderiza pero **no responde al
+teclado**. Si pasa en una entrevista: `rm -rf .next` y reiniciar. No es un fallo
+del producto y no aparece en el build de producción.
+
+### Backlog (no implementado)
+
+Cambiar el nombre de la casa desde *Mi casa* · el carrito sigue sin persistirse ·
+`design/*.html` describen un Home anterior a esta entrada.
+
+---
+
+## 🛒 §E · La salida del producto — entregar la compra a Wong (2026-08-03)
+
+Origen: **la PO usó el producto como usuaria** y encontró dos cosas. La primera,
+un fallo: la cantidad solo se podía editar en lo que se vende al peso. La
+segunda, estructural: *el recorrido terminaba antes de cumplir la promesa*.
+Decía «Compraste 3 cosas» cuando en realidad no se había comprado nada.
+
+### El North Star, en una frase de la PO
+
+> «En menos de dos minutos pasé de ideas sueltas a tener mi compra lista en Wong.»
+
+No somos una app de listas: somos un **acelerador de la compra semanal**. El
+final del recorrido no está en nuestra pantalla, está en el carrito de Wong.
+
+### Investigación de integración con Wong (hecha contra el Wong real, no en docs)
+
+| Mecanismo | Resultado |
+|---|---|
+| **Deep link `/checkout/cart/add?sku&qty&seller`** | ✅ **Vivo.** 302 → `/checkout/#/cart`. `sku`/`qty`/`seller` se repiten por producto. **Elegido.** |
+| API pública de Checkout (orderForm) desde servidor | ❌ Crear carrito: 200. Añadir ítems: **401**. Y la cookie de propiedad (`CheckoutOrderFormOwnership`, HttpOnly + SameSite=Strict) impide traspasar el carrito al navegador de la familia. Vía muerta por diseño. |
+| APIs de administración VTEX | 🔒 Exigen `appKey`/`appToken` emitidos por Wong: acuerdo comercial, no técnico. |
+| App móvil / «Mis listas» | ❌ Sin deep links públicos; las listas exigen login y no tienen API. |
+| Automatizar el checkout | 🚫 Línea roja: rompe «API antes que scraping» y tocaría las credenciales de la familia. |
+
+### ⚠️ Hallazgo que sigue abierto: el catálogo depende de la zona
+
+- `sc=1` no existe para la cuenta `wongio`; `sc=2` es un catálogo distinto y
+  reducido; `sc=3..20` no están disponibles. La búsqueda **sin `sc`** es la que
+  devuelve el catálogo real de supermercado con precios correctos.
+- El carrito rechaza los SKU de esa búsqueda: *«Seller no autorizado 1 con la
+  política comercial N»* / *«ítem no encontrado o no disponible»*.
+- En el propio wong.pe, pulsar AGREGAR **sin haber elegido tienda no añade
+  nada**, y Wong asigna la tienda **pidiendo el correo**:
+  *«Para asignarte una tienda, por favor ingresa tu mail»*.
+
+**Consecuencia:** la zona→catálogo **no es resoluble desde nuestro servidor**.
+Wong solo la resuelve dentro de una sesión identificada. Por eso el enlace **no
+envía `sc`**: se abre en el navegador de la familia y hereda SU sesión —su
+tienda, su zona, su login—, que es el único contexto correcto que existe.
+
+**Y por eso NO se implementó la pregunta de zona** que la PO había pedido para
+el momento de la entrega: hoy no podríamos usar la respuesta para nada
+—ni precios, ni disponibilidad, ni el enlace— y Wong volvería a preguntar lo
+mismo del otro lado. Preguntar algo que no podemos usar es exactamente lo que
+el producto no hace. Queda como decisión abierta para la PO.
+
+### Lo que se construyó
+
+1. **Cantidad editable en TODO lo que se puede comprar.** `cantidadDe` ya no
+   devuelve `1` fijo para lo envasado: `1` pasa a ser el valor por defecto más
+   honesto, y la línea trae un contador `− n +` con los pasos reales de la
+   tienda. El número central abre la hoja para escribir cualquier otra cantidad.
+2. **`lib/entrega.ts`** — contrato `EntregaEnTienda` + `wongDeepLink`. El
+   producto no conoce a Wong.
+3. **Pantalla «Llevar a Wong»**, que sustituye al checkout falso (dirección,
+   fecha, correo) y al «Compraste N cosas». Enseña **antes de saltar**: qué
+   cruza, qué no y por qué, y los redondeos.
+4. **Redondeo siempre hacia ARRIBA** con su monto recalculado. Quedarse corto no
+   se arregla en la cocina; y el total de la entrega es el que Wong va a cobrar,
+   no el del carrito (500 g de trucha que se vende de 400 en 400 son 800 g y
+   S/ 27.12, no S/ 16.95). **Encontrado en QA de esta misma implementación.**
+5. **El historial guarda lo que cruzó**, no lo que se pidió. El hecho es la
+   entrega.
+6. `Preferencia.unidadHabitual` — el perfil ya no guarda «0.5» sin mundo: ahora
+   se lee «Trucha, 500 g de siempre» y un hábito aprendido en kg no se aplica a
+   un producto que se vende por unidad.
+
+### Verificado en el navegador (extremo a extremo)
+
+Libreta → carrito → contador (3 × S/ 4.50 = S/ 13.50; `−` en 1 no baja a 0) →
+trucha 500 g → entrega: enlace
+`…/cart/add?sku=4155&qty=2&seller=1&sku=39343578&qty=1&seller=1`, total
+S/ 31.62, ajuste «pediste 500 g · van 800 g» → «Tu compra está en Wong» →
+historial S/ 31.62 y «Trucha, 500 g de siempre».
+
+### ⏸ Lo único que falta para cerrar el ciclo: una prueba humana de 5 minutos
+
+**No se pudo verificar que los productos aterricen de verdad en el carrito de
+una familia**, porque para probarlo hace falta una sesión de Wong identificada
+(correo + aceptar términos), y eso no lo hace el equipo por nadie. El enlace
+responde 302 y es el mecanismo documentado de VTEX, pero eso no es prueba.
+
+**Experimento pendiente (la PO, con su cuenta real de Wong):** abrir un enlace
+generado por el producto y mirar el carrito. Responde de una vez si toda la
+estrategia de salida se sostiene. Es más barato que cualquier cosa que podamos
+construir encima.
+
+### Métrica del North Star, ya medible
+
+**Segundos desde la primera tecla hasta el carrito lleno en Wong** ·
+**% de productos que sobreviven el salto** (`viajan` / anotados).
+
+---
+
+## F. Sprint 0 — Estabilización (2026-08-03)
+
+Objetivo: NO mejorar el producto, sino dejar una base limpia después de integrar
+el trabajo de dos sesiones en paralelo (rediseño visual + salida a Wong).
+
+### Estado de la base
+
+| Comprobación | Resultado |
+|---|---|
+| `npm run build` | ✅ exit 0 · compila, 9 páginas estáticas, `/` 16.2 kB (122 kB First Load) |
+| `npx tsc --noEmit` | ✅ exit 0 · sin errores |
+| `tsc --noUnusedLocals --noUnusedParameters` | ✅ sin imports ni variables sin usar |
+| Consola del navegador | ✅ sin errores en todo el recorrido |
+| Logs del servidor | ✅ sin errores |
+| Netlify | ✅ `netlify.toml` correcto (plugin-nextjs, `CATALOG_PROVIDER=wong`); `.gitignore` protege `.env*`, `.next/`, `*.tsbuildinfo` y las capturas reales |
+
+**La integración de las dos sesiones no dejó ningún error de compilación ni de
+tipos.** Es el resultado de que las dos trabajaran contra contratos (`sistema.ts`,
+`EntregaEnTienda`, `perfil-store`) y no contra las tripas de la otra.
+
+### Lo único que se corrigió
+
+- **`app/ui/Campo.tsx`: componente huérfano, eliminado.** Su único consumidor era
+  la pantalla `confirmar` (dirección/fecha/correo) que se borró al reemplazar el
+  checkout falso por la entrega a Wong. Además era no controlado (`defaultValue`,
+  sin `onChange`): no podía transportar dato alguno. Su CSS `.sc-campo` SÍ sigue
+  viva (Libreta, Bienvenida, HojaCantidad, /editar) y se conserva.
+
+Nada más: no había imports muertos, ni rutas inalcanzables (`libreta`, `revision`,
+`compra`, `entregar`, `entregado`, `casa`, `boleta` se alcanzan todas), ni estados
+imposibles detectables.
+
+### Recorrido completo verificado a mano
+
+Perfil limpio (`localStorage.clear()`) → bienvenida → «los Torres» → home →
+escribir «leche» → pegar un WhatsApp de 5 líneas → revisión (se pueden quitar) →
+carrito con precios reales de Wong → **subir cantidad de arroz a 2** (el paso se
+propaga al enlace: `sku=530&qty=2`) → **bajar el chocolate: se queda en 1, no
+baja a 0** → «Dejarlo anotado» devuelve la línea a la libreta → entrega («5
+productos», S/ 775.70, «esto no cruza») → enlace de 5 SKUs → «Tu compra está en
+Wong» → la libreta conserva solo lo que no cruzó → perfil («2 de siempre») →
+historial (S/ 775.70) → boleta (suma exacta). Menú semanal: se anota. Importar
+captura con una imagen ilegible: **degrada bien** («No pude leerla»), sin
+excepción ni error en consola.
+
+### 🗒 Backlog — encontrado durante la revisión, NO implementado
+
+1. ⚠️ **El ruido de un WhatsApp se convierte en compra cara.** `«gracias!»` →
+   *Cama El Cisne Munay + Sofá Cama, S/ 659.00*; `«2/8/2026] Mamá: compra por
+   favor»` → *Rompecabeza Disney*. `esContexto()` existe pero no filtra en la
+   revisión. Es el fallo más caro del producto hoy: el matcher siempre devuelve
+   algo, y «algo» a veces son S/ 659. **Prioridad alta.**
+2. **`«leche»` empareja con `Chocolate-con-Leche-Triangulo-29g`.** El matcher
+   premia la subcadena sobre el sustantivo principal.
+3. **La clave del ingrediente es la línea cruda.** El perfil aprendió «2 kg de
+   arroz» como ingrediente, así que la lección no se reutiliza si la próxima vez
+   escribe «arroz».
+4. **«2 de siempre» para unidades** debería decir «2 paquetes» o similar.
+5. **Partir por comas rompe las horas:** `«[10:03, 2/8/2026]»` se parte en dos.
+6. **`playwright` está en `dependencies` y no lo usa ningún archivo del código.**
+   Engorda el build de Netlify sin motivo.
+7. **`/api/data` escribe en el filesystem** (ya documentado): en Netlify no
+   persiste. `/editar` solo sirve en local.
+

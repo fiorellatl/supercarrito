@@ -5,7 +5,7 @@
 // Wong. Solo tipos y funciones. Esa es la condición para poder migrar el perfil
 // a un backend sin tocar nada de esta lógica (ver lib/perfil-store.ts).
 
-import type { ProductoWong } from "@/lib/catalog";
+import type { ProductoWong, UnidadVenta } from "@/lib/catalog";
 
 // --- Las dimensiones que aprendemos -----------------------------------------
 // marca · formato · sensibilidad al precio · sustituciones · frecuencia
@@ -35,6 +35,9 @@ export type Preferencia = {
   // producto se vende al peso y no tenemos la respuesta: sin ella no podríamos
   // calcular un total honesto. Una vez respondida, no se vuelve a preguntar.
   cantidadHabitual?: number;
+  // En qué unidad se aprendió. Sin esto, "0.5" es un número sin mundo: no se
+  // puede escribir como "500 g" ni saber si sirve para el producto de hoy.
+  unidadHabitual?: UnidadVenta;
 
   skuElegido?: string;
   vecesConfirmada: number; // 3 = alta confianza ("deja de preguntar")
@@ -211,7 +214,8 @@ export function aprenderDeCorreccion(
 export function aprenderCantidad(
   perfil: Perfil,
   ingrediente: string,
-  cantidad: number
+  cantidad: number,
+  unidad?: UnidadVenta
 ): Perfil {
   const k = clave(ingrediente);
   const previa = perfil.preferencias[k];
@@ -225,6 +229,7 @@ export function aprenderCantidad(
     }),
     ingrediente: k,
     cantidadHabitual: cantidad,
+    unidadHabitual: unidad ?? previa?.unidadHabitual,
     actualizado: new Date().toISOString(),
   };
 
