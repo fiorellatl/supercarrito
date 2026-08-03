@@ -11,6 +11,8 @@
 //   · Al comprar la libreta no se vacía: se RESUELVE. Lo comprado se va; lo que
 //     no, se queda con la marca de por qué sigue ahí.
 
+import { naturalezaDe, type Lectura } from "@/lib/contexto";
+
 export type OrigenLinea = "escrita" | "pegada" | "captura" | "menu";
 
 export type Linea = {
@@ -24,6 +26,9 @@ export type Linea = {
   unidad?: "kg" | "un";
   // Sobrevivió a una compra anterior. Se dice en lápiz, sin fecha y sin reproche.
   quedo?: boolean;
+  // El veredicto de la familia sobre una línea dudosa. `undefined` = todavía no
+  // se lo hemos preguntado; nunca se rellena solo.
+  esCompra?: boolean;
 };
 
 export type Libreta = { version: 1; lineas: Linea[] };
@@ -47,66 +52,31 @@ export function partir(texto: string): string[] {
     .filter(Boolean);
 }
 
-// --- Encabezados: contexto, no productos -------------------------------------
-//
-// Un mensaje de WhatsApp casi nunca empieza por un producto. Empieza por a quién
-// va dirigido y por lo que se pide hacer:
-//
-//   «Mami                         →  esto no es un producto
-//    compra 2 kg de pollo          →  el producto es "2 kg de pollo"
-//    lista del mercado             →  esto no es un producto
-//    aceite»
-//
-// Sin esto, "mami" viaja al buscador como si fuera comida y vuelve con una
-// pizzería. No es un fallo de precisión: es el momento exacto en el que la
-// familia deja de creer que el producto entiende su mensaje.
-//
-// Es una lista cerrada de palabras, no un motor: solo se quitan si van AL
-// PRINCIPIO y solo mientras se encadenen. En cuanto aparece cualquier otra cosa
-// —un número, un producto— se para y el resto se respeta letra por letra.
-//
-// Fuera de la lista a propósito: **papa** y **papi**. En Perú "papa" es un
-// producto que se compra todas las semanas, y confundirlo con un vocativo sería
-// mucho peor que el fallo que estamos arreglando.
-const ENCABEZADO = new Set([
-  "mami", "mama", "mamá", "mamita", "mamacita", "hija", "hijita", "hijo", "hijito",
-  "amor", "hola", "buenas", "oye", "oiga", "porfa", "porfis", "please", "urgente",
-  "compra", "compras", "cómprame", "comprame", "comprar", "compre", "compremos",
-  "trae", "tráeme", "traeme", "traer", "necesito", "necesitamos", "falta", "faltan",
-  "acuérdate", "acuerdate", "recuerda", "anota", "apunta",
-  "lista", "listita", "mercado", "súper", "super", "supermercado", "encargo", "pedido",
-]);
+// Separar la compra de la conversación vive en `lib/contexto.ts`: es una
+// decisión con reglas propias y merecía su casa. Se re-exporta desde aquí
+// porque, para el resto del producto, sigue siendo «lo que sabe la libreta».
+export { esContexto, naturalezaDe, sinEncabezado } from "@/lib/contexto";
+export type { Lectura, Naturaleza } from "@/lib/contexto";
 
-// Solo se descartan DESPUÉS de haber quitado un encabezado. "el pollo" a secas
-// se respeta; "cómprame el pollo" sí puede perder su "el".
-const RELLENO = new Set(["de", "del", "la", "el", "los", "las", "para", "por", "favor", "que", "hay", "me", "nos", "un", "una", "y"]);
-
-const desnudo = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-const ENCABEZADO_PLANO = new Set([...ENCABEZADO].map(desnudo));
-const RELLENO_PLANO = new Set([...RELLENO].map(desnudo));
-
-// Devuelve la línea sin su encabezado. Si no queda nada, la línea ERA el
-// encabezado. Nunca modifica lo que la familia ve: solo lo que se busca.
-export function sinEncabezado(texto: string): string {
-  const palabras = (texto ?? "").trim().split(/\s+/).filter(Boolean);
-  let i = 0;
-  let corte = 0;
-  while (i < palabras.length) {
-    const p = desnudo(palabras[i].replace(/[.,:;!¡?¿]+$/, ""));
-    if (ENCABEZADO_PLANO.has(p)) {
-      i++;
-      corte = i;
-    } else if (corte > 0 && RELLENO_PLANO.has(p)) {
-      i++;
-    } else break;
-  }
-  return palabras.slice(corte === 0 ? 0 : i).join(" ").trim();
+// Qué es esta línea, contando lo que la familia haya dicho de ella.
+//
+// Una regla es una sospecha; `esCompra` es un hecho. Cuando la familia se toma
+// la molestia de decirnos «esto sí es una compra», ninguna lista de palabras
+// tiene autoridad para contradecirla —ni ahora ni la próxima semana—.
+export function lecturaDe(linea: Linea): Lectura {
+  if (linea.esCompra === true) return { naturaleza: "compra", motivo: "" };
+  if (linea.esCompra === false)
+    return { naturaleza: "contexto", motivo: "dijiste que no era una compra" };
+  return naturalezaDe(linea.texto);
 }
 
-// Una línea que es solo encabezado se queda escrita —es suya— pero no se busca,
-// no suma y no se le reprocha haber quedado pendiente.
-export function esContexto(texto: string): boolean {
-  return sinEncabezado(texto) === "";
+// La familia responde a la duda. Es la única señal que necesitamos para no
+// volver a preguntarlo por esta línea.
+export function marcarCompra(libreta: Libreta, id: string, esCompra: boolean): Libreta {
+  return {
+    ...libreta,
+    lineas: libreta.lineas.map((l) => (l.id === id ? { ...l, esCompra } : l)),
+  };
 }
 
 export function anotar(
@@ -159,15 +129,21 @@ export function resolverCompra(libreta: Libreta, compradas: string[]): Libreta {
     ...libreta,
     lineas: libreta.lineas
       .filter((l) => !fuera.has(l.texto.trim().toLowerCase()))
-      .map((l) => (esContexto(l.texto) ? l : { ...l, quedo: true })),
+      // Solo lo que de verdad íbamos a comprar puede «quedar pendiente». Al
+      // contexto y a lo dudoso no se les reprocha nada: nunca prometimos
+      // buscarlos.
+      .map((l) => (lecturaDe(l).naturaleza === "compra" ? { ...l, quedo: true } : l)),
   };
 }
 
 // Lo que se manda al motor. Una línea es una línea: no se agrupa, no se ordena
 // y no se reescribe.
+//
+// Sale SOLO lo que es una compra. Lo dudoso se queda en tierra hasta que la
+// familia lo confirme: preguntar por «gracias» es lo que devolvía un sofá cama.
 export function aPedidos(libreta: Libreta) {
   return libreta.lineas
-    .filter((l) => !esContexto(l.texto))
+    .filter((l) => lecturaDe(l).naturaleza === "compra")
     .map((l) => ({
       texto: l.texto,
       ...(l.cantidad != null ? { cantidad: l.cantidad, unidad: l.unidad } : {}),

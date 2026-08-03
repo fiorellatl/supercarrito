@@ -51,8 +51,9 @@ import {
   aPedidos,
   deshacerUltimoBloque,
   editar,
-  esContexto,
+  lecturaDe,
   libretaVacia,
+  marcarCompra,
   origenLegible,
   partir,
   quitar,
@@ -571,8 +572,13 @@ export default function App() {
 
   const nPrefs = Object.keys(perfil.preferencias).length;
   const vacia = libreta.lineas.length === 0;
-  // Lo que se va a buscar de verdad: la libreta menos sus encabezados.
-  const aBuscar = libreta.lineas.filter((l) => !esContexto(l.texto));
+  // Lo que se va a buscar de verdad: la libreta menos la conversación. Lo que no
+  // se busca no desaparece —se enseña aparte, con el motivo—, porque una línea
+  // que se ignora en silencio es indistinguible de una línea que se perdió.
+  const aBuscar = libreta.lineas.filter((l) => lecturaDe(l).naturaleza === "compra");
+  const noSeBusca = libreta.lineas
+    .map((l) => ({ linea: l, lectura: lecturaDe(l) }))
+    .filter(({ lectura }) => lectura.naturaleza !== "compra");
   // Una libreta vacía la primera vez y una vacía porque acabas de comprar no son
   // el mismo vacío: una necesita que le enseñen el gesto, la otra es un logro.
   const primeraVez = vacia && compras.length === 0 && nPrefs === 0;
@@ -774,6 +780,34 @@ export default function App() {
                   }
                 />
               ))}
+              {/* La otra mitad de la honestidad: enseñar lo que NO vamos a
+                  buscar, decir por qué, y dejar la puerta abierta. Preferimos
+                  preguntar por una línea rara a devolver un sofá cama porque
+                  alguien escribió «gracias». */}
+              {noSeBusca.length > 0 && (
+                <div style={{ marginTop: 26 }}>
+                  <p style={{ ...rotulo, margin: "0 0 8px" }}>ESTO NO PARECE COMPRA</p>
+                  <p style={{ ...lapiz, margin: "0 0 12px" }}>
+                    Lo dejo anotado sin buscarlo. Si me equivoqué, dímelo.
+                  </p>
+                  {noSeBusca.map(({ linea, lectura }) => (
+                    <Fila
+                      key={linea.id}
+                      titulo={linea.texto}
+                      nota={lectura.motivo}
+                      derecha={
+                        <Boton
+                          variante="fantasma"
+                          chico
+                          onClick={() => setLibreta((lb) => marcarCompra(lb, linea.id, true))}
+                        >
+                          Sí es compra
+                        </Boton>
+                      }
+                    />
+                  ))}
+                </div>
+              )}
               {vacia && (
                 <Vacio titulo="Quitaste todo." texto="Tu compra te espera igual." />
               )}

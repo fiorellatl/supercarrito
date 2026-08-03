@@ -2076,3 +2076,89 @@ excepción ni error en consola.
 7. **`/api/data` escribe en el filesystem** (ya documentado): en Netlify no
    persiste. `/editar` solo sirve en local.
 
+
+---
+
+## G. Separar la compra de la conversación (2026-08-03)
+
+**Origen:** el fallo nº 1 del backlog del Sprint 0. Pegar un WhatsApp normal y
+que `«gracias!»` volviera convertido en *Cama El Cisne Munay + Sofá Cama,
+S/ 659.00*. No es un fallo de precisión: es el momento en que la familia deja de
+creer que el producto entiende lo que le escribe.
+
+**El objetivo NO era mejorar el matching.** Era dejar de preguntarle al buscador
+por cosas que no son compras. Un buscador siempre devuelve algo; la culpa era de
+la pregunta, no de la respuesta.
+
+### La decisión de diseño: tres naturalezas, no dos
+
+Hasta hoy toda línea era **producto** o **encabezado**, y lo que no encajaba en
+encabezado se iba al buscador **por descarte**. Ese «por descarte» era el fallo.
+
+| Naturaleza | Qué pasa |
+|---|---|
+| `compra` | se busca |
+| `contexto` | no se busca, se enseña con su motivo, y **no se le reprocha** haber quedado pendiente |
+| `duda` | **no se busca sin preguntar antes** |
+
+La pieza que faltaba era el «no sé». Ante el empate, gana no buscar: una línea
+que no encontramos deja a la familia donde estaba; una línea inventada de S/ 659
+le enseña que no la entendemos.
+
+### Cómo, sin abrir un motor de NLP
+
+`lib/contexto.ts` — una lista cerrada de palabras y un puñado de formas
+reconocibles, en el mismo sitio que el normalizador que ya existía
+(`sinEncabezado`, que se movió aquí; `lib/libreta.ts` lo re-exporta). Cuando la
+regla se equivoque, se ve por qué.
+
+- **Formas imposibles de comprar** → contexto: hora (`[10:03`), fecha
+  (`2/8/2026]…`), enlace, correo, teléfono, solo emojis.
+- **Fórmulas de conversación** (lista cerrada, solo si son la línea entera):
+  gracias, ok, listo, dale, besos, buenas noches, jaja…
+- **Sospechas** → duda: termina en `?`, o más de 6 palabras sin una sola cifra.
+
+Detalles que importan:
+- La fecha exige **tres** grupos, para que `1/2 kg de queso` siga siendo queso.
+- La cortesía se juzga **sin encabezado**: «porfa gracias» es tan poco producto
+  como «gracias».
+- «gracias» dentro de una línea larga no descarta nada: solo cuenta la línea
+  entera.
+
+### La salida abierta (§ «toda pregunta cerrada tiene salida abierta»)
+
+Lo que no se busca **no desaparece en silencio** —eso sería indistinguible de
+perder el trabajo de la familia—. La pantalla de revisión, que ya existía, gana
+un bloque **«ESTO NO PARECE COMPRA»** con el motivo de cada línea y un botón
+**«Sí es compra»**. Ese veredicto se guarda en la línea (`esCompra`) y **manda
+sobre cualquier regla**, para siempre: una regla es una sospecha, `esCompra` es
+un hecho. Cero pantallas nuevas.
+
+### Verificado (perfil vacío, catálogo real de Wong)
+
+Pegado un WhatsApp con 10 líneas: 3 compras, 1 pregunta, 6 ruidos.
+
+- **Al buscador van 3.** Antes iban 10.
+- Los 7 restantes se enseñan con su motivo: *«es la hora del mensaje»*, *«es la
+  fecha del mensaje»*, *«es una fórmula de conversación»*, *«es un número de
+  teléfono»*, *«no dice nada que se pueda comprar»*, *«parece una frase, no un
+  producto»*.
+- **«¿compramos pollo?» → «Sí es compra»** la mueve arriba y la busca: *Filete de
+  Pechuga de Pollo x kg*, pendiente de cantidad.
+- **Carrito: S/ 65.60.** Antes, con el mismo mensaje: **S/ 775.70**, de los
+  cuales S/ 659.00 eran un sofá cama que nadie pidió.
+- Tras comprar, solo «¿compramos pollo?» lleva *«quedó de la semana pasada»*. Las
+  7 líneas de conversación se quedan calladas: nunca prometimos buscarlas.
+
+`npm run build` exit 0 · `tsc --noEmit` exit 0 · sin imports ni variables sin
+usar · consola limpia.
+
+### Lo que sigue sin resolverse (backlog)
+
+- `«leche»` sigue emparejando con `Chocolate-con-Leche-Triangulo-29g`. Eso es
+  matching, y este sprint no lo tocó a propósito.
+- La clave del ingrediente sigue siendo la línea cruda («2 kg de arroz»).
+- El `esCompra` de una línea **no se aprende entre compras**: si la próxima
+  semana vuelve a escribir la misma frase, se le vuelve a preguntar. Llevarlo al
+  perfil es una decisión de producto, no un descuido.
+
