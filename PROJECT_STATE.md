@@ -1,7 +1,12 @@
 # PROJECT_STATE — SuperCarrito
 
 > Memoria permanente del proyecto. Se actualiza al cerrar cada ciclo.
-> Última actualización: 2026-08-01 — ciclo de importación por captura cerrado:
+> **Última actualización: 2026-08-02 — la arquitectura ARQ-3 está IMPLEMENTADA en
+> la aplicación real y lista para entrevistas. Ver §A al final.** Cambio de modo
+> de la PO: se prioriza aprendizaje sobre perfección; se decide y se construye,
+> y lo que solo puede responder un usuario se lleva a la entrevista.
+>
+> Histórico — 2026-08-01: ciclo de importación por captura cerrado:
 > montos explicables, pasada de UX, benchmark de modelo/estrategia (Sonnet 5 +
 > `completar`), pipeline de búsqueda con matiz, `DEBUG_MATCHING` para
 > investigación. **Listo para pruebas con usuarios.**
@@ -1238,6 +1243,71 @@ COMPRA" · cualquier pantalla que aparezca **antes** de la libreta.
 
 ---
 
+## 🪡 El diseño deja de ser exploración (2026-08-03)
+
+**Un solo SuperCarrito.** El prototipo y la aplicación dejan de ser dos cosas.
+`design/app.html` pasa a ser la **especificación visual oficial del MVP**: si el
+código y ese documento discrepan, cambia el código.
+
+### Cómo está construido ahora
+
+`app/ui/` es el sistema, y cada pieza existe **una sola vez**:
+
+`sistema.ts` (color · tipografía · renglón · tiempos) · `sistema.css` (keyframes,
+papel, foco) · `Boton` · `Sello` · `Foto` · `Hoja` · `HojaCantidad` ·
+`HojaOpciones` · `LineaCarrito` · `Libreta` (línea, compositor, puertas) ·
+`Pantalla` (+ `Vacio`, `Seccion`) · `PantallaCalma` · `Aviso` · `Campo`.
+
+`app/page.tsx` pasó de **1365 a ~980 líneas** y ya no contiene **ni un solo
+color**: orquesta estado y reglas, nada más. Se borraron `RevisionCaptura.tsx`
+(su papel es ahora la pantalla *Antes de comprar*) y dos componentes muertos.
+
+### Decisiones de esta integración
+
+- **Fuera la barra de pestañas.** Contradecía el sistema visual —*«una barra
+  inferior convierte una libreta en una app»*—. Todo cuelga de la libreta: la
+  compra hacia abajo, la casa detrás del monograma, y **siempre se vuelve con la
+  misma flecha en la misma esquina**.
+- **La pregunta de cantidad y las alternativas suben en hoja**, no en la tarjeta.
+  Elegir comida es visual, y a 12 px cuatro arroces son cuatro filas idénticas.
+- **`window.prompt` fuera.** La salida abierta de *«otra cantidad»* es ahora un
+  campo real dentro de la hoja. Un diálogo del navegador es la señal más barata
+  de que algo es un prototipo.
+- **Lo pendiente vale un guion, nunca `S/ 0.00`.** Un cero al lado de su propia
+  multiplicación es un monto que ya no se puede explicar.
+- **Lo agotado se atenúa y lleva sello**, no se tacha ni se esconde.
+- **La libreta persiste** (`lib/libreta.ts` + `repositorioLibreta`). Sin esto,
+  *«volver una semana después»* no se puede enseñar en una entrevista. Al comprar
+  la libreta no se vacía: se **resuelve**, y lo que no se compró se queda con su
+  *«quedó de la semana pasada»* — sin fechas dentro del texto de la familia.
+- **Wong real por defecto** (`lib/wong.ts`) y `netlify.toml` con el plugin de
+  Next: que producción use datos reales deja de depender de que alguien recuerde
+  poner una variable en un panel. La degradación a FakeWong ya existía.
+
+### 🐞 Arreglado antes de enseñarlo
+
+**Corregir una línea la borraba.** Al tocar una línea para editarla, vaciar el
+campo para reescribirla —el gesto más normal del mundo— aplicaba `editar()` con
+texto vacío, que equivale a `quitar()`: la línea desaparecía a media corrección y
+lo que se escribía después caía sobre un id que ya no existía. Rompía §4 *«el
+trabajo del usuario no se pierde jamás»* en el gesto más común de todos. Ahora el
+texto vive en el estado de la edición y **solo se aplica al cerrar**.
+
+### 🟡 Diferencias con el diseño, a propósito
+
+- **Sin esqueleto de carga entre líneas.** Pegar es síncrono (no hay red) y la
+  captura ocupa la pantalla de calma. No hay ningún momento donde ese esqueleto
+  tenga sentido; dejarlo sería código muerto.
+- **La libreta se resuelve comparando textos**, así que una línea cuyo texto no
+  coincide con el ingrediente extraído (*«maracuyá para el jugo»* → `maracuyá`)
+  sobrevive a la compra aunque sí se comprara. Falla del lado seguro —nunca borra
+  de más—. Arreglarlo exige que el carrito devuelva el id de la línea de origen,
+  y eso es tocar el modelo: **queda fuera a propósito**.
+- **`/editar` solo se alcanza por URL.** No cuelga de la libreta ni del
+  monograma: es trastienda, y *«cuenta y ayuda»* va lo más lejos posible.
+
+---
+
 ## 🧊 Congelación para entrevistas — MVP demostrable (2026-08-02)
 
 **Cierre de la fase de construcción.** A partir de este punto no se construye:
@@ -1535,3 +1605,176 @@ no el matching. Los cuatro roles replantean el roadmap completo.
     para el prototipo.** La libreta es el Home. El primer contacto es la compra.
 12. ~~¿"Una sola boca" o "una sola intención"?~~ ✅ **Una sola intención.** La
     filosofía obliga a no clasificar la evidencia; no obliga a un único gesto.
+
+---
+
+## 🏗 §A · La aplicación real — ARQ-3 implementada (2026-08-02)
+
+> **Cambio de modo de la PO (2026-08-02):** se acabaron los sprints de
+> exploración. *"Construir la mejor versión que podamos probar, no la mejor que
+> podamos imaginar."* Ante dos soluciones razonables que no rompen ningún
+> principio, se elige una, se anota la hipótesis y se sigue. Lo que solo puede
+> responder una familia **no bloquea**: se lleva a la entrevista.
+
+### Decisiones tomadas y ya construidas (no se re-litigan; se falsan con familias)
+
+| # | Decisión | Estado |
+|---|---|---|
+| 21 | **Barra inferior de tres lugares** — Libreta · Compra · Casa, por propósito y nunca por tipo de evidencia. Revierte el *"sin barra de pestañas"* de `design/app.html`. | ✅ construida |
+| 22 | **Revisión sobrevive** como frontera antes de buscar precios. Cada línea dice de dónde vino. Se elimina si nadie la usa en 5 entrevistas. | ✅ construida |
+| 23 | **La cuenta bajo *Compra*** existe, en lápiz, sin badge ni color. | ✅ construida |
+| 24 | **El login vive en Confirmar**, no al abrir. La cuenta nace al pedir dirección y correo, que hacen falta igual. | ✅ construida (formulario; sin backend) |
+| — | **Las cuatro puertas son gestos, no pestañas:** `escribe · pega · foto · menú` bajo el renglón. La familia nunca clasifica su evidencia. | ✅ construida |
+| — | **La normalización pasa a ser por LÍNEA**, no por mensaje. Es lo que hace real *"cuatro puertas, un solo motor"*: en la misma libreta conviven una lista, un menú, una receta y lo leído de una captura. `comprarLibreta()` en `lib/cart.ts`. | ✅ construida |
+| — | **La libreta se resuelve al comprar, no se vacía.** Lo comprado se va; lo demás sobrevive marcado `quedo` → *"quedó de la semana pasada"*. | ✅ construida |
+| 9 | **¿Persona o casa?** Se asume **una libreta por dispositivo** para poder salir a entrevistar. No es la respuesta, es la versión probable. | ⏸ se decide con evidencia |
+
+### 🐞 Defecto encontrado al integrar (y por qué importa)
+
+`extraerNumeroMenu()` tomaba **el primer número del texto**. Con el chat era
+tolerable —todo el mensaje era una intención—, pero con la libreta cada línea se
+normaliza sola y las líneas traen cantidades constantemente: **"2 kg de pollo"
+se convertía en el menú 2 y expandía la semana entera, en silencio.** Ahora exige
+la palabra `menú`. Es exactamente la clase de fallo que ningún documento de
+arquitectura habría encontrado y que la primera entrevista habría hecho
+inservible.
+
+### Mapa de archivos nuevos y tocados
+
+| Archivo | Rol |
+|---|---|
+| `lib/libreta.ts` | **Nuevo.** Modelo puro: partir por cualquier separador, anotar, editar, quitar, deshacer un pegado, `resolverCompra()`. Cero React, cero almacenamiento. |
+| `lib/perfil-store.ts` | `RepositorioLibreta` y `RepositorioCompras` junto a perfil e historial. Sigue siendo **la única pieza que sabe de almacenamiento**. |
+| `lib/cart.ts` | `comprarLibreta()` — normaliza línea a línea y une; dedupe silencioso (repetir no es un error). Arreglado `extraerNumeroMenu()`. |
+| `app/api/chat/route.ts` | Acepta `lineas` (entrada normal), y conserva `lista` y `mensaje`. |
+| `app/page.tsx` | **Reescrito.** Las siete pantallas: Libreta · Revisión · Compra · Confirmar · Hecho · Casa · Boleta. Sistema visual aprobado, sin dependencias nuevas. |
+| `app/layout.tsx` | Papel de fondo, tipografía redondeada, las dos únicas animaciones. |
+| `app/RevisionCaptura.tsx` | **Huérfano:** la captura entra ahora directa a la libreta. Se borra cuando la PO confirme que no lo quiere de vuelta. |
+
+### Verificado en el navegador (no en teoría)
+
+Escribir · separadores mezclados (`"2 kg de pollo, arroz"` → dos líneas) ·
+persistencia tras recargar · Hacer la compra → Revisión con el origen de cada
+línea → Buscar precios → carrito · corregir un producto y que **el perfil
+aprenda** (*"Leche es Laive"* aparece en Casa) · comprar · **la libreta queda con
+lo no comprado y su *"quedó de la semana pasada"*** · Casa con lo aprendido y la
+compra · boleta con la multiplicación conservada · Compra vacía explicando el
+modelo mental. `tsc --noEmit` limpio.
+
+### Lo que falta para una entrevista de verdad
+
+1. **Decisión 17, sigue bloqueando:** qué pasa cuando el primer producto es el
+   equivocado. Con `CATALOG_PROVIDER=fake` no se ve; con Wong real, `leche`
+   devuelve chocolates. **Es el primer riesgo del guion, no un detalle.**
+2. Confirmar no tiene backend: es un formulario que no manda nada.
+3. El eco (C1) no está construido. Es lo que da razón para volver un martes.
+
+### Qué observar en las cinco entrevistas
+
+Si al abrir escribe o busca un menú · si usa algún gesto además de escribir
+(**si nadie pega, fotografía ni carga menú, la fila de gestos es decoración**) ·
+si entiende que hay tres lugares o solo ve la libreta · si vuelve entre semana
+sin que se lo pidamos (**HD-16, la que decide el producto**) · si abandona en
+Confirmar · y si al ver Casa dice que perdería algo al irse (H6).
+
+---
+
+## 🧊 §B · Producto congelado — listo para entrevistas (2026-08-02)
+
+> **Las decisiones 21–24 quedan IMPLEMENTADAS, no cerradas.** Siguen así hasta
+> que las entrevistas demuestren lo contrario. A partir de aquí: **no más cambios
+> de UX, no más arquitectura, no más pantallas.** Toda mejora futura exige
+> observaciones repetidas en usuarios reales, no discusiones de diseño.
+
+Antes de congelar se hicieron exactamente tres cosas, y ninguna más.
+
+### 1 · Decisión 17 — los fallos que rompen la confianza, sin sprint de ranking
+
+No se tocó el ranking. Se **reordena el Top-6 que ya traíamos**, apoyándose en H7
+(*el producto correcto suele estar entre los candidatos; el problema es cuál va
+primero*). Tres reglas en `reordenarPorClase()` / `puntuarCandidato()`, en
+`lib/cart.ts`, agnósticas del proveedor:
+
+1. **La categoría que da la tienda manda.** Era la señal más fiable y la estábamos
+   tirando: `mapear()` guardaba solo la hoja (*"Chocolates de Leche"*). Ahora
+   `ProductoWong.categoriaRuta` conserva la ruta completa y un candidato
+   clasificado en lo que se pidió va delante.
+2. **Un utensilio nunca es el primero** cuando se pidió un alimento.
+3. **Desempate:** si el nombre empieza por lo que pidió la familia, va delante.
+
+**Nada se descarta ni se esconde:** todos los candidatos siguen ahí como
+alternativas, que es de donde sale el aprendizaje. Solo cambia el orden.
+
+Medido contra el catálogo **real** de Wong, 15 términos básicos: **6 mejoran, 0
+empeoran.**
+
+| Término | Antes | Ahora |
+|---|---|---|
+| `huevos` | Cortador de Huevos Bynd | **Huevos la Calera Pardos 14un** |
+| `arroz` | Arroz Chaufa Cuisine & Co | **Arroz Extra Wong 750g** |
+| `queso` | Pack Doritos Queso Atrevido | **Queso Mozzarella Laive 250g** |
+| `yogurt` | Envase para Yogurt Lock & Lock | **Yogurt Natural Ecologic 1L** |
+| `tomate` | Puré de Tomate Gourmet | **Tomate Italiano x kg** |
+| `fideos` | Salsa de Ají El Charrúa | **Fideos de Arroz Bárcidda** |
+
+**Iteración intermedia descartada:** una primera versión sin categoría arreglaba
+`huevos`, `queso` y `yogurt` pero **rompía `pollo`** (*Muslo de Pollo* →
+*Pollo Rostizado*). Con la categoría, la regresión desaparece. La regla de la
+tienda vale más que cualquier heurística nuestra.
+
+### ⚠️ Lo que este arreglo NO puede arreglar, y hay que llevar a la entrevista
+
+`leche` y `azúcar` **siguen mal, y no es reordenable: el producto correcto no
+está en el Top-6.** Wong devuelve seis chocolates para `leche` y cuatro bebidas
+sin azúcar para `azúcar`. Reordenar no puede inventar un candidato que no vino.
+
+**Pero el fallo desaparece en cuanto la familia añade una palabra:**
+
+| Consulta | Resultado |
+|---|---|
+| `leche` | Chocolate-con-Leche 29g ❌ |
+| `leche gloria` | **Leche Gloria Niños Lata 390g** ✅ |
+| `azúcar` | Bebida de Almendra Sin Azúcar ❌ |
+| `azúcar rubia` | **Azúcar Rubia Paramonga 1kg** ✅ |
+
+Esto es **exactamente el ciclo 6 (Escuchar)** visto desde el otro lado, y ahora
+es una pregunta de entrevista en vez de una discusión: *¿cuánta gente escribe
+`leche` a secas y cuánta escribe `leche gloria`?* Si casi nadie escribe genérico,
+el problema es menor de lo que temíamos. **No se construye nada hasta saberlo.**
+
+### 2 · Netlify usa el catálogo real — por construcción, no por memoria
+
+El defecto de `CATALOG_PROVIDER` pasa de `fake` a **`wong`** (`lib/wong.ts`).
+Antes, que producción usara datos reales dependía de que alguien recordara poner
+una variable en el panel de Netlify — y no había `netlify.toml` ni forma de
+verificarlo desde el repositorio. Ahora es verdad por defecto y usar el catálogo
+ficticio exige pedirlo a propósito.
+
+Es seguro porque **la degradación elegante ya existía**: si Wong falla, se cae a
+FakeWong solo. Equivocarse hacia datos reales no cuesta nada; equivocarse hacia
+datos ficticios era enseñarle precios inventados a una familia sin que nadie se
+diera cuenta.
+
+Añadido `netlify.toml` (config-as-code) con una advertencia escrita: las
+variables de `[build.environment]` llegan al build y **no necesariamente a las
+funciones en ejecución** — por eso la garantía real es el defecto en código, no
+el archivo. La clave de Anthropic sigue solo en el panel, como secreto.
+
+**Verificado end-to-end contra Wong real:** 6/6 productos correctos, proveedor
+`wong`, sin una sola degradación, y `tomate` queda **pendiente de cantidad** en
+vez de inventar un monto.
+
+### 3 · Código muerto
+
+`app/RevisionCaptura.tsx` eliminado (cero referencias en el repositorio; la
+captura entra ahora directa a la libreta). `playwright` sigue en `package.json`
+como deuda conocida, y **no se toca**: quitarlo no aporta nada a las entrevistas.
+
+### Estado del congelado
+
+`tsc --noEmit` limpio · sin errores de consola · flujo completo verificado en el
+navegador con Wong real: escribir → Hacer la compra → revisión → precios →
+carrito honesto → comprar → la libreta se resuelve.
+
+**Lo único que sigue sin backend es Confirmar:** es un formulario que no manda
+nada. Para las entrevistas sirve; para cobrar, no. Es deuda declarada, no olvido.

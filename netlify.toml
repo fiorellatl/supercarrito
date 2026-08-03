@@ -1,0 +1,21 @@
+# Despliegue de SuperCarrito. Config-as-code: lo que decide cómo se comporta el
+# producto vive en el repositorio, no en el panel de nadie.
+#
+# ⚠️ Importante y contraintuitivo: las variables de [build.environment] llegan al
+# BUILD, no necesariamente a las funciones en tiempo de ejecución. Por eso el
+# proveedor real NO se garantiza aquí: se garantiza en `lib/wong.ts`, donde el
+# defecto es "wong". Esta sección solo lo deja explícito y coherente.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  CATALOG_PROVIDER = "wong"
+
+# La clave de Anthropic NO se pone aquí: es un secreto y vive solo en las
+# variables de entorno del panel de Netlify. Sin ella, la lectura de capturas
+# degrada al extractor de muestra y el resto del producto funciona igual.
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

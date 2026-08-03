@@ -23,7 +23,13 @@ export type ProductoWong = {
   cantidadMinima?: number; // mínimo (y paso) de compra, en `unidadVenta`
 
   presentacion?: string; // "500 g", "Pack x6"… solo para productos envasados
-  categoria?: string;
+  categoria?: string; // hoja legible: "Arroz Extra y Superior"
+
+  // Ruta completa tal como la clasifica la tienda: "Abarrotes/Arroz/Arroz Extra
+  // y Superior". No es para pintarla: es la única señal barata que distingue un
+  // arroz de un *combo de pollo con arroz chaufa*, y la tienda ya nos la da.
+  // Opcional a propósito: un proveedor que no clasifique sigue siendo válido.
+  categoriaRuta?: string;
   disponible?: boolean;
   url?: string; // enlace al producto
 

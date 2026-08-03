@@ -1,21 +1,27 @@
 import { NextResponse } from "next/server";
-import { comprarIntencion, comprarLista } from "@/lib/cart";
+import { comprarIntencion, comprarLibreta, comprarLista } from "@/lib/cart";
 
 export async function POST(req: Request) {
-  const { mensaje, lista, titulo } = await req.json();
+  const { mensaje, lista, lineas, titulo } = await req.json();
 
-  // Dos formas de pedir lo mismo. Cuando la intención YA viene normalizada
-  // (importar una captura), no se vuelve a parsear texto libre: solo cambia la
-  // puerta de entrada; la tubería a partir de aquí es idéntica.
-  // `lista` acepta strings sueltos o pedidos con cantidad: la captura sí sabe
-  // cuánto, y esa cantidad es lo que permite explicar el monto después.
+  // Tres formas de pedir lo mismo; una sola tubería a partir de aquí.
+  //
+  // `lineas`  — la libreta, y la entrada normal del producto. Cada línea se
+  //   normaliza por separado, porque en la misma libreta conviven una lista, un
+  //   menú, una receta y lo leído de una captura.
+  // `lista`   — una intención YA normalizada (captura importada): no se vuelve a
+  //   parsear texto libre y puede traer cantidades.
+  // `mensaje` — texto libre de una sola intención. Se conserva para pruebas por
+  //   API y para el resto de herramientas.
   const pedidos = Array.isArray(lista)
     ? lista.map((x) => (typeof x === "string" ? { producto: x } : x))
     : null;
 
-  const carrito = pedidos
-    ? await comprarLista(typeof titulo === "string" && titulo ? titulo : "Tu compra", pedidos)
-    : await comprarIntencion(mensaje ?? "");
+  const carrito = Array.isArray(lineas)
+    ? await comprarLibreta(lineas.map((x) => (typeof x === "string" ? { texto: x } : x)))
+    : pedidos
+      ? await comprarLista(typeof titulo === "string" && titulo ? titulo : "Tu compra", pedidos)
+      : await comprarIntencion(mensaje ?? "");
 
   if (!carrito) {
     return NextResponse.json({

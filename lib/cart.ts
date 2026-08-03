@@ -17,10 +17,17 @@ async function cargarDatos(): Promise<{ menus: Menus; recipes: Recipes }> {
   return { menus: JSON.parse(menus), recipes: JSON.parse(recipes) };
 }
 
-// "Compra el menú 2" -> "2". Toma el primer número que aparezca en el mensaje.
+// "Compra el menú 2" -> "2". Exige la palabra "menú": el número solo, no basta.
+//
+// Antes tomaba el primer número del texto, y con el chat era tolerable porque
+// todo el mensaje era UNA intención. Con la libreta cada línea se normaliza por
+// separado y las líneas traen cantidades constantemente — "2 kg de pollo",
+// "6 huevos", "papel higiénico x12"—, así que aquella regla convertía una
+// cantidad en un menú entero **en silencio**. Encontrado al integrar la
+// libreta, 2026-08-02.
 export function extraerNumeroMenu(mensaje: string): string | null {
-  const match = mensaje.match(/\d+/);
-  return match ? match[0] : null;
+  const match = mensaje.match(/\bmen[uú]\s*(?:n[.º°]?\s*)?(\d+)\b/i);
+  return match ? match[1] : null;
 }
 
 export type ResultadoMenu = {
@@ -212,6 +219,70 @@ function puntuarResultado(
   return punto;
 }
 
+// --- Clase de producto: el arreglo mínimo de confianza (decisión 17) ---------
+//
+// NO es un motor de ranking, y no se abre ese sprint. Es una reordenación del
+// Top-6 que YA traemos, apoyada en H7: *el producto correcto casi siempre está
+// entre los candidatos; el problema es cuál va primero.*
+//
+// Ataca exactamente los tres fallos que rompen la confianza en el primer uso:
+//   `huevos` → Cortador de Huevos · `leche` → chocolates · `pan` → moldes.
+//
+// Tres reglas, y ninguna más:
+//   1. Si la TIENDA clasifica el producto en la categoría que se pidió, va
+//      delante. Es la señal más fiable y ya venía en la respuesta: distingue un
+//      arroz de un *combo de pollo con arroz chaufa* sin que inventemos nada.
+//   2. Un utensilio nunca puede ser el primero cuando se pidió un alimento.
+//   3. A igualdad, si el nombre empieza por lo que pidió la familia, va delante.
+//
+// Nada se esconde ni se descarta: los candidatos siguen todos ahí como
+// alternativas, que es de donde sale el aprendizaje. Solo cambia el orden.
+const UTENSILIO =
+  /\b(cortador(?:a|es)?|rallador(?:a|es)?|molde(?:s)?|exprimidor(?:a|es)?|batidor(?:a|es)?|licuadora(?:s)?|pelador(?:a|es)?|mandolina(?:s)?|colador(?:es)?|escurridor(?:es)?|cocedor(?:a|es)?|hervidor(?:a|es)?|separador(?:a|es)?|sartenes?|sarten|olla(?:s)?|cuchillo(?:s)?|espatula(?:s)?|cucharon(?:es)?|batidora(?:s)?|tostadora(?:s)?|waflera(?:s)?|freidora(?:s)?)\b/i;
+
+// ¿Qué tan buen candidato es, más allá del orden que trajo el proveedor?
+function puntuarCandidato(consulta: string, p: ProductoWong): number {
+  if (!p.encontrado) return -99;
+  const nombre = limpiar(p.nombre ?? "");
+  let punto = puntuarResultado(consulta, p);
+
+  const claves = limpiar(terminoDeBusqueda(consulta))
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length > 2 && !SIN_VALOR.has(w));
+
+  // 1. Lo que dice la tienda. `arroz` → "Abarrotes/Arroz/…" gana a
+  //    "Comidas y Rostizados/…"; `pollo` → "Cortes de Pollo" gana a un combo
+  //    rostizado. Pesa más que todo lo demás porque es un dato, no una heurística.
+  const ruta = limpiar(p.categoriaRuta ?? p.categoria ?? "");
+  if (ruta && claves.some((k) => ruta.includes(k))) punto += 0.6;
+
+  // 2. Un utensilio se va al fondo. No se borra: sigue siendo una alternativa,
+  //    y quizá era justo lo que quería — pero nunca es la apuesta por defecto.
+  if (UTENSILIO.test(nombre)) punto -= 1;
+
+  // 3. Desempate: en español el sustantivo principal del producto va primero.
+  if (claves.length > 0 && nombre.startsWith(claves[0])) punto += 0.3;
+
+  return punto;
+}
+
+// Reordena el Top-N devuelto por el proveedor. Es agnóstico del proveedor a
+// propósito: FakeWong y WongVTEX pasan por aquí igual, y ninguno se nombra.
+function reordenarPorClase(consulta: string, p: ProductoWong): ProductoWong {
+  const { alternativas, ...cabeza } = p;
+  if (!p.encontrado || !alternativas?.length) return p;
+
+  const candidatos = [cabeza as ProductoWong, ...alternativas];
+  const ordenados = candidatos
+    .map((c, i) => ({ c, i, punto: puntuarCandidato(consulta, c) }))
+    // En empate manda el orden del proveedor: no cambiamos nada sin razón.
+    .sort((a, b) => b.punto - a.punto || a.i - b.i)
+    .map((x) => x.c);
+
+  const [mejor, ...resto] = ordenados;
+  return { ...mejor, alternativas: resto };
+}
+
 // --- Instrumentación de matching (solo investigación) ------------------------
 // NO es una funcionalidad del producto: es una herramienta para entender POR QUÉ
 // el sistema eligió un producto durante las entrevistas. Se activa con
@@ -258,8 +329,12 @@ async function buscarMejor(
 ): Promise<ProductoWong> {
   const limpio = terminoDeBusqueda(termino);
 
+  // Toda respuesta del proveedor pasa por la reordenación por clase antes de
+  // que nadie la mire: es una sola puerta, igual que el normalizador.
+  const buscar = async (q: string) => reordenarPorClase(q, await buscarEnWong(q));
+
   if (limpio === termino.trim()) {
-    const r = await buscarEnWong(termino);
+    const r = await buscar(termino);
     if (traza) {
       traza.intentos.push(anotar("directa", termino, r));
       traza.motivo = "sin sufijo de venta: una sola consulta";
@@ -268,10 +343,7 @@ async function buscarMejor(
   }
 
   const unidad = unidadDelSufijo(termino);
-  const [conSufijo, sinSufijo] = await Promise.all([
-    buscarEnWong(termino),
-    buscarEnWong(limpio),
-  ]);
+  const [conSufijo, sinSufijo] = await Promise.all([buscar(termino), buscar(limpio)]);
   const pCon = puntuarResultado(termino, conSufijo, unidad);
   const pSin = puntuarResultado(termino, sinSufijo, unidad);
 
@@ -315,7 +387,7 @@ async function buscarConAlternativa(
   const limpio = terminoDeBusqueda(ingrediente);
   const generico = limpio.split(" ")[0];
   if (generico.toLowerCase() !== limpio.toLowerCase()) {
-    const alt = await buscarEnWong(generico);
+    const alt = reordenarPorClase(generico, await buscarEnWong(generico));
     if (traza) {
       traza.intentos.push(anotar("alternativa genérica", generico, alt));
     }
@@ -430,5 +502,54 @@ export async function comprarLista(
   return armarCarrito(
     { menu: titulo, titulo, platos: [], ingredientes: limpios.map((p) => p.producto) },
     limpios
+  );
+}
+
+// --- La libreta: una sola compra hecha de líneas heterogéneas ----------------
+// La libreta es mixta por diseño: en la misma pantalla conviven "leche",
+// "menú 2", "ají de gallina" y ocho líneas leídas de una captura. Normalizar el
+// texto entero fallaría — sólo reconocería el menú si TODO el texto fuera el
+// menú— así que la unidad de normalización es **la línea**, igual que la unidad
+// de interacción en la interfaz.
+//
+// Esto es literalmente "cuatro puertas, un solo motor": cada línea entra por
+// `normalizarIntencion()`, la misma de siempre, y lo que sale se suma.
+// Una línea que ya trae cantidad (viene de una captura) no se vuelve a parsear:
+// esa cantidad es justo lo que permite explicar su monto después.
+
+export type LineaPedida = { texto: string; cantidad?: number; unidad?: "kg" | "un" };
+
+export async function comprarLibreta(lineas: LineaPedida[]): Promise<Carrito | null> {
+  const vivas = (lineas ?? []).filter((l) => (l?.texto ?? "").trim());
+  if (vivas.length === 0) return null;
+
+  const resueltas = await Promise.all(
+    vivas.map(async (l): Promise<Pedido[]> => {
+      const texto = l.texto.trim();
+      // Ya normalizada por el extractor: se respeta tal cual, con su cantidad.
+      if (l.cantidad != null) return [{ producto: texto, cantidad: l.cantidad, unidad: l.unidad }];
+      const base = await normalizarIntencion(texto);
+      // Una línea que no entendemos no rompe la compra ni se inventa: se busca
+      // tal como se escribió, y si no existe aparecerá entre los faltantes.
+      if (!base) return [{ producto: texto }];
+      return base.ingredientes.map((producto) => ({ producto }));
+    })
+  );
+
+  // Repetir algo no es un error, es memoria repetida: se resuelve aquí, en
+  // silencio, y nunca se le advierte a la familia mientras escribe.
+  const vistos = new Set<string>();
+  const pedidos: Pedido[] = [];
+  for (const p of resueltas.flat()) {
+    const clave = p.producto.toLowerCase();
+    if (vistos.has(clave)) continue;
+    vistos.add(clave);
+    pedidos.push(p);
+  }
+  if (pedidos.length === 0) return null;
+
+  return armarCarrito(
+    { menu: "Tu compra", titulo: "Tu compra", platos: [], ingredientes: pedidos.map((p) => p.producto) },
+    pedidos
   );
 }

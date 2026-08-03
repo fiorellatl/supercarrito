@@ -73,11 +73,11 @@ function mapear(ingrediente: string, p: VtexProduct): ProductoWong {
     return { ingrediente, encontrado: false, motivo: "sin precio", proveedor: "wong" };
   }
 
-  // categoría: VTEX la da como "/Abarrotes/Arroz/" -> "Arroz"
-  const categoria = (p.categories?.[0] ?? "")
-    .split("/")
-    .filter(Boolean)
-    .pop();
+  // categoría: VTEX la da como "/Abarrotes/Arroz/Arroz Extra y Superior/".
+  // Guardamos la hoja para leerla y la ruta entera para clasificar.
+  const partes = (p.categories?.[0] ?? "").split("/").filter(Boolean);
+  const categoria = partes.length ? partes[partes.length - 1] : undefined;
+  const categoriaRuta = partes.length ? partes.join("/") : undefined;
 
   // Cómo se vende. Verificado contra la API y contra una boleta real:
   //   · `Price` es el precio POR `measurementUnit` — para "x kg", el del KILO.
@@ -111,6 +111,7 @@ function mapear(ingrediente: string, p: VtexProduct): ProductoWong {
     cantidadMinima,
     presentacion,
     categoria,
+    categoriaRuta,
     disponible,
     url: p.linkText ? `${BASE}/${p.linkText}/p` : p.link,
     proveedor: "wong",

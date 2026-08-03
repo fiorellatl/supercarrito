@@ -1,0 +1,120 @@
+/* Lo único que no cabe en estilos en línea: keyframes, pseudo-clases y el
+   renglón del papel. Se importa una sola vez, en el layout. */
+
+:root {
+  --papel: #f5f3ed;
+  --papel-2: #efede5;
+  --tinta: #223354;
+  --lapiz: #7f8a80;
+  --lapiz-2: #a3ada5;
+  --renglon: #e2ded2;
+  --pino: #2e5d4b;
+  --papaya: #e0864b;
+  --ladrillo: #a8503c;
+  --renglon-alto: 38px;
+}
+
+/* Debe sentirse antes de verse. Si se nota, está mal: 50 % de opacidad y
+   desvanecido arriba y abajo para que nunca parezca una tabla. */
+.sc-papel {
+  position: relative;
+}
+.sc-papel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 37px,
+    var(--renglon) 37px 38px
+  );
+  opacity: 0.5;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 56px, #000 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 56px, #000 88%, transparent 100%);
+}
+
+/* Entra una línea escrita: sube 3 px y aparece. NO rebota — rebotar es
+   celebrar, y anotar papel higiénico no se celebra. */
+@keyframes sc-linea {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Cae una captura: 10 px y un grado de rotación, y se endereza. Es el único
+   elemento torcido de la app: se siente prendido con clip, no subido. */
+@keyframes sc-clip {
+  from { opacity: 0; transform: translateY(-10px) rotate(-1.2deg); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Aparece una propuesta. SOLO opacidad: si el texto de arriba se moviera un
+   milímetro, el producto habría empujado a la familia. */
+@keyframes sc-eco {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Sube la hoja. Salida rápida, llegada lenta; lo de atrás se queda asomando
+   para que volver nunca dé miedo. */
+@keyframes sc-subir {
+  from { transform: translateY(102%); }
+  to   { transform: translateY(0); }
+}
+
+/* Una exhalación, no un spinner. Un círculo que gira dice "trabajando";
+   uno que respira dice "tranquila". */
+@keyframes sc-respirar {
+  0%, 100% { transform: scale(0.82); opacity: 0.3; }
+  50%      { transform: scale(1); opacity: 0.65; }
+}
+
+/* El esqueleto tiene la forma final: al llegar el dato no salta un píxel. */
+@keyframes sc-barrido {
+  to { background-position: -200% 0; }
+}
+
+/* Un trazo que se escribe, no un icono que aparece. Es lo más parecido a una
+   celebración que nos permitimos. */
+@keyframes sc-trazo {
+  to { stroke-dashoffset: 0; }
+}
+
+.sc-entra   { animation: sc-linea 220ms cubic-bezier(.22,.61,.36,1) both; }
+.sc-cae     { animation: sc-clip 260ms cubic-bezier(.22,.61,.36,1) both; }
+.sc-aparece { animation: sc-eco 180ms ease both; }
+.sc-sube    { animation: sc-subir 320ms cubic-bezier(.22,.61,.36,1) both; }
+.sc-respira { animation: sc-respirar 2600ms ease-in-out infinite; }
+.sc-carga {
+  background: linear-gradient(90deg, var(--renglon), var(--papel), var(--renglon));
+  background-size: 200% 100%;
+  animation: sc-barrido 1600ms linear infinite;
+}
+
+/* Si algo se puede tocar, se ve tocable — y se hunde 1 px al tocarlo. */
+.sc-boton { transition: transform 90ms ease, border-color 140ms ease, background 140ms ease; }
+.sc-boton:active:not(:disabled) { transform: translateY(1px); }
+.sc-boton:disabled { cursor: default; }
+
+/* El foco se ve. Papaya, que es exactamente donde va el dedo. */
+.sc-boton:focus-visible,
+.sc-campo:focus-visible {
+  outline: 2px solid var(--papaya);
+  outline-offset: 2px;
+}
+
+.sc-campo { caret-color: var(--papaya); }
+.sc-campo::placeholder { color: var(--lapiz-2); font-weight: 400; }
+
+/* Barra de scroll fuera: una libreta no tiene barras. */
+.sc-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.sc-scroll::-webkit-scrollbar { display: none; }
+
+/* Quien pidió que nada se mueva, no ve nada moverse. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

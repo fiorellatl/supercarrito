@@ -2,6 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { color, fuente, lapiz, rotulo } from "@/app/ui/sistema";
+import Boton from "@/app/ui/Boton";
+
+// La trastienda: los menús y las recetas de la casa, en texto plano.
+//
+// No está en la libreta ni cuelga del monograma — se llega por URL, a propósito.
+// Es lo más lejos posible de escribir, que es lo que la familia viene a hacer.
+// Aquí sí se ve una tipografía monoespaciada: es el único sitio del producto
+// donde lo que importa es la ALINEACIÓN del texto, no su calidez.
 
 export default function Editar() {
   const [menus, setMenus] = useState("");
@@ -27,32 +36,36 @@ export default function Editar() {
       body: JSON.stringify({ menus, recetas }),
     });
     const d = await res.json();
-    setEstado(d.ok ? "✅ Guardado. Ya puedes probarlo en el chat." : `⚠️ ${d.error}`);
+    setEstado(d.ok ? "Guardado. Ya puedes anotarlo en tu libreta." : d.error);
   }
 
   return (
     <main
       style={{
-        maxWidth: 720,
+        maxWidth: 760,
         margin: "0 auto",
-        padding: 16,
-        fontFamily: "system-ui, sans-serif",
+        padding: "26px 22px 60px",
+        fontFamily: fuente,
+        color: color.tinta,
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ fontSize: 22 }}>✏️ Editar menús y recetas</h1>
-        <Link href="/" style={{ color: "#4338ca" }}>
-          ← Volver al chat
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 16 }}>
+        <h1 style={{ fontSize: 21, fontWeight: 600, letterSpacing: "-0.03em", margin: 0 }}>
+          Menús y recetas
+        </h1>
+        <Link href="/" style={{ ...lapiz, color: color.lapiz, textDecoration: "none" }}>
+          volver a la libreta
         </Link>
       </div>
-      <p style={{ color: "#71717a", marginTop: 0 }}>
-        Un bloque por elemento, separados por una línea en blanco. Ingredientes con “-”.
+
+      <p style={{ ...lapiz, margin: "8px 0 22px" }}>
+        Un bloque por elemento, separados por una línea en blanco. Los ingredientes van con “-”.
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
         <Caja
           titulo="Menús"
-          ayuda='El nombre debe tener un número (ej. "Menú 2").'
+          ayuda="El nombre debe llevar un número (por ejemplo, “Menú 2”)."
           value={menus}
           onChange={setMenus}
         />
@@ -64,22 +77,13 @@ export default function Editar() {
         />
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 16 }}>
-        <button
-          onClick={guardar}
-          style={{
-            padding: "12px 22px",
-            borderRadius: 10,
-            border: "none",
-            background: "#111",
-            color: "#fff",
-            fontSize: 16,
-            cursor: "pointer",
-          }}
-        >
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 18 }}>
+        <Boton variante="lleno" onClick={guardar}>
           Guardar
-        </button>
-        <span style={{ color: "#3f3f46" }}>{estado}</span>
+        </Boton>
+        <span style={lapiz} role="status" aria-live="polite">
+          {estado}
+        </span>
       </div>
     </main>
   );
@@ -98,23 +102,27 @@ function Caja({
 }) {
   return (
     <div>
-      <label style={{ fontWeight: 600 }}>{titulo}</label>
-      <div style={{ fontSize: 12, color: "#a1a1aa", marginBottom: 6 }}>{ayuda}</div>
+      <label style={{ ...rotulo, display: "block" }}>{titulo}</label>
+      <div style={{ ...lapiz, margin: "4px 0 8px" }}>{ayuda}</div>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         spellCheck={false}
+        className="sc-campo"
         style={{
           width: "100%",
           height: 340,
-          padding: 12,
-          borderRadius: 10,
-          border: "1px solid #d4d4d8",
-          fontFamily: "ui-monospace, monospace",
-          fontSize: 14,
-          lineHeight: 1.5,
+          padding: 14,
+          borderRadius: 13,
+          border: `1px solid ${color.renglon}`,
+          background: color.blanco,
+          color: color.tinta,
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+          fontSize: 13.5,
+          lineHeight: 1.6,
           boxSizing: "border-box",
           resize: "vertical",
+          outline: "none",
         }}
       />
     </div>

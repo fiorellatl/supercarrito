@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SuperCarrito · La aplicación completa</title>
+<style>
+:root{
+  --papel:#F5F3ED; --papel-2:#EFEDE5; --blanco:#FFFFFF;
+  --tinta:#223354; --tinta-2:#4A5A78;
+  --lapiz:#7F8A80; --lapiz-2:#A3ADA5; --renglon:#E2DED2;
+  --pino:#2E5D4B; --papaya:#E0864B; --ladrillo:#A8503C;
+  --mesa:#E7E3D9; --mesa-2:#DBD6C9; --mesa-tinta:#3A3B36; --mesa-suave:#6E6E64;
+  --sombra:0 1px 2px rgba(34,51,84,.05),0 12px 28px -12px rgba(34,51,84,.22),0 32px 60px -30px rgba(34,51,84,.28);
+  --btn-sombra:0 1px 0 rgba(255,255,255,.18) inset,0 2px 5px rgba(34,51,84,.18);
+  --sans:ui-rounded,'SF Pro Rounded','Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--mesa);color:var(--mesa-tinta);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;line-height:1.55;display:flex;justify-content:center;
+  gap:38px;padding:34px 20px 70px;flex-wrap:wrap;align-items:flex-start}
+
+/* andamio */
+.lado{width:250px;flex:0 0 auto;position:sticky;top:24px}
+.lado h1{font-size:19px;font-weight:600;letter-spacing:-.025em;margin:0 0 4px;color:var(--mesa-tinta)}
+.lado .sub{font-size:12.5px;color:var(--mesa-suave);margin:0 0 22px}
+.grupo{margin-bottom:18px}
+.grupo p{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#9A9A8E;margin:0 0 6px}
+.paso{display:block;width:100%;text-align:left;font-family:inherit;font-size:12.5px;padding:6px 10px;
+  border:0;border-radius:9px;background:transparent;color:var(--mesa-tinta);cursor:pointer}
+.paso:hover{background:var(--mesa-2)}
+.paso[aria-current="true"]{background:var(--pino);color:#fff;font-weight:600}
+.mad{display:flex;gap:6px;margin-top:4px}
+.mad button{flex:1;font-family:inherit;font-size:11.5px;padding:6px 4px;border-radius:9px;
+  border:1px solid var(--mesa-2);background:transparent;color:var(--mesa-tinta);cursor:pointer}
+.mad button.on{background:var(--mesa-tinta);color:var(--mesa);border-color:transparent;font-weight:600}
+
+.nota{width:250px;flex:0 0 auto;position:sticky;top:24px}
+.nota .et{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#9A9A8E;margin:0 0 7px}
+.nota h3{font-size:17px;font-weight:600;margin:0 0 9px;letter-spacing:-.02em;line-height:1.28;color:var(--mesa-tinta)}
+.nota p{font-size:13px;color:var(--mesa-suave);line-height:1.6;margin:0 0 9px}
+.nota .pq{font-size:12.5px;color:var(--mesa-suave);border-left:2px solid var(--mesa-2);padding-left:11px;margin:0}
+
+/* teléfono */
+.phone{width:360px;height:740px;background:var(--papel);border-radius:36px;box-shadow:var(--sombra);
+  position:relative;overflow:hidden;display:flex;flex-direction:column;border:1px solid rgba(0,0,0,.06);flex:0 0 auto}
+.status{display:flex;justify-content:space-between;padding:14px 24px 2px;font-size:11.5px;
+  color:var(--lapiz);font-variant-numeric:tabular-nums;position:relative;z-index:2}
+.dots{display:flex;gap:3px}.dots i{width:4px;height:4px;border-radius:50%;background:var(--lapiz-2)}
+.rayado{position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:repeating-linear-gradient(to bottom,transparent 0 37px,var(--renglon) 37px 38px);
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 10%,#000 78%,transparent 92%);
+          mask-image:linear-gradient(to bottom,transparent 0,#000 10%,#000 78%,transparent 92%)}
+
+.vista{flex:1;min-height:0;display:none;flex-direction:column;position:relative;z-index:1}
+.vista.on{display:flex}
+.cab{display:flex;align-items:center;gap:10px;padding:8px 24px 10px}
+.cab .tit{font-size:13px;font-weight:600;color:var(--lapiz)}
+.back{width:32px;height:32px;border-radius:50%;border:1px solid var(--renglon);background:var(--blanco);
+  color:var(--lapiz);cursor:pointer;display:grid;place-items:center;font-family:inherit;flex:0 0 auto}
+.cuerpo{flex:1;min-height:0;overflow-y:auto;padding:0 24px}
+.cuerpo::-webkit-scrollbar{width:0}
+
+/* libreta */
+.ln{font-size:17px;font-weight:500;color:var(--tinta);line-height:38px;letter-spacing:-.01em;cursor:text}
+.ln.d1{opacity:.4}.ln.d2{opacity:.62}
+.aire{height:38px}.aire.doble{height:76px}
+.pegado{border-left:2px solid var(--lapiz-2);padding-left:12px;margin:4px 0 6px}
+.pegado .ln{font-size:16.5px;line-height:32px}
+.clip{border:1px solid var(--renglon);background:var(--blanco);border-radius:11px;padding:9px 12px;
+  margin:6px 0;transform:rotate(-.6deg)}
+.clip .t{font-size:13px;color:var(--tinta);font-weight:500}
+.clip .s{font-size:12px;color:var(--lapiz)}
+.comp{font-family:inherit;font-size:17px;font-weight:500;color:var(--tinta);line-height:38px;height:38px;
+  background:transparent;border:0;outline:0;width:100%;padding:0;caret-color:var(--papaya);letter-spacing:-.01em}
+.comp::placeholder{color:var(--lapiz-2);font-weight:400}
+.gestos{font-size:12.5px;color:var(--lapiz-2);line-height:38px;display:flex;gap:6px;flex-wrap:wrap}
+.gestos button{font-family:inherit;font-size:12.5px;color:var(--lapiz);background:transparent;border:0;
+  padding:0;cursor:pointer}
+.gestos button:hover{color:var(--pino)}
+.gestos i{font-style:normal;color:var(--lapiz-2)}
+.eco{font-size:12.5px;color:var(--lapiz);line-height:30px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  animation:ap .18s ease both}
+@keyframes ap{from{opacity:0}to{opacity:1}}
+.eco button.t{font-family:inherit;font-size:12.5px;color:var(--lapiz);background:transparent;border:0;padding:0;cursor:pointer}
+.eco button.t:hover{color:var(--pino)}
+
+/* botones */
+.btn{font-family:inherit;font-size:14.5px;font-weight:500;min-height:44px;padding:11px 20px;border-radius:13px;
+  cursor:pointer;border:1px solid transparent;transition:transform .06s,opacity .25s}
+.btn:active{transform:translateY(1px)}
+.btn.pino{background:var(--pino);color:#fff;box-shadow:var(--btn-sombra);width:100%}
+.btn.fant{background:var(--blanco);color:var(--tinta);border-color:var(--renglon);box-shadow:0 1px 2px rgba(34,51,84,.06)}
+.btn.chico{min-height:32px;padding:5px 12px;font-size:12.5px;border-radius:9px}
+.btn.off{opacity:.34;cursor:default;box-shadow:none}
+.pie{padding:10px 24px 12px;display:flex;gap:9px;align-items:center}
+
+/* barra de pestañas */
+.barra{display:flex;border-top:1px solid var(--renglon);background:var(--papel-2);position:relative;z-index:3}
+.tab{flex:1;font-family:inherit;background:transparent;border:0;cursor:pointer;padding:9px 4px 13px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--lapiz)}
+.tab .ico{width:21px;height:21px}
+.tab .n{font-size:10.5px;letter-spacing:.01em}
+.tab .c{font-size:10px;color:var(--lapiz-2);font-variant-numeric:tabular-nums;height:12px;line-height:12px}
+.tab.on{color:var(--tinta)}
+.tab.on .n{font-weight:600}
+
+/* carrito / listas */
+.item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--renglon);flex-wrap:wrap}
+.tile{width:46px;height:46px;flex:0 0 auto;background:var(--blanco);border:1px solid var(--renglon);
+  border-radius:12px;display:grid;place-items:center;font-size:20px}
+.item .txt{flex:1;min-width:0}
+.item .nom{font-size:14px;font-weight:500;color:var(--tinta);line-height:1.3}
+.item .calc{font-size:13px;color:var(--tinta-2);margin-top:2px;font-variant-numeric:tabular-nums}
+.item .cf{font-size:11.5px;color:var(--lapiz);margin-top:1px}
+.item .mo{font-size:14px;font-weight:600;color:var(--pino);font-variant-numeric:tabular-nums;white-space:nowrap}
+.item.ago .nom{color:var(--lapiz-2);text-decoration:line-through}
+.sello{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ladrillo);
+  border:1px solid var(--ladrillo);border-radius:999px;padding:1px 7px;display:inline-block;margin-top:3px}
+.acc{width:100%;padding-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.cierre{padding:13px 24px 14px;border-top:1px solid var(--renglon);background:var(--papel-2)}
+.tot{display:flex;justify-content:space-between;align-items:baseline;font-variant-numeric:tabular-nums;margin-bottom:2px}
+.tot .e{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--lapiz)}
+.tot .v{font-size:24px;font-weight:600;color:var(--tinta);letter-spacing:-.03em}
+.pend{font-size:12px;color:var(--lapiz);margin-bottom:10px}
+
+/* casa */
+.fr{padding:11px 0;border-bottom:1px solid var(--renglon)}
+.fr .f{font-size:15px;font-weight:500;color:var(--tinta);line-height:1.35}
+.fr .d{font-size:12px;color:var(--lapiz);margin-top:2px}
+.sec{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--lapiz-2);margin:22px 0 6px}
+.compra{display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;
+  border-bottom:1px solid var(--renglon);cursor:pointer}
+.compra .c{font-size:14.5px;color:var(--tinta);font-weight:500}
+.compra .d{font-size:12px;color:var(--lapiz)}
+.compra .t{font-size:14px;color:var(--tinta);font-variant-numeric:tabular-nums;font-weight:600}
+.vac{padding:34px 0 0;max-width:26ch}
+.vac .g{font-size:19px;font-weight:600;color:var(--tinta);letter-spacing:-.02em;line-height:1.3;margin-bottom:8px}
+.vac .p{font-size:13.5px;color:var(--lapiz);line-height:1.55;margin-bottom:16px}
+
+/* formulario */
+.campo{margin-bottom:14px}
+.campo label{display:block;font-size:12.5px;color:var(--lapiz);margin-bottom:5px}
+.campo input{width:100%;font-family:inherit;font-size:15px;color:var(--tinta);background:var(--blanco);
+  border:1px solid var(--renglon);border-radius:11px;padding:11px 13px;outline:0}
+.campo input:focus{border-color:var(--papaya)}
+
+/* superpuestos */
+.hoja{position:absolute;left:0;right:0;bottom:0;background:var(--papel);border-radius:22px 22px 0 0;
+  box-shadow:var(--sombra);z-index:8;padding:16px 22px 22px;transform:translateY(102%);
+  transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.hoja.on{transform:translateY(0)}
+.hoja .h{font-size:16px;font-weight:600;color:var(--tinta);margin-bottom:3px;letter-spacing:-.02em}
+.hoja .s{font-size:12.5px;color:var(--lapiz);margin-bottom:12px}
+.hoja .sal{font-size:12.5px;color:var(--lapiz);margin-top:11px}
+.opt{display:flex;gap:11px;align-items:center;padding:10px 0;border-bottom:1px solid var(--renglon);cursor:pointer}
+.opt:hover{opacity:.7}
+.opt .nm{font-size:14px;font-weight:500;color:var(--tinta)}
+.opt .nt{font-size:12px;color:var(--lapiz)}
+.opt .mo{margin-left:auto;font-size:14px;font-weight:600;color:var(--pino);font-variant-numeric:tabular-nums}
+.centro{position:absolute;inset:0;background:var(--papel);z-index:9;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;padding:0 42px;text-align:center}
+.marca{width:44px;height:44px;border-radius:50%;border:1.6px solid var(--pino);color:var(--pino);
+  display:grid;place-items:center;margin-bottom:6px}
+.grande{font-size:22px;font-weight:600;color:var(--tinta);letter-spacing:-.02em;line-height:1.25}
+.chico{font-size:13.5px;color:var(--lapiz);line-height:1.55;max-width:27ch}
+.centro .btn{margin-top:10px;width:100%}
+.respira{width:34px;height:34px;border-radius:50%;background:var(--pino);opacity:.18;
+  animation:res 2.6s ease-in-out infinite;margin-bottom:8px}
+@keyframes res{0%,100%{transform:scale(.82);opacity:.14}50%{transform:scale(1.12);opacity:.3}}
+.toast{position:absolute;left:16px;right:16px;bottom:86px;background:var(--tinta);color:var(--papel);
+  border-radius:13px;padding:11px 14px;display:flex;gap:10px;align-items:center;font-size:12.5px;z-index:10;
+  animation:sb .2s ease both}
+@keyframes sb{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.toast button{margin-left:auto;font-family:inherit;font-size:12px;background:rgba(255,255,255,.14);
+  color:inherit;border:0;border-radius:9px;padding:6px 10px;cursor:pointer}
+.oculto{display:none !important}
+@media(max-width:1180px){.lado,.nota{position:static;width:360px}}
+</style>
+
+<div class="lado">
+  <h1>SuperCarrito</h1>
+  <p class="sub">Arquitectura completa · ARQ-3 · tres lugares, cuatro gestos</p>
+
+  <div class="grupo">
+    <p>Madurez de la casa</p>
+    <div class="mad">
+      <button data-mad="nueva">Día 1</button>
+      <button data-mad="viva" class="on">Mes 3</button>
+    </div>
+  </div>
+
+  <div class="grupo" id="menu"></div>
+</div>
+
+<div class="phone">
+  <div class="rayado"></div>
+  <div class="status"><span id="reloj">21:14</span><span class="dots"><i></i><i></i><i></i></span></div>
+
+  <!-- LIBRETA -->
+  <div class="vista on" id="v-libreta">
+    <div class="cab"><span class="tit">Casa</span></div>
+    <div class="cuerpo">
+      <div id="lineas"></div>
+      <input id="comp" class="comp" type="text">
+      <div id="eco"></div>
+      <div class="gestos">
+        <button data-g="escribe">escribe</button><i>·</i>
+        <button data-g="pega">pega</button><i>·</i>
+        <button data-g="foto">foto</button><i>·</i>
+        <button data-g="menu">menú</button>
+      </div>
+      <div style="height:20px"></div>
+    </div>
+    <div class="pie"><button class="btn fant" id="b-comprar" style="flex:1">Hacer la compra</button></div>
+  </div>
+
+  <!-- REVISIÓN -->
+  <div class="vista" id="v-revision">
+    <div class="cab"><button class="back" data-ir="libreta">‹</button><span class="tit">Antes de comprar</span></div>
+    <div class="cuerpo" id="revision"></div>
+    <div class="pie"><span style="font-size:12.5px;color:var(--lapiz);flex:1" id="conteo"></span>
+      <button class="btn pino" id="b-precios" style="width:auto">Buscar precios</button></div>
+  </div>
+
+  <!-- COMPRA (carrito) -->
+  <div class="vista" id="v-compra">
+    <div class="cab" id="cab-compra"><span class="tit">Tu compra</span></div>
+    <div class="cuerpo" id="compra"></div>
+    <div class="cierre oculto" id="cierre-compra">
+      <div class="pend" id="pend"></div>
+      <div class="tot"><span class="e" id="rot">Subtotal confirmado</span><span class="v" id="sub">S/ 0.00</span></div>
+      <button class="btn pino" id="b-confirmar" style="margin-top:8px">Comprar</button>
+    </div>
+  </div>
+
+  <!-- CONFIRMAR -->
+  <div class="vista" id="v-confirmar">
+    <div class="cab"><button class="back" data-ir="compra">‹</button><span class="tit">Confirmar</span></div>
+    <div class="cuerpo">
+      <div class="tot" style="margin:4px 0 18px"><span class="e">Total</span><span class="v" id="conf-total">S/ 0.00</span></div>
+      <div class="campo"><label>¿A dónde te lo llevamos?</label><input placeholder="Av. Primavera 1234, Surco"></div>
+      <div class="campo"><label>¿Cuándo?</label><input value="jueves, 9–11 h"></div>
+      <div class="campo"><label>Tu correo, para la boleta</label><input placeholder="rosa@correo.com"></div>
+      <p style="font-size:12.5px;color:var(--lapiz);line-height:1.55;margin:0 0 4px">
+        Con esto queda creada tu cuenta. No te pedimos nada antes porque no hacía falta.</p>
+    </div>
+    <div class="pie"><button class="btn pino" id="b-pagar">Comprar</button></div>
+  </div>
+
+  <!-- CASA -->
+  <div class="vista" id="v-casa">
+    <div class="cab"><span class="tit">Casa</span></div>
+    <div class="cuerpo" id="casa"></div>
+  </div>
+
+  <!-- BOLETA -->
+  <div class="vista" id="v-boleta">
+    <div class="cab"><button class="back" data-ir="casa">‹</button><span class="tit" id="bol-tit"></span></div>
+    <div class="cuerpo" id="boleta"></div>
+    <div class="cierre"><div class="tot"><span class="e">Total</span><span class="v" id="bol-total"></span></div></div>
+  </div>
+
+  <!-- AJUSTES -->
+  <div class="vista" id="v-ajustes">
+    <div class="cab"><button class="back" data-ir="casa">‹</button><span class="tit">Ajustes</span></div>
+    <div class="cuerpo">
+      <div class="fr"><div class="f">Dirección</div><div class="d">Av. Primavera 1234, Surco</div></div>
+      <div class="fr"><div class="f">Pago</div><div class="d">Visa ·· 6411</div></div>
+      <div class="fr"><div class="f">Tu correo</div><div class="d">rosa@correo.com</div></div>
+      <div class="fr"><div class="f">Ayuda</div><div class="d">Escríbenos</div></div>
+      <div class="fr"><div class="f" style="color:var(--lapiz)">Cerrar sesión</div></div>
+      <p style="font-size:12.5px;color:var(--lapiz-2);margin-top:18px;line-height:1.55">
+        Aquí no vive ninguna decisión sobre cómo compran. Eso está arriba, en lo que aprendí.</p>
+    </div>
+  </div>
+
+  <!-- superpuestos -->
+  <div class="hoja" id="hoja"></div>
+  <div class="centro oculto" id="centro"></div>
+  <div class="toast oculto" id="toast"></div>
+
+  <!-- BARRA -->
+  <div class="barra" id="barra"></div>
+</div>
+
+<div class="nota">
+  <p class="et" id="n-et"></p>
+  <h3 id="n-tit"></h3>
+  <p id="n-txt"></p>
+  <p class="pq" id="n-pq"></p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ─────────── datos ─────────── */
+const LINEAS_VIVA=[
+  {t:'leche',op:'d1'},{t:'pañales talla 4',op:'d1'},{t:'papel higiénico',op:'d2'},
+  {tipo:'pegado',filas:['mami compra 2 kg de pollo','arroz costeño el grande','y yogurt para la Vale 🙏']},
+  {t:'galletas para el lonche'}
+];
+const CARRITO=[
+  {id:'pollo',ico:'🍗',nom:'Pollo entero San Fernando',calc:'2 kg × S/ 12.90',cf:'lo pediste así',v:25.8},
+  {id:'arroz',ico:'🍚',nom:'Arroz Costeño Extra 5 kg',calc:'1 × S/ 29.50',cf:'basado en tu compra anterior',v:29.5},
+  {id:'papel',ico:'🧻',nom:'Papel higiénico Elite x12',calc:'1 × S/ 21.90',cf:'lo compras cada tres semanas',v:21.9},
+  {id:'trucha',ico:'🐟',nom:'Trucha deshuesada',estado:'cantidad',calc:'S/ 31.50 por kilo · falta la cantidad',v:0},
+  {id:'galletas',ico:'🍪',nom:'Galletas para el lonche',estado:'opciones',calc:'escribiste algo abierto',v:0},
+  {id:'yogurt',ico:'🥛',nom:'Yogurt Gloria fresa 1 L',estado:'agotado',calc:'hoy no hay en Wong',cf:'lo dejé anotado igual',v:0}
+];
+const OPCIONES={
+  galletas:{h:'Galletas para el lonche',s:'Escribiste algo abierto. Te muestro por dónde ir.',
+    sal:'¿Nada de esto es? Escribe la marca y la busco.',
+    items:[{nom:'Margarita pack x6',nt:'la de siempre · marzo y abril',v:6.9},
+           {nom:'Soda Field pack x8',nt:'S/ 0.95 c/u',v:7.6},
+           {nom:'Vainilla Gretel x6',nt:'S/ 1.30 c/u',v:7.8}]},
+  yogurt:{h:'Hoy no hay Gloria fresa',s:'No cambio nada por mi cuenta. Estas sí están hoy.',
+    sal:'También puedes dejarlo anotado y lo busco la próxima vez.',
+    items:[{nom:'Laive fresa 1 L',nt:'la más parecida',v:13.8},
+           {nom:'Gloria durazno 1 L',nt:'misma marca, otro sabor',v:14.4}]},
+  trucha:{h:'¿Cuánto llevas?',s:'Son múltiplos reales del mínimo de venta.',
+    sal:'Otra cantidad… · en gramos, como se habla en el súper',
+    items:[{nom:'400 g',nt:'× S/ 31.50/kg',v:12.6},{nom:'800 g',nt:'× S/ 31.50/kg',v:25.2},
+           {nom:'1,2 kg',nt:'× S/ 31.50/kg',v:37.8},{nom:'2 kg',nt:'× S/ 31.50/kg',v:63}]}
+};
+const APRENDIDO=[
+  {f:'La leche es Gloria, siempre entera',d:'cinco compras seguidas'},
+  {f:'El arroz es el grande, el de 5 kg',d:'lo escribiste así en marzo'},
+  {f:'La trucha, 800 g',d:'lo confirmaste el domingo'},
+  {f:'Nada con pistacho en casa',d:'lo quitaste dos veces'}
+];
+const COMPRAS=[
+  {id:'dom',c:'El domingo',d:'12 cosas · Wong',t:'S/ 214.60'},
+  {id:'ant',c:'Hace dos semanas',d:'9 cosas · Wong',t:'S/ 168.20'},
+  {id:'tres',c:'Hace tres semanas',d:'15 cosas · Wong',t:'S/ 246.90'}
+];
+const BOLETAS={
+  dom:{t:'El domingo',s:'3 de agosto · Wong',tot:'S/ 214.60',resto:'y nueve más',
+   f:[['Pollo entero San Fernando','2 kg × S/ 12.90','25.80'],['Arroz Costeño Extra 5 kg','1 × S/ 29.50','29.50'],['Yogurt Gloria fresa 1 L','2 × S/ 7.20','14.40']]},
+  ant:{t:'Hace dos semanas',s:'20 de julio · Wong',tot:'S/ 168.20',resto:'y seis más',
+   f:[['Detergente Bolívar 4,5 kg','1 × S/ 42.90','42.90'],['Leche Gloria entera x6','2 × S/ 25.40','50.80'],['Pan de yema','12 × S/ 0.80','9.60']]},
+  tres:{t:'Hace tres semanas',s:'13 de julio · Wong',tot:'S/ 246.90',resto:'y doce más',
+   f:[['Pañales Huggies talla 4 x60','1 × S/ 79.90','79.90'],['Trucha deshuesada','0,8 kg × S/ 31.50','25.20'],['Papel higiénico Elite x12','1 × S/ 21.90','21.90']]}
+};
+
+const TABS=[
+  {k:'libreta',n:'Libreta',d:'M4 4h13a3 3 0 013 3v13H7a3 3 0 01-3-3z M8 4v16'},
+  {k:'compra', n:'Compra', d:'M4 5h2l2.5 10h9L20 8H7 M9.5 19.5h.01 M16.5 19.5h.01'},
+  {k:'casa',   n:'Casa',   d:'M4 11l8-7 8 7 M6 10v9h12v-9'}
+];
+
+const NOTAS={
+ libreta:['Pestaña 1 · Home','La libreta, aligerada','Sigue siendo el Home y ocupa casi todo. Lo que cambia: ya no carga el producto entero. El historial y el perfil dejaron de colgar de un monograma en la esquina.','Por qué: la libreta es una herramienta, no la arquitectura. Descargarla es lo único que este sprint hace por ella.'],
+ gestos:['Las cuatro puertas','Gestos, no pestañas','«escribe · pega · foto · menú» bajo el renglón. No navegan a ningún sitio: describen qué acepta el lienzo.','Por qué: §4 prohíbe que la familia clasifique su evidencia. Hacer visibles las puertas no exige convertirlas en destinos.'],
+ barra:['Navegación','Tres lugares, deliberadamente aburridos','Libreta (95 % del uso) · Compra (una vez por semana) · Casa (una vez al mes). Sin badges rojos, sin animación, sin cuarta pestaña.','Por qué: la innovación va entera en el contenido. Una familia no debería aprender una interfaz nueva para llegar a ella.'],
+ nueva:['Día 1','Las tres pestañas ya están','Dos de ellas admiten que están vacías, y lo dicen enseñando el modelo mental en vez de decir «no hay nada».','Por qué: esconder una sección hasta que se la gane es menos honesto que un vacío que explica.'],
+ revision:['Frontera','Antes de comprar','Quitar, corregir, confirmar. Cada línea recuerda de dónde vino. Es el único momento donde pedimos atención.','Por qué: si el carrito apareciera solo, la familia nunca sabría qué autorizó. Es también la pantalla más discutible del producto.'],
+ precios:['Carga','Buscando precios','Un círculo que respira cada 2,6 s. Sin barra, sin porcentaje, sin «analizando con IA».','Por qué: una barra promete un tiempo que no controlamos; una respiración solo promete que seguimos aquí.'],
+ compra:['Pestaña 2','El carrito honesto','Seis estados a la vez. Toca la trucha, las galletas y el yogurt agotado y mira subir el subtotal: solo sube cuando se confirma.','Por qué: un producto solo suma si conocemos su cantidad. Preferimos un carrito incompleto y honesto a uno completo e inventado.'],
+ compraVacia:['Pestaña 2 · vacía','Cinco días de cada siete','La pestaña vacía enseña el modelo mental en dos frases. Es también el punto más débil de la arquitectura: un tercio de la navegación inactivo la mayor parte del tiempo.','Por qué: se acepta a cambio de que la compra deje de estar escondida detrás de un botón discreto.'],
+ confirmar:['Login','La cuenta nace aquí, y solo aquí','No hay registro al abrir. La identidad se pide una vez, en el único momento en que es inevitable: hacen falta dirección y pago de todos modos.','Por qué: pedir una cuenta antes de demostrar valor es cobrar antes de servir.'],
+ hecho:['Cierre','Tranquilidad, no fiesta','Un trazo y dos frases. Lo que no se llevó sigue anotado, y se dice antes de que lo pregunte.','Por qué: celebrar una compra del súper es celebrar el trabajo de otro.'],
+ casa:['Pestaña 3','Lo que aprendí de ustedes','Frases de casa, no una tabla. Debajo, las compras anteriores. Al pie del todo, ajustes.','Por qué: el perfil es opinión derivada, y una opinión se escribe en frases. Es la única pantalla que contesta «¿qué pierdo si me voy?».'],
+ casaVacia:['Pestaña 3 · vacía','Todavía no sé nada','Cero campos, cero formulario de preferencias.','Por qué: pedir preferencias por adelantado es hacer trabajar a la familia por un beneficio que aún no ha visto.'],
+ boleta:['Historial','Una compra de hace tres semanas','Cada línea conserva su multiplicación. Sin fotos: aquí ya no se elige, se consulta.','Por qué: un monto que no se puede reconstruir es uno que no se puede defender.'],
+ ajustes:['Al pie de Casa','Lo más lejos posible','Dirección, pago, correo, ayuda, salir. Nada que decida cómo compra la familia.','Por qué: separar la cuenta de la memoria evita que el perfil parezca configuración.'],
+ pegar:['Puerta · pegar','El WhatsApp entra entero','Con emojis, con «mami» y con faltas. Una barra al costado dice «esto lo pegaste tú», no «esto lo entendí yo».','Por qué: nunca tocamos lo que escribió la familia.'],
+ foto:['Puerta · foto','La captura se queda a la vista','Decimos cuántas líneas leímos, nunca cuántas no pudimos. El detalle se ve al comprar: ahora está anotando.','Por qué: la evidencia es suya. Lo que no sabemos leer no se inventa.'],
+ menu:['Puerta · menú','Sin pestaña de «Menú»','Se pega el menú de la semana como texto y se descompone en líneas, igual que todo lo demás.','Por qué: cambia el soporte, no la tarea. Una sola intención, no un solo gesto.']
+};
+
+/* ─────────── estado ─────────── */
+const S={tab:'libreta',ruta:'libreta',mad:'viva',lineas:[],carrito:[],hoja:null,bol:'tres',nota:'libreta'};
+let timers=[];
+const limpiar=()=>{timers.forEach(clearTimeout);timers=[]};
+const luego=(ms,f)=>timers.push(setTimeout(f,ms));
+
+function setMad(m){
+  S.mad=m;
+  S.lineas = m==='viva' ? LINEAS_VIVA.map(l=>({...l})) : [];
+  S.carrito = [];   // el carrito no existe hasta que se hace la compra
+  $('reloj').textContent = m==='viva' ? '21:14' : '20:06';
+  document.querySelectorAll('.mad button').forEach(b=>b.classList.toggle('on',b.dataset.mad===m));
+  ir('libreta', m==='viva'?'libreta':'nueva');
+}
+
+function ir(ruta,nota){
+  limpiar(); S.ruta=ruta; S.hoja=null;
+  if(['libreta','compra','casa'].includes(ruta)) S.tab=ruta;
+  if(nota) S.nota=nota;
+  $('centro').classList.add('oculto'); $('toast').classList.add('oculto');
+  render();
+  if(ruta==='libreta') $('comp').focus({preventScroll:true});
+}
+
+/* ─────────── render ─────────── */
+function render(){
+  ['libreta','revision','compra','confirmar','casa','boleta','ajustes'].forEach(v=>
+    $('v-'+v).classList.toggle('on', S.ruta===v));
+
+  // barra
+  $('barra').innerHTML = TABS.map(t=>{
+    const n = t.k==='compra' ? S.carrito.length : 0;
+    return `<button class="tab ${S.tab===t.k?'on':''}" data-tab="${t.k}">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round"><path d="${t.d}"/></svg>
+      <span class="n">${t.n}</span><span class="c">${n?n:''}</span></button>`;
+  }).join('');
+
+  pintaLibreta(); pintaCompra(); pintaCasa(); pintaBoleta();
+  const n=NOTAS[S.nota]||NOTAS.libreta;
+  $('n-et').textContent=n[0]; $('n-tit').textContent=n[1]; $('n-txt').textContent=n[2]; $('n-pq').textContent=n[3];
+  document.querySelectorAll('.paso').forEach(b=>b.setAttribute('aria-current', b.dataset.n===S.nota));
+}
+
+function pintaLibreta(){
+  $('lineas').innerHTML = S.lineas.map(l=>{
+    if(l.tipo==='pegado') return `<div class="pegado">${l.filas.map(f=>`<div class="ln">${esc(f)}</div>`).join('')}</div>`;
+    if(l.tipo==='clip') return `<div class="clip"><div class="t">${esc(l.t)}</div><div class="s">${esc(l.sub)}</div></div>`;
+    if(l.aire) return `<div class="aire"></div>`;
+    return `<div class="ln ${l.op||''}">${esc(l.t)}</div>`;
+  }).join('');
+  $('comp').placeholder = S.mad==='nueva'&&!S.lineas.length ? 'lo que se te acabó' : '';
+  const vacia = !S.lineas.length;
+  $('b-comprar').classList.toggle('off', vacia); $('b-comprar').disabled = vacia;
+  $('eco').innerHTML = S.eco ? `<span>⌁</span><button class="t">${esc(S.eco)}</button>
+    <button class="btn pino chico" style="width:auto" id="eco-si">Sí</button>
+    <button class="btn fant chico" id="eco-no">Otro</button>` : '';
+}
+
+function pintaCompra(){
+  const c=$('compra'), vacio=!S.carrito.length;
+  $('cierre-compra').classList.toggle('oculto', vacio);
+  if(vacio){
+    c.innerHTML=`<div class="vac"><div class="g">Aquí verás tu compra cuando la hagas.</div>
+      <div class="p">Se arma sola con lo que anotes en la libreta.</div>
+      <button class="btn fant" data-ir="libreta">Ir a la libreta</button></div>`;
+    return;
+  }
+  let total=0,pend=0;
+  c.innerHTML = S.carrito.map(p=>{
+    if(p.estado==='agotado'){
+      pend++;
+      return `<div class="item ago"><div class="tile">${p.ico}</div><div class="txt">
+        <div class="nom">${esc(p.nom)}</div><div class="sello">agotado hoy</div>
+        <div class="cf">${esc(p.cf||'')}</div>
+        <div class="acc"><button class="btn fant chico" data-op="yogurt">Ver qué sí hay</button>
+        <button class="btn fant chico" data-quitar="${p.id}">Dejar anotado</button></div></div></div>`;
+    }
+    if(p.estado){
+      pend++;
+      const clave = p.estado==='cantidad'?'trucha':'galletas';
+      return `<div class="item"><div class="tile">${p.ico}</div><div class="txt">
+        <div class="nom">${esc(p.nom)}</div><div class="cf">${esc(p.calc)}</div>
+        <div class="acc"><button class="btn fant chico" data-op="${clave}">${p.estado==='cantidad'?'¿Cuánto llevas?':'Elegir cuáles'}</button></div>
+        </div></div>`;
+    }
+    total+=p.v;
+    return `<div class="item"><div class="tile">${p.ico}</div><div class="txt">
+      <div class="nom">${esc(p.nom)}</div><div class="calc">${esc(p.calc)}</div>
+      <div class="cf">${esc(p.cf||'')}</div></div><div class="mo">S/ ${p.v.toFixed(2)}</div></div>`;
+  }).join('');
+  $('sub').textContent='S/ '+total.toFixed(2);
+  $('conf-total').textContent='S/ '+total.toFixed(2);
+  $('rot').textContent = pend?'Subtotal confirmado':'Total';
+  $('pend').textContent = pend? pend+(pend===1?' producto pendiente':' productos pendientes') : '';
+}
+
+function pintaCasa(){
+  if(S.mad==='nueva'){
+    $('casa').innerHTML=`<div class="vac"><div class="g">Todavía no sé nada de ustedes.</div>
+      <div class="p">Después de la primera compra empiezo a aprender cómo compran.</div></div>
+      <div class="sec" style="margin-top:40px"></div>
+      <button class="btn fant chico" data-ir="ajustes">ajustes</button>`;
+    return;
+  }
+  $('casa').innerHTML =
+    `<div class="sec" style="margin-top:2px">Lo que aprendí de ustedes</div>`+
+    APRENDIDO.map(a=>`<div class="fr"><div class="f">${esc(a.f)}</div><div class="d">⌁ ${esc(a.d)}</div></div>`).join('')+
+    `<div class="sec">Sus compras</div>`+
+    COMPRAS.map(c=>`<div class="compra" data-bol="${c.id}">
+      <span><span class="c">${esc(c.c)}</span><br><span class="d">${esc(c.d)}</span></span>
+      <span class="t">${esc(c.t)}</span></div>`).join('')+
+    `<div class="sec">Gasto</div>
+     <div class="fr"><div class="f">S/ 209 por semana, de media</div><div class="d">⌁ de las últimas cuatro compras</div></div>
+     <div style="height:18px"></div>
+     <button class="btn fant chico" data-ir="ajustes">ajustes</button><div style="height:14px"></div>`;
+}
+
+function pintaBoleta(){
+  const b=BOLETAS[S.bol]; if(!b) return;
+  $('bol-tit').textContent=b.t;
+  $('boleta').innerHTML=`<p style="font-size:12.5px;color:var(--lapiz);margin:0 0 10px">${esc(b.s)}</p>`+
+    b.f.map(f=>`<div class="item" style="padding:10px 0"><div class="txt">
+      <div class="nom">${esc(f[0])}</div><div class="calc">${esc(f[1])}</div></div>
+      <div class="mo" style="color:var(--tinta)">S/ ${f[2]}</div></div>`).join('')+
+    `<p style="font-size:12.5px;color:var(--lapiz);margin:12px 0 0">${esc(b.resto)}</p>`;
+  $('bol-total').textContent=b.tot;
+}
+
+/* ─────────── acciones ─────────── */
+function abrirHoja(k){
+  const o=OPCIONES[k]; S.hoja=k;
+  $('hoja').innerHTML=`<div class="h">${esc(o.h)}</div><div class="s">${esc(o.s)}</div>`+
+    o.items.map((it,i)=>`<div class="opt" data-i="${i}"><div><div class="nm">${esc(it.nom)}</div>
+      <div class="nt">${esc(it.nt)}</div></div><div class="mo">S/ ${it.v.toFixed(2)}</div></div>`).join('')+
+    `<div class="sal">${esc(o.sal)}</div>`;
+  $('hoja').classList.add('on');
+  $('hoja').querySelectorAll('.opt').forEach(el=>el.onclick=()=>{
+    const it=o.items[+el.dataset.i];
+    const id = k==='trucha'?'trucha' : k==='yogurt'?'yogurt':'galletas';
+    S.carrito=S.carrito.map(p=>p.id===id?{...p,estado:null,nom:k==='trucha'?p.nom:it.nom,
+      calc:k==='trucha'?it.nom+' × S/ 31.50/kg':it.nt,cf:'lo acabas de elegir',v:it.v}:p);
+    $('hoja').classList.remove('on'); render();
+  });
+}
+function toast(txt,undo){
+  $('toast').innerHTML=`<span>${esc(txt)}</span>${undo?'<button id="undo">Deshacer</button>':''}`;
+  $('toast').classList.remove('oculto');
+  luego(4200,()=>$('toast').classList.add('oculto'));
+  if(undo) $('undo').onclick=()=>{S.lineas=S.lineas.filter(l=>l.tipo!=='pegado'&&l.tipo!=='clip');
+    $('toast').classList.add('oculto'); render();};
+}
+function pegar(){
+  S.lineas.push({tipo:'pegado',filas:['mami compra 2 kg de pollo','arroz costeño el grande','y yogurt para la Vale 🙏']});
+  ir('libreta','pegar'); toast('Pegado tal cual. Yo lo ordeno cuando compres.',true);
+}
+function foto(){
+  ir('libreta','foto');
+  $('centro').className='centro'; $('centro').innerHTML=`<div class="respira"></div>
+    <div class="grande">Leyendo la captura</div><div class="chico">Va a tardar un momento.</div>`;
+  luego(1700,()=>{$('centro').classList.add('oculto');
+    S.lineas.push({tipo:'clip',t:'captura del carrito de Wong',sub:'leí 8 líneas · las verás al comprar'});
+    render(); toast('Guardada. Nada tuyo se pierde.',false);});
+}
+function menu(){
+  S.lineas.push({tipo:'pegado',filas:['lun · ají de gallina','mar · lentejas','mié · pollo al horno']});
+  ir('libreta','menu'); toast('Pegado tal cual. Yo lo ordeno cuando compres.',true);
+}
+function aRevision(){
+  const out=[];
+  S.lineas.forEach(l=>{
+    if(l.tipo==='pegado') l.filas.forEach(f=>out.push([f,'del WhatsApp de la casa']));
+    else if(l.tipo==='clip') out.push(['8 líneas de la captura','de la captura de Wong']);
+    else if(!l.aire) out.push([l.t,'lo escribiste tú']);
+  });
+  $('revision').innerHTML=out.map(o=>`<div class="item" style="padding:9px 0"><div class="txt">
+    <div class="nom">${esc(o[0])}</div><div class="cf">⌁ ${esc(o[1])}</div></div>
+    <button class="btn fant chico" style="min-height:28px">✕</button></div>`).join('');
+  $('conteo').textContent=out.length+' cosas';
+  ir('revision','revision');
+}
+function buscarPrecios(){
+  ir('revision','precios');
+  $('centro').className='centro'; $('centro').innerHTML=`<div class="respira"></div>
+    <div class="grande">Buscando precios<br>en Wong</div>
+    <div class="chico">Tarda unos segundos. Puedes seguir escribiendo mientras tanto.</div>`;
+  luego(2000,()=>{$('centro').classList.add('oculto'); S.carrito=CARRITO.map(c=>({...c})); ir('compra','compra');});
+}
+function hecho(){
+  ir('compra','hecho');
+  $('centro').className='centro';
+  $('centro').innerHTML=`<div class="marca"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+    <div class="grande">Listo. Compraste<br>${S.carrito.filter(p=>!p.estado).length} cosas.</div>
+    <div class="chico">Tu libreta quedó limpia. Lo que no compraste sigue anotado para la próxima.</div>
+    <button class="btn pino" id="b-volver">Volver a la libreta</button>`;
+  $('b-volver').onclick=()=>{S.carrito=[];S.lineas=[{t:'galletas para el lonche'},{aire:true}];
+    ir('libreta','libreta');};
+}
+
+/* ─────────── eventos ─────────── */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-tab]'); if(t){ ir(t.dataset.tab, t.dataset.tab==='compra'&&!S.carrito.length?'compraVacia':
+    t.dataset.tab==='casa'&&S.mad==='nueva'?'casaVacia':t.dataset.tab); return; }
+  const ird=e.target.closest('[data-ir]'); if(ird){ ir(ird.dataset.ir, ird.dataset.ir); return; }
+  const op=e.target.closest('[data-op]'); if(op){ abrirHoja(op.dataset.op); return; }
+  const q=e.target.closest('[data-quitar]'); if(q){ S.carrito=S.carrito.filter(p=>p.id!==q.dataset.quitar); render(); return; }
+  const bol=e.target.closest('[data-bol]'); if(bol){ S.bol=bol.dataset.bol; ir('boleta','boleta'); return; }
+  const g=e.target.closest('[data-g]'); if(g){
+    const k=g.dataset.g;
+    if(k==='pega') pegar(); else if(k==='foto') foto(); else if(k==='menu') menu();
+    else { S.nota='gestos'; render(); $('comp').focus(); }
+    return;
+  }
+  if(e.target.closest('.hoja')===null && S.hoja){ $('hoja').classList.remove('on'); S.hoja=null; }
+});
+$('b-comprar').onclick=()=>{ if(!$('b-comprar').disabled) aRevision(); };
+$('b-precios').onclick=buscarPrecios;
+$('b-confirmar').onclick=()=>ir('confirmar','confirmar');
+$('b-pagar').onclick=hecho;
+$('comp').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&$('comp').value.trim()){ S.lineas.push({t:$('comp').value.trim()}); $('comp').value=''; S.eco=null; render(); $('comp').focus(); }
+});
+$('comp').addEventListener('input',()=>{
+  if(S.mad==='viva'&&$('comp').value.trim().toLowerCase()==='yogurt'){ S.eco='Gloria fresa 1 L, 2 · como siempre'; render(); }
+});
+$('comp').addEventListener('paste',e=>{ e.preventDefault(); pegar(); });
+document.querySelectorAll('.mad button').forEach(b=>b.onclick=()=>setMad(b.dataset.mad));
+
+/* menú del andamio */
+const MENU=[
+ ['La casa madura',[['Libreta','libreta',()=>ir('libreta','libreta')],
+   ['Las cuatro puertas','gestos',()=>{S.nota='gestos';ir('libreta','gestos');}],
+   ['La barra','barra',()=>{S.nota='barra';ir('libreta','barra');}]]],
+ ['Las puertas',[['Pegar un WhatsApp','pegar',pegar],['Pegar una captura','foto',foto],['Cargar el menú','menu',menu]]],
+ ['La compra',[['Revisión','revision',aRevision],['Buscando precios','precios',buscarPrecios],
+   ['El carrito','compra',()=>{S.carrito=CARRITO.map(c=>({...c}));ir('compra','compra');}],
+   ['Confirmar · el login','confirmar',()=>{S.carrito=CARRITO.map(c=>({...c}));render();ir('confirmar','confirmar');}],
+   ['Compra hecha','hecho',hecho]]],
+ ['La casa',[['Lo que aprendí','casa',()=>ir('casa','casa')],
+   ['Una boleta','boleta',()=>{S.bol='tres';ir('boleta','boleta');}],
+   ['Ajustes','ajustes',()=>ir('ajustes','ajustes')]]],
+ ['Día 1',[['Libreta vacía','nueva',()=>{setMad('nueva');}],
+   ['Compra vacía','compraVacia',()=>{setMad('nueva');ir('compra','compraVacia');}],
+   ['Casa vacía','casaVacia',()=>{setMad('nueva');ir('casa','casaVacia');}]]]
+];
+$('menu').innerHTML=MENU.map((g,i)=>`<div class="grupo"><p>${esc(g[0])}</p>`+
+  g[1].map((p,j)=>`<button class="paso" data-g2="${i}" data-p="${j}" data-n="${esc(p[1])}">${esc(p[0])}</button>`).join('')+
+  `</div>`).join('');
+$('menu').addEventListener('click',e=>{const b=e.target.closest('.paso');if(!b)return;
+  MENU[+b.dataset.g2][1][+b.dataset.p][2]();});
+
+setMad('viva');
+</script>
+</html>

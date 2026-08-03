@@ -15,11 +15,12 @@ npm run dev            # por defecto usa FakeWong (catálogo ficticio, sin red)
 ## Proveedor de catálogo (una sola configuración)
 
 ```bash
-CATALOG_PROVIDER=fake npm run dev   # catálogo ficticio (por defecto)
-CATALOG_PROVIDER=wong npm run dev   # datos REALES de Wong (API pública de VTEX)
+CATALOG_PROVIDER=fake npm run dev   # catálogo ficticio (sin red, para demos)
+npm run dev                         # datos REALES de Wong (por defecto)
 ```
 
-- En **Netlify**, pon la variable de entorno `CATALOG_PROVIDER=wong` para datos reales.
+- **El defecto es Wong real** (`lib/wong.ts`). En Netlify no hay que configurar nada:
+  para usar el catálogo ficticio hay que pedirlo a propósito con `CATALOG_PROVIDER=fake`.
 - Si Wong no responde (timeout, 403, 429, endpoint caído), el sistema **degrada
   automáticamente a FakeWong**: nunca se rompe la experiencia.
 - El resto del código nunca sabe qué proveedor está activo (contrato en `lib/catalog.ts`).

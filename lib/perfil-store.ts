@@ -11,6 +11,7 @@
 
 import { perfilVacio, type Perfil } from "@/lib/preferencias";
 import { historialVacio, registrar, type Hecho, type Historial } from "@/lib/historial";
+import { libretaVacia, type Libreta } from "@/lib/libreta";
 
 export interface RepositorioPerfil {
   cargar(): Promise<Perfil>;
@@ -114,3 +115,88 @@ export class HistorialLocalStorage implements RepositorioHistorial {
 }
 
 export const repositorioHistorial: RepositorioHistorial = new HistorialLocalStorage();
+
+// --- La libreta --------------------------------------------------------------
+// Mismo puerto, misma disciplina. Aquí importa más que en ningún otro sitio:
+// "el trabajo del usuario no se pierde jamás" (§4) deja de ser una intención de
+// diseño y pasa a ser esta clase. Se guarda en cada cambio, no al salir.
+
+export interface RepositorioLibreta {
+  cargar(): Promise<Libreta>;
+  guardar(libreta: Libreta): Promise<void>;
+}
+
+const CLAVE_LIBRETA = "supercarrito.libreta.v1";
+
+export class LibretaLocalStorage implements RepositorioLibreta {
+  async cargar(): Promise<Libreta> {
+    if (typeof window === "undefined") return libretaVacia();
+    try {
+      const crudo = window.localStorage.getItem(CLAVE_LIBRETA);
+      if (!crudo) return libretaVacia();
+      const l = JSON.parse(crudo) as Libreta;
+      if (l?.version !== 1 || !Array.isArray(l.lineas)) return libretaVacia();
+      return l;
+    } catch {
+      return libretaVacia();
+    }
+  }
+
+  async guardar(libreta: Libreta): Promise<void> {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(CLAVE_LIBRETA, JSON.stringify(libreta));
+    } catch {
+      // Nada que hacer, pero tampoco se rompe lo que está en pantalla: la
+      // familia sigue viendo su texto aunque no hayamos podido persistirlo.
+    }
+  }
+}
+
+export const repositorioLibreta: RepositorioLibreta = new LibretaLocalStorage();
+
+// --- Las compras cerradas ----------------------------------------------------
+// Lo mínimo para que "Casa" sea real y no una maqueta: qué se compró, cuándo y
+// por cuánto, con la multiplicación de cada línea conservada. Append-only como
+// el historial — una compra ocurrió.
+
+export type CompraCerrada = {
+  ts: number;
+  total: number;
+  lineas: { nombre: string; cuenta: string; monto: number }[];
+};
+
+export interface RepositorioCompras {
+  cargar(): Promise<CompraCerrada[]>;
+  agregar(compra: CompraCerrada): Promise<void>;
+}
+
+const CLAVE_COMPRAS = "supercarrito.compras.v1";
+
+export class ComprasLocalStorage implements RepositorioCompras {
+  async cargar(): Promise<CompraCerrada[]> {
+    if (typeof window === "undefined") return [];
+    try {
+      const crudo = window.localStorage.getItem(CLAVE_COMPRAS);
+      const c = crudo ? JSON.parse(crudo) : [];
+      return Array.isArray(c) ? c : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async agregar(compra: CompraCerrada): Promise<void> {
+    if (typeof window === "undefined") return;
+    try {
+      const actual = await this.cargar();
+      window.localStorage.setItem(
+        CLAVE_COMPRAS,
+        JSON.stringify([compra, ...actual].slice(0, 50))
+      );
+    } catch {
+      // Guardar el recuerdo de una compra nunca puede romper la siguiente.
+    }
+  }
+}
+
+export const repositorioCompras: RepositorioCompras = new ComprasLocalStorage();
