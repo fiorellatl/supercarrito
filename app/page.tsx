@@ -962,10 +962,21 @@ export default function App() {
           onVolver={() => ir("compra")}
           cuerpo={
             <>
-              <p style={{ lineHeight: 1.55, margin: "2px 0 16px", color: color.tinta }}>
+              <p style={{ lineHeight: 1.55, margin: "2px 0 10px", color: color.tinta }}>
                 Abro tu carrito en Wong con {entrega.viajan.length}{" "}
                 {entrega.viajan.length === 1 ? "producto" : "productos"} dentro. Pagas
                 allá, con tu cuenta de siempre. Nosotros no tocamos tu tarjeta.
+              </p>
+
+              {/* Avisar del login ANTES de saltar. Wong pedirá la sesión cuando
+                  le apetezca, y eso no lo controlamos; lo que sí controlamos es
+                  que no parezca que fallamos nosotros. Una familia advertida
+                  inicia sesión; una familia sorprendida cierra la pestaña.
+                  Se dice como posibilidad —«si te pide»— porque prometer que
+                  ocurrirá, o que no, sería inventarnos lo que hará Wong. */}
+              <p style={{ ...lapiz, margin: "0 0 16px" }}>
+                Si Wong te pide iniciar sesión, es normal: el carrito se arma
+                dentro de tu cuenta, no de la nuestra.
               </p>
 
               <div
