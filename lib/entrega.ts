@@ -164,9 +164,16 @@ export const wongDeepLink: EntregaEnTienda = {
       //   · Un SKU que ya no exista se ignora sin arrastrar a los demás.
       //   · Cabe una compra semanal entera: 35 productos son ~1 000 caracteres,
       //     muy por debajo del límite práctico de una URL.
+      //
+      // `qcart=1` es la puerta que Wong deja abierta para el móvil. Su
+      // `apple-app-site-association` **excluye** de la app cualquier URL con ese
+      // parámetro, así que en iPhone el enlace abre Safari en vez de la app —que
+      // se come los parámetros y deja el carrito vacío, comprobado con una
+      // cuenta real el 2026-08-03—. En escritorio y en Android no cambia nada:
+      // medido, mismo 302 y los mismos ítems dentro. Cuesta nueve caracteres.
       url:
         partes.length > 0
-          ? `${BASE}/checkout/cart/add?${partes.join("&")}&sc=${CANAL}`
+          ? `${BASE}/checkout/cart/add?${partes.join("&")}&sc=${CANAL}&qcart=1`
           : null,
       viajan,
       sequedan,

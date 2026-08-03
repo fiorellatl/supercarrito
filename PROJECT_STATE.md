@@ -2364,3 +2364,39 @@ funcionalidad: comprobó que se puede vivir con ellos.
   dominio. Si el teléfono tiene la app instalada, el enlace puede abrirla y
   perder los parámetros. Sin verificar con `sc=70`; es lo primero que se sabrá
   usándolo.
+
+---
+
+## K · La app de Wong se come el enlace (2026-08-03)
+
+**Falsado con cuenta real, esta vez con `sc=70`.** En escritorio sin sesión el
+handoff funciona perfecto. En el teléfono, con la app de Wong instalada y sesión
+iniciada, **la app se abre directamente y el carrito llega vacío**. Y desde
+dentro de la app ya no se puede copiar el enlace: la familia se queda sin salida.
+
+Es la última incógnita del protocolo de certificación, y sale que no. La app
+declara `handle_all_urls` y descarta los parámetros; no es algo que podamos
+arreglar desde fuera.
+
+### Lo que se hizo, por impedir usar el producto
+
+1. **`qcart=1` en el enlace.** El `apple-app-site-association` de Wong **excluye
+   de la app cualquier URL con ese parámetro**: es una puerta que dejaron
+   abierta a propósito. En iPhone debería abrir Safari en vez de la app. Medido
+   que es inocuo en el resto: mismo 302 y los mismos ítems dentro, con y sin él.
+   **Sin verificar en un iPhone real** — es lo primero que hay que mirar.
+2. **«Copia el enlace» en la pantalla de entrega**, junto al botón. La copia
+   tiene que estar *antes* del salto, porque después ya no se puede. Con
+   `navigator.clipboard` y respaldo de `textarea` para navegadores viejos.
+3. **Las tiendas pasan a desplegable** (pedido de la PO). En el teléfono, trece
+   tiendas en fila empujaban la pantalla; ahora la elección cabe entera sin
+   desplazar.
+
+En Android no hay equivalente a `qcart`: ahí la copia del enlace es la única
+salida hasta que exista otra cosa.
+
+### Verificado
+
+Recorrido completo en 375×812: desplegable con 14 opciones sin desbordes, enlace
+con `qcart=1`, aviso «Enlace copiado». El enlace exacto que genera la app metió
+sus 3 productos en un carrito real de Wong. `tsc` y `build` en verde.

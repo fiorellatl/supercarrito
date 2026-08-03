@@ -1175,29 +1175,27 @@ export default function App() {
                   los precios serán referenciales.
                 </p>
               ) : (
-                <>
-                  <input
-                    className="sc-campo"
-                    value={filtroTienda}
-                    onChange={(e) => setFiltroTienda(e.target.value)}
-                    placeholder="Busca por nombre o distrito"
-                    style={{ width: "100%", marginBottom: 10 }}
-                  />
-                  {tiendas
-                    .filter((t) => {
-                      const q = filtroTienda.trim().toLowerCase();
-                      if (!q) return true;
-                      return `${t.nombre} ${t.distrito ?? ""}`.toLowerCase().includes(q);
-                    })
-                    .map((t) => (
-                      <Fila
-                        key={t.id}
-                        titulo={t.nombre}
-                        nota={t.distrito}
-                        onTocar={() => tomarTienda(t)}
-                      />
-                    ))}
-                </>
+                // Un desplegable y no una lista: en el teléfono, trece tiendas
+                // en fila empujan el resto de la pantalla fuera de la vista, y
+                // elegir la tuya entre trece no es explorar, es reconocerla.
+                <select
+                  className="sc-campo"
+                  value={filtroTienda}
+                  onChange={(e) => {
+                    setFiltroTienda(e.target.value);
+                    const t = tiendas.find((x) => x.id === e.target.value);
+                    if (t) tomarTienda(t);
+                  }}
+                  style={{ width: "100%" }}
+                >
+                  <option value="">Elige tu tienda…</option>
+                  {tiendas.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.nombre}
+                      {t.distrito ? ` · ${t.distrito}` : ""}
+                    </option>
+                  ))}
+                </select>
               )}
             </>
           }
@@ -1311,17 +1309,61 @@ export default function App() {
               // más respetuoso que imponerle uno; sonaba bien y era falso: sin
               // `sc` la petición devuelve 500 y no entrega nada. El canal es de
               // la tienda, no de la familia.
-              <a
-                href={entrega.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={entregar}
-                style={{ textDecoration: "none", display: "block" }}
-              >
-                <Boton variante="lleno" style={{ width: "100%" }}>
-                  Abrir mi carrito en Wong
-                </Boton>
-              </a>
+              <>
+                <a
+                  href={entrega.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={entregar}
+                  style={{ textDecoration: "none", display: "block" }}
+                >
+                  <Boton variante="lleno" style={{ width: "100%" }}>
+                    Abrir mi carrito en Wong
+                  </Boton>
+                </a>
+
+                {/* La salida para el teléfono. La app de Wong reclama todas las
+                    URLs del dominio: si está instalada, se abre ella y descarta
+                    los productos —comprobado con una cuenta real—. Desde dentro
+                    de la app ya no se puede copiar nada, así que la copia tiene
+                    que estar AQUÍ, antes del salto. No es un truco: es la única
+                    forma que hoy tiene una familia con la app de llevarse su
+                    compra. */}
+                <div style={{ ...lapiz, marginTop: 10, textAlign: "center" }}>
+                  ¿Se te abrió la app de Wong con el carrito vacío?{" "}
+                  <button
+                    onClick={async () => {
+                      const url = entrega.url!;
+                      try {
+                        await navigator.clipboard.writeText(url);
+                      } catch {
+                        // Sin permiso de portapapeles: el truco de toda la vida.
+                        const t = document.createElement("textarea");
+                        t.value = url;
+                        t.style.position = "fixed";
+                        t.style.opacity = "0";
+                        document.body.appendChild(t);
+                        t.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(t);
+                      }
+                      setAviso({ texto: "Enlace copiado. Pégalo en tu navegador." });
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      font: "inherit",
+                      color: color.tinta,
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Copia el enlace
+                  </button>{" "}
+                  y ábrelo en tu navegador.
+                </div>
+              </>
             ) : (
               <p style={{ ...lapiz, textAlign: "center" }}>
                 Todavía no hay nada que llevar.
