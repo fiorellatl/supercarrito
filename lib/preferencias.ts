@@ -50,10 +50,29 @@ export type Metricas = {
   preguntasEvitadas: number; // indicador 2 del ciclo ⭐
 };
 
+// Dónde compra esta familia. Es una preferencia de compra más —del mismo rango
+// que la marca o el formato—, no una integración ni una sesión: aquí no hay
+// credenciales de nadie, solo el nombre de una tienda y dónde está.
+//
+// Está a nivel de perfil y no por ingrediente porque una familia compra en un
+// sitio, no un sitio por producto. Y es la preferencia que hace explicables a
+// todas las demás: sin tienda, un precio es un promedio; con tienda, es su
+// precio. Mañana esto mismo podrá decir "Plaza Vea Primavera" sin que el
+// modelo mental de la familia cambie.
+export type TiendaPreferida = {
+  id: string;
+  nombre: string;
+  distrito?: string;
+  lon: number;
+  lat: number;
+  elegida: string; // ISO
+};
+
 export type Perfil = {
   version: 1;
   preferencias: Record<string, Preferencia>;
   metricas: Metricas;
+  tienda?: TiendaPreferida;
 };
 
 export function perfilVacio(): Perfil {
@@ -62,6 +81,13 @@ export function perfilVacio(): Perfil {
     preferencias: {},
     metricas: { correcciones: 0, preferenciasAprendidas: 0, preguntasEvitadas: 0 },
   };
+}
+
+// Elegir tienda es un acto explícito de la familia y se guarda como tal. Se
+// puede volver a hacer siempre —una familia se muda, o compra en otra por una
+// temporada—: es una preferencia, no una decisión definitiva.
+export function elegirTienda(perfil: Perfil, tienda: Omit<TiendaPreferida, "elegida">): Perfil {
+  return { ...perfil, tienda: { ...tienda, elegida: new Date().toISOString() } };
 }
 
 // Clave canónica: "Leche " y "leche" son el mismo ingrediente.

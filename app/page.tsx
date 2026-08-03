@@ -32,6 +32,7 @@ import {
   aprenderDeCorreccion,
   contarPreguntasEvitadas,
   elegir,
+  elegirTienda,
   perfilVacio,
   preferenciaDe,
   type Perfil,
@@ -62,7 +63,8 @@ import {
 } from "@/lib/libreta";
 import type { LineaExtraida } from "@/lib/evidencia";
 import type { ProductoWong } from "@/lib/catalog";
-import { wongDeepLink } from "@/lib/entrega";
+import { wongDeepLink, unidadesDeVenta } from "@/lib/entrega";
+import type { LineaAValorar, Tienda } from "@/lib/tienda";
 
 import { casaVacia, crearCasa, monograma, saludo, tieneCasa, type Casa } from "@/lib/casa";
 import { repositorioCasa } from "@/lib/perfil-store";
@@ -84,7 +86,15 @@ import LineaCarrito, { type EstadoLinea } from "@/app/ui/LineaCarrito";
 import { Pantalla, Seccion, Vacio } from "@/app/ui/Pantalla";
 import PantallaCalma from "@/app/ui/PantallaCalma";
 
-type Ruta = "libreta" | "revision" | "compra" | "entregar" | "entregado" | "casa" | "boleta";
+type Ruta =
+  | "libreta"
+  | "revision"
+  | "compra"
+  | "tienda"
+  | "entregar"
+  | "entregado"
+  | "casa"
+  | "boleta";
 
 type Item = ProductoWong & {
   alternativa: boolean;
@@ -214,7 +224,16 @@ function confianzaDe(
   perfil: Perfil,
   estado: EstadoLinea
 ): { tono: "confirmado" | "sabido" | "pendiente" | "problema"; texto: string } | undefined {
-  if (estado === "agotado") return { tono: "problema", texto: "lo dejé anotado igual" };
+  // Un producto agotado se nombra con la tienda que lo dijo. "No hay" a secas es
+  // una limitación nuestra; "no hay en tu Wong de Óvalo Gutiérrez" es un dato
+  // del mundo, y además explica por qué su compra no suma lo que esperaba.
+  if (estado === "agotado")
+    return {
+      tono: "problema",
+      texto: perfil.tienda
+        ? `no hay en ${perfil.tienda.nombre} · lo dejé anotado`
+        : "lo dejé anotado igual",
+    };
   if (estado === "pendiente") return { tono: "pendiente", texto: "pendiente de confirmar" };
   if (estado === "sin-resultado") return undefined;
   if (it.cantidadElegida != null) return { tono: "confirmado", texto: "lo acabas de confirmar" };
@@ -273,6 +292,16 @@ export default function App() {
   const [hoja, setHoja] = useState<{ tipo: "cantidad" | "opciones"; ingrediente: string } | null>(null);
   const [ultimaCompra, setUltimaCompra] = useState<{ n: number; quedaron: number } | null>(null);
 
+  // La tienda de la familia. `preciosDeTienda` es lo que decide si el carrito
+  // enseña precios reales o referenciales, y hay que poder distinguir "todavía
+  // no pregunté" de "pregunté y no me contestaron": callar la diferencia sería
+  // enseñar un número sin decir de dónde viene.
+  const [tiendas, setTiendas] = useState<Tienda[] | null>(null);
+  const [filtroTienda, setFiltroTienda] = useState("");
+  const [preciosDeTienda, setPreciosDeTienda] = useState<boolean | null>(null);
+  const [totalTienda, setTotalTienda] = useState<number | null>(null);
+  const [sinTienda, setSinTienda] = useState(false); // "ahora no", solo esta sesión
+
   const compRef = useRef<HTMLInputElement>(null);
   const archivoRef = useRef<HTMLInputElement>(null);
   const cargada = useRef(false);
@@ -326,6 +355,105 @@ export default function App() {
   }, []);
 
   const { total, pendientes } = useMemo(() => totalDe(items ?? [], perfil), [items, perfil]);
+
+  // --- Los precios de SU tienda ----------------------------------------------
+  // Lo que la familia ve tiene que ser lo que va a pagar. El catálogo público no
+  // tiene tienda —devuelve un precio único y "hay de todo"—, así que antes de
+  // pintar el carrito le preguntamos a la suya.
+
+  // Se pregunta en dos grupos, y la diferencia importa:
+  //
+  //   · `aCobrar` — lo que ya tiene cantidad. Va con las unidades de venta
+  //     exactas que viajarán en el enlace, y de ahí sale EL TOTAL. Preguntar por
+  //     otras cantidades daría un número que luego no cuadraría con el carrito de
+  //     Wong, que es justo lo que venimos a arreglar.
+  //   · `aTantear` — lo que todavía no tiene cantidad. Se pregunta por una
+  //     unidad, solo para saber su precio y si lo hay. Su respuesta NO suma:
+  //     enseñar el precio de catálogo de un producto pendiente sería seguir
+  //     mintiendo en pequeño, y encima en el sitio donde la familia va a decidir
+  //     cuánto lleva.
+  const { aCobrar, aTantear } = useMemo(() => {
+    const cobrar: LineaAValorar[] = [];
+    const tantear: LineaAValorar[] = [];
+    for (const it of items ?? []) {
+      if (it.fuera) continue;
+      const p = it.elegido;
+      if (!p?.encontrado || !p.sku) continue;
+      const c = cantidadDe(it, perfil);
+      if (c != null) cobrar.push({ sku: p.sku, unidades: unidadesDeVenta(c, p) });
+      else tantear.push({ sku: p.sku, unidades: 1 });
+    }
+    return { aCobrar: cobrar, aTantear: tantear };
+  }, [items, perfil]);
+
+  // Firma de lo que se va a preguntar. Si no cambia, no se vuelve a preguntar:
+  // cambiar de producto o de cantidad sí, repintar no.
+  const firmaValorar = useMemo(
+    () =>
+      [...aCobrar, ...aTantear].map((l) => `${l.sku}:${l.unidades}`).join("|"),
+    [aCobrar, aTantear]
+  );
+
+  const idTienda = perfil.tienda?.id;
+
+  useEffect(() => {
+    if (!perfil.tienda || firmaValorar === "") return;
+    let vivo = true;
+    (async () => {
+      try {
+        const preguntar = (lineas: LineaAValorar[]) =>
+          fetch("/api/precios", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tienda: perfil.tienda, lineas }),
+          }).then((r) => r.json());
+
+        // Las dos preguntas van en paralelo: la del total y la de tanteo.
+        const [cobro, tanteo] = await Promise.all([
+          aCobrar.length > 0 ? preguntar(aCobrar) : Promise.resolve({ ok: true, lineas: [] }),
+          aTantear.length > 0 ? preguntar(aTantear) : Promise.resolve({ ok: true, lineas: [] }),
+        ]);
+        if (!vivo) return;
+        if (!cobro.ok || !tanteo.ok) {
+          setPreciosDeTienda(false);
+          return;
+        }
+        setPreciosDeTienda(true);
+        // El total sale SOLO de lo que tiene cantidad. El tanteo no suma.
+        setTotalTienda(typeof cobro.total === "number" ? cobro.total : null);
+        const data = { lineas: [...(cobro.lineas ?? []), ...(tanteo.lineas ?? [])] };
+
+        // El precio y la disponibilidad de la tienda SUSTITUYEN a los del
+        // catálogo sobre el mismo producto. Se aplican aquí, una sola vez, para
+        // que el resto de la pantalla —subtotales, estados, entrega— siga
+        // funcionando igual sin saber que existe una tienda.
+        const porSku = new Map<string, { precio?: number; disponible: boolean }>(
+          (data.lineas ?? []).map((l: { sku: string; precio?: number; disponible: boolean }) => [
+            l.sku,
+            l,
+          ])
+        );
+        setItems((xs) =>
+          (xs ?? []).map((it) => {
+            const p = it.elegido;
+            const dato = p?.sku ? porSku.get(p.sku) : undefined;
+            if (!p || !dato) return it;
+            return {
+              ...it,
+              elegido: { ...p, precio: dato.precio ?? p.precio, disponible: dato.disponible },
+            };
+          })
+        );
+      } catch {
+        if (vivo) setPreciosDeTienda(false);
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+    // Las listas cambian de identidad en cada render; su contenido es `firmaValorar`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firmaValorar, idTienda]);
 
   // La entrega se deriva del carrito, no se guarda: no hay un segundo estado
   // que se pueda desincronizar de lo que la familia está viendo.
@@ -443,7 +571,42 @@ export default function App() {
 
   // --- La compra -------------------------------------------------------------
 
+  // La pregunta se hace aquí y no antes: justo cuando vamos a calcular precios,
+  // que es el único momento en el que se explica sola. No toca el onboarding —
+  // una familia que todavía está escribiendo su lista no tiene por qué pensar en
+  // qué tienda es la suya.
   async function buscarPrecios() {
+    if (buscando || libreta.lineas.length === 0) return;
+    if (!perfil.tienda && !sinTienda) {
+      void cargarTiendas();
+      ir("tienda");
+      return;
+    }
+    void arrancarBusqueda();
+  }
+
+  async function cargarTiendas() {
+    if (tiendas) return;
+    try {
+      const res = await fetch("/api/tiendas");
+      const data = await res.json();
+      setTiendas(data.tiendas ?? []);
+    } catch {
+      setTiendas([]);
+    }
+  }
+
+  function tomarTienda(t: Tienda) {
+    actualizarPerfil((p) => elegirTienda(p, t));
+    setSinTienda(false);
+    setFiltroTienda("");
+    // Si ya había un carrito, el efecto de precios lo revalorará solo al llegar
+    // la tienda nueva. Si no lo había, esta era la puerta de entrada.
+    if (items) ir("compra");
+    else void arrancarBusqueda();
+  }
+
+  async function arrancarBusqueda() {
     if (buscando || libreta.lineas.length === 0) return;
     setBuscando(true);
     ir("compra");
@@ -934,6 +1097,39 @@ export default function App() {
                       : `${pendientes} productos todavía no suman: falta saber cuánto llevas.`}
                   </div>
                 )}
+
+                {/* De dónde sale este número. Con tienda es una promesa; sin
+                    ella es una estimación, y decirlo cuesta una línea. Callarlo
+                    es exactamente el error que nos trajo hasta aquí. */}
+                {perfil.tienda ? (
+                  preciosDeTienda === false && (
+                    <div style={{ ...lapiz, marginBottom: 8 }}>
+                      {perfil.tienda.nombre} no me contestó: estos son precios
+                      referenciales, no los suyos.
+                    </div>
+                  )
+                ) : (
+                  <div style={{ ...lapiz, marginBottom: 8 }}>
+                    Precios referenciales: todavía no sé cuál es tu Wong.{" "}
+                    <button
+                      onClick={() => {
+                        void cargarTiendas();
+                        ir("tienda");
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        font: "inherit",
+                        color: color.tinta,
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Elegir mi tienda
+                    </button>
+                  </div>
+                )}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
                   <span>
                     <span style={{ ...rotulo, display: "block" }}>
@@ -949,6 +1145,75 @@ export default function App() {
                 </div>
               </>
             ) : undefined
+          }
+        />
+      )}
+
+      {/* Elegir tienda. Es una PREFERENCIA DE COMPRA, no una conexión con Wong:
+          no hay sesión, ni contraseña, ni permiso que conceder. Por eso se
+          pregunta con naturalidad y se puede cambiar cuando quiera. */}
+      {ruta === "tienda" && (
+        <Pantalla
+          titulo="¿Cuál es tu Wong?"
+          onVolver={() => ir(items ? "compra" : "libreta")}
+          cuerpo={
+            <>
+              <p style={{ lineHeight: 1.55, margin: "2px 0 10px", color: color.tinta }}>
+                Cada tienda tiene sus precios y su stock. Si me dices cuál es la
+                tuya, lo que te enseñe será lo que vas a pagar.
+              </p>
+              <p style={{ ...lapiz, margin: "0 0 16px" }}>
+                No me conecto a tu cuenta ni veo tus datos. Es solo saber dónde
+                compras, como saber que llevas leche Gloria.
+              </p>
+
+              {tiendas === null ? (
+                <p style={{ ...lapiz }}>Buscando las tiendas…</p>
+              ) : tiendas.length === 0 ? (
+                <p style={{ ...lapiz }}>
+                  No pude traer la lista de tiendas. Puedes seguir sin elegir:
+                  los precios serán referenciales.
+                </p>
+              ) : (
+                <>
+                  <input
+                    className="sc-campo"
+                    value={filtroTienda}
+                    onChange={(e) => setFiltroTienda(e.target.value)}
+                    placeholder="Busca por nombre o distrito"
+                    style={{ width: "100%", marginBottom: 10 }}
+                  />
+                  {tiendas
+                    .filter((t) => {
+                      const q = filtroTienda.trim().toLowerCase();
+                      if (!q) return true;
+                      return `${t.nombre} ${t.distrito ?? ""}`.toLowerCase().includes(q);
+                    })
+                    .map((t) => (
+                      <Fila
+                        key={t.id}
+                        titulo={t.nombre}
+                        nota={t.distrito}
+                        onTocar={() => tomarTienda(t)}
+                      />
+                    ))}
+                </>
+              )}
+            </>
+          }
+          pie={
+            // Toda pregunta cerrada tiene salida abierta. Decir "ahora no" no
+            // rompe nada: la compra sigue, con precios marcados como lo que son.
+            <Boton
+              style={{ width: "100%" }}
+              onClick={() => {
+                setSinTienda(true);
+                if (items) ir("compra");
+                else void arrancarBusqueda();
+              }}
+            >
+              Ahora no
+            </Boton>
           }
         />
       )}
@@ -994,12 +1259,17 @@ export default function App() {
               >
                 <span>
                   <span style={{ ...rotulo, display: "block" }}>Lo que llevas</span>
+                  {/* Cuando el total lo da la tienda dejamos de prometer un
+                      cálculo nuestro y pasamos a repetir el suyo. Es la
+                      diferencia entre "debería costar" y "cuesta". */}
                   <span style={{ ...lapiz, fontSize: 12 }}>
-                    precios de la web de Wong · el total lo confirma tu tienda
+                    {perfil.tienda && totalTienda != null
+                      ? `precios de ${perfil.tienda.nombre}`
+                      : "precios referenciales · el total lo confirma tu tienda"}
                   </span>
                 </span>
                 <span style={{ ...plata, fontSize: 25, letterSpacing: "-0.03em" }}>
-                  {soles(totalEntrega)}
+                  {soles(totalTienda ?? totalEntrega)}
                 </span>
               </div>
 
@@ -1091,13 +1361,33 @@ export default function App() {
             />
           }
           cuerpo={
-            nPrefs === 0 && compras.length === 0 ? (
+            nPrefs === 0 && compras.length === 0 && !perfil.tienda ? (
               <Vacio
                 titulo="Todavía no sé nada de ustedes."
                 texto="Después de la primera compra empiezo a aprender cómo compran. No hay nada que rellenar."
               />
             ) : (
               <>
+                {perfil.tienda && (
+                  <>
+                    <Seccion>Dónde compran</Seccion>
+                    <Fila
+                      titulo={perfil.tienda.nombre}
+                      nota={`${perfil.tienda.distrito ? perfil.tienda.distrito + " · " : ""}precios y stock de esta tienda`}
+                      derecha={
+                        <Boton
+                          onClick={() => {
+                            void cargarTiendas();
+                            ir("tienda");
+                          }}
+                        >
+                          Cambiar
+                        </Boton>
+                      }
+                    />
+                  </>
+                )}
+
                 {nPrefs > 0 && (
                   <>
                     <Seccion>Lo que aprendí de ustedes</Seccion>

@@ -2231,3 +2231,96 @@ verificada: se ignora y el resto entra igual.
 
 Sigue pendiente lo que necesita cuenta real o teléfono, que es el Sprint de
 Certificación: `design/protocolo-handoff-definitivo.md`.
+
+---
+
+## I · Sprint «Los precios de tu tienda» (2026-08-03)
+
+Objetivo de la PO: que cuando SuperCarrito diga «tu compra cuesta S/ 182.40»,
+Wong diga lo mismo cinco segundos después.
+
+### El cambio conceptual
+
+**Dejamos de calcular el total y pasamos a preguntarlo.** Mientras lo
+multiplicáramos nosotros —precio de catálogo × cantidad—, cualquier promoción o
+precio por local nos desviaba. Ahora el número lo da la tienda.
+
+La pieza es `orderForms/simulation?sc=70`, el endpoint con el que Wong calcula su
+propio carrito. Una llamada para la compra entera.
+
+### Por qué hacía falta, medido
+
+El catálogo público **no tiene tienda**: devuelve un precio único y
+`AvailableQuantity: 100` para todo. La realidad, con los mismos cuatro
+productos y las 13 tiendas Wong del directorio:
+
+| | Total |
+|---|---|
+| Wong Asia | S/ 39.80 |
+| Wong San Miguel | S/ 68.60 |
+| Wong Óvalo Gutiérrez | S/ 118.00 |
+| Wong Aldabas / Camacho / Dos de Mayo | S/ 128.50 |
+
+La misma compra, de S/ 39.80 a S/ 128.50. Y la trucha existe en unas tiendas y en
+otras no. De una compra semanal de 35 productos, 12 salían sin stock en una zona
+real de Lima; los enseñábamos todos, con precio, sumados al total.
+
+### Decisiones de producto (PO)
+
+1. **La tienda se pregunta, no se infiere.** Nada de geolocalización por IP: la
+   familia sabe perfectamente cuál es su Wong. Además el código postal —lo único
+   que da una IP— **no resuelve la zona en esta cuenta**: devuelve todo sin stock.
+   Solo sirven las coordenadas.
+2. **Se pregunta la primera vez que vamos a calcular precios**, no en el
+   onboarding. Es el único momento en que la pregunta se explica sola.
+3. **Los productos sin stock nunca desaparecen.** Se quedan a la vista, con su
+   motivo —*«no hay en Wong Óvalo Gutiérrez · lo dejé anotado»*— y no suman.
+4. **La tienda es una preferencia de compra**, del mismo rango que la marca o el
+   formato. Vive en el perfil. No es una integración: no hay sesión, ni
+   contraseña, ni permiso que conceder.
+
+### Qué se construyó
+
+| Archivo | Qué hace |
+|---|---|
+| `lib/tienda.ts` | Contrato `CatalogoDeTienda` + implementación Wong: directorio de tiendas (puntos de retiro, 11 anclas fijas, caché 6 h) y precios reales (`simulation`). |
+| `app/api/tiendas` · `app/api/precios` | El navegador nunca llama a Wong. |
+| `lib/preferencias.ts` | `TiendaPreferida` en el `Perfil` + `elegirTienda()`. |
+| `app/page.tsx` | Pantalla «¿Cuál es tu Wong?», precios de tienda aplicados sobre los items, total de Wong en la entrega, tienda visible y cambiable en el perfil. |
+
+**Dos preguntas en paralelo, y la diferencia importa:** lo que ya tiene cantidad
+va con las unidades exactas que viajarán en el enlace, y de ahí sale el total; lo
+pendiente se tantea con una unidad solo para saber su precio y si lo hay, y **no
+suma**. Sin eso, un producto pendiente seguía enseñando el precio de catálogo
+justo donde la familia decide cuánto lleva.
+
+### Verificado
+
+Carrito de 5 productos en Wong Óvalo Gutiérrez: la pantalla dice **S/ 61.40** y
+la simulación de Wong para esa tienda devuelve **`Items: 6140`**. El mismo
+número. Trucha pendiente: 33.90 de catálogo → **30.90 de su tienda**. Fideos
+Bárcidda, «disponible» en catálogo → **«no hay en Wong Óvalo Gutiérrez»**.
+
+`tsc --noEmit` exit 0 · `npm run build` exit 0 · consola limpia.
+
+### Degradación
+
+Si la tienda no contesta, se pintan precios de catálogo **diciéndolo**
+(«precios referenciales»). Si la familia dice «ahora no», la compra sigue igual,
+marcada. Toda pregunta cerrada tiene salida abierta.
+
+### Lo que NO resuelve
+
+- La tienda de su cuenta de Wong puede seguir siendo otra: la nuestra es la que
+  ella eligió, no la que Wong le asignó. No hay forma de leer eso desde fuera.
+- Reparto y retiro en tienda pueden tener precios distintos. Sin medir.
+- Entre nuestra simulación y su checkout pasan minutos.
+- **El carrito encoge**, y eso hay que observarlo en entrevistas: una compra que
+  antes se veía completa ahora se ve con huecos. Es la verdad, pero es un cambio
+  de sensación grande.
+
+### Dato para el futuro
+
+El directorio de puntos de retiro trae **también los Metro de Cencosud** —misma
+cuenta de VTEX—. Se filtran a propósito: el producto todavía no sabe atenderlos.
+Es el camino natural por el que esta preferencia crecerá a otras cadenas.
