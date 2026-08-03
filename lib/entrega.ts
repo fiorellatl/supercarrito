@@ -6,39 +6,43 @@
 // el producto no conoce a Wong, conoce `EntregaEnTienda`. Cambiar de tienda es
 // escribir otra implementación.
 //
-// ⛔ EL ENLACE DE CARRITO NO FUNCIONA. Falsado el 2026-08-03 con la cuenta real
-// de una familia, después de haberlo dado por bueno durante dos sprints.
+// 🔑 TODO DEPENDE DEL CANAL DE VENTA, y es lo único que hay que entender aquí.
+// Estuvimos dos sprints creyendo que Wong no dejaba entregar carritos desde
+// fuera. Sí deja. Probábamos los canales 1 y 2, y su tienda opera en el **70**.
 //
-//   · `/checkout/cart/add?sku&qty&seller` SIN `sc`  -> HTTP 500.
-//   · con `sc=2`  -> 302 a /checkout/#/cart y el carrito VACÍO: el catálogo de
-//     esa política comercial no contiene nuestros SKUs (buscar con sc=2 devuelve
-//     cero productos).
+//   · `sc=1`  -> 401 «Seller no autorizado 1 con la política comercial 1».
+//   · `sc=2`  -> 200 (y también un 302 en el enlace) sin añadir NADA: el
+//     catálogo de ese canal no contiene los SKUs de la tienda.
+//   · SIN `sc` -> 500.
+//   · **`sc=70` -> el carrito se llena de verdad.**
 //
-// LA LECCIÓN, que vale más que el código: **un 302 no era prueba de nada** —un
-// SKU inexistente también lo devuelve—. En VTEX un código de éxito no significa
-// que la operación hiciera algo. La única prueba de una entrega es leer el
-// carrito de una cuenta real.
+// Verificado el 2026-08-03 leyendo el carrito, con 35 productos en un solo
+// enlace y con productos al peso. Detalle en
+// design/arquitecturas-ultima-milla.md.
 //
-// Descartado con evidencia (ver design/integracion-wong-investigacion.md):
-//   · API pública de Checkout: crear carrito da 200, pero añadir ítems da 401
-//     «Seller no autorizado 1 con la política comercial 1»; con sc=2 da 200 y
-//     añade CERO. Además la propiedad del carrito viaja en una cookie
-//     HttpOnly+SameSite=Strict que no podemos traspasar.
-//   · APIs de administración de VTEX: exigen appKey/appToken emitidos por Wong.
-//     Es un acuerdo comercial, no una decisión técnica.
-//   · En móvil da igual: la app de Wong reclama todas las URLs del dominio
-//     (assetlinks.json, `handle_all_urls`) y descarta los parámetros.
-//
-// Lo que este archivo SIGUE haciendo bien, y por eso no se borra: traducir la
-// compra al idioma de la tienda —redondeos al múltiplo de venta, qué cruza y
-// qué no, y a qué precio— que es la parte difícil y la que seguirá valiendo
-// cuando exista una vía de entrega de verdad.
+// LA LECCIÓN, que vale más que el código: ni un 302 ni un 200 son prueba de
+// nada —un SKU inexistente también devuelve 302, y `sc=2` respondía 200
+// añadiendo cero—. **La única prueba de una entrega es leer el carrito.** Si
+// alguien vuelve a tocar este archivo: no des por buena una respuesta; abre el
+// carrito y cuenta los productos.
 
 import type { ProductoWong, UnidadVenta } from "@/lib/catalog";
 
-// Nota para quien retome esto: `seller=1` era correcto —la API de catálogo
-// devuelve `sellerId: "1"`, `sellerName: "WongIO"`—. Lo que no está autorizado
-// no es el vendedor, somos nosotros escribiendo en su política comercial.
+const BASE = "https://www.wong.pe";
+
+// El canal de venta de la tienda. NO es un número mágico: Wong lo publica en
+// `GET https://www.wong.pe/api/segments` -> `{"channel":"70", …}`. Si algún día
+// el enlace deja de llenar el carrito, ese endpoint es lo primero que hay que
+// mirar; leerlo en caliente en vez de fijarlo aquí es una mejora pendiente.
+//
+// Coherencia que conviene no romper: `lib/wongvtex.ts` busca SIN `sc`, y el
+// valor por defecto de la tienda es justamente 70. Los SKUs que guardamos son,
+// por tanto, los del mismo canal en el que escribimos.
+const CANAL = "70";
+
+// `seller=1` es correcto: la API de catálogo devuelve `sellerId: "1"`,
+// `sellerName: "WongIO"`. Nunca fue el problema.
+const SELLER = "1";
 
 // Lo que el producto le pide a la entrega: una línea ya decidida.
 export type LineaAEntregar = {
@@ -105,6 +109,7 @@ export const wongDeepLink: EntregaEnTienda = {
   preparar(lineas) {
     const viajan: LineaViajera[] = [];
     const sequedan: LineaQueSeQueda[] = [];
+    const partes: string[] = [];
 
     for (const { producto, ingrediente, cantidad } of lineas) {
       const nombre = producto.nombre ?? ingrediente;
@@ -125,6 +130,8 @@ export const wongDeepLink: EntregaEnTienda = {
       const qty = unidadesDeVenta(cantidad, producto);
       const cruza = Math.round(qty * pasoDe(producto) * 1000) / 1000;
 
+      partes.push(`sku=${producto.sku}&qty=${qty}&seller=${SELLER}`);
+
       viajan.push({
         ingrediente,
         nombre,
@@ -142,12 +149,25 @@ export const wongDeepLink: EntregaEnTienda = {
 
     return {
       tienda: "Wong",
-      // ⛔ `null` a propósito, no por falta de implementación. El enlace que
-      // había aquí —`/checkout/cart/add?sku&qty&seller`— llevaba a un error de
-      // Wong o a un carrito vacío. Preferimos una función menos que una promesa
-      // rota. El contrato mantiene el campo porque el día que exista una vía de
-      // entrega autorizada, volverá a llenarse y la pantalla ya sabe usarlo.
-      url: null,
+      // Sin nada que entregar no hay enlace: mandar a la familia a un carrito
+      // vacío sería peor que no mandarla.
+      //
+      // Comportamiento comprobado del enlace con `sc=70`:
+      //   · AÑADE a lo que la familia ya tuviera en el carrito, sin borrarlo.
+      //   · Repetirlo no duplica líneas.
+      //   · Sobre un producto que ya estaba, **se queda con la cantidad mayor y
+      //     nunca la baja**: 4 en el carrito + un enlace que pide 6 -> 6; luego
+      //     un enlace que pide 2 -> sigue en 6. Ojo: eso significa que el total
+      //     que enseñamos aquí puede quedarse corto si la familia ya tenía más
+      //     de ese producto. No es un fallo del enlace, es una diferencia que
+      //     habrá que saber contar.
+      //   · Un SKU que ya no exista se ignora sin arrastrar a los demás.
+      //   · Cabe una compra semanal entera: 35 productos son ~1 000 caracteres,
+      //     muy por debajo del límite práctico de una URL.
+      url:
+        partes.length > 0
+          ? `${BASE}/checkout/cart/add?${partes.join("&")}&sc=${CANAL}`
+          : null,
       viajan,
       sequedan,
     };

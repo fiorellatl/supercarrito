@@ -56,8 +56,10 @@ Medido hoy en sesión anónima de escritorio, leyendo el carrito:
 
 - **Carrito previo:** el enlace **suma** a lo que ya había. Lo comprobé dos
   veces; un carrito con 3 productos pasó a 5 sin perder ninguno.
-- **Repetir el mismo enlace no duplica:** fija la cantidad. Pasar dos veces por
-  `qty=2` deja 2, no 4.
+- **Repetir el mismo enlace no duplica líneas**, pero sobre un producto que ya
+  estaba **se queda con la cantidad mayor y nunca la baja**: con 4 en el carrito,
+  un enlace que pide 6 lo deja en 6; otro que pide 2 lo deja en 6 igual. Si en P1
+  metes a mano uno de los 4 productos del enlace, cuenta con esto.
 - **Producto inexistente:** se ignora en silencio y **el resto entra igual**. Un
   enlace con 2 válidos y 1 inválido metió los 2 válidos.
 - **35 productos** en un solo enlace: entran los 35.

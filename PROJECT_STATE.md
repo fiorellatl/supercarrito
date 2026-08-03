@@ -2220,8 +2220,14 @@ Documento: `design/arquitecturas-ultima-milla.md`.
 3. Con tienda/zona asignada (se midió con `regionId: null`).
 4. Un producto agotado dentro del enlace: ¿entra el resto o falla todo?
 
-### Deuda que deja este sprint
+### Deuda que dejó este sprint — SALDADA el mismo día
 
-`lib/entrega.ts` conserva un comentario de cabecera que hoy es falso («EL ENLACE
-DE CARRITO NO FUNCIONA») y devuelve `url: null`. No se tocó porque el sprint era
-de investigación. Es una trampa para quien lea el código.
+`lib/entrega.ts` quedó con un comentario de cabecera falso («EL ENLACE DE
+CARRITO NO FUNCIONA») y devolviendo `url: null`, porque el sprint era de
+investigación. Corregido acto seguido para poder probar el flujo desde Netlify:
+el enlace vuelve, ahora con `sc=70`, y las pantallas vuelven a prometer el
+carrito. La prueba 4 de la lista de arriba —producto inexistente— quedó también
+verificada: se ignora y el resto entra igual.
+
+Sigue pendiente lo que necesita cuenta real o teléfono, que es el Sprint de
+Certificación: `design/protocolo-handoff-definitivo.md`.
