@@ -64,7 +64,9 @@ export default function Hoja({
           borderTopRightRadius: radio.hoja,
           borderTop: `1px solid ${color.renglon}`,
           boxShadow: sombraHoja,
-          padding: "14px 22px 0",
+          // La hoja llega hasta el borde de abajo del teléfono: es la última
+          // superficie, así que la zona segura la respeta ella.
+          padding: "14px 22px var(--abajo)",
           outline: "none",
           fontFamily: fuente,
         }}

@@ -18,6 +18,7 @@ export function Pantalla({
   navegacion,
   cuerpo,
   pie,
+  sentido = "adelante",
 }: {
   titulo?: string;
   onVolver?: () => void;
@@ -29,6 +30,10 @@ export function Pantalla({
   navegacion?: React.ReactNode;
   cuerpo: React.ReactNode;
   pie?: React.ReactNode;
+  // Hacia dónde va este cambio de pantalla. Entrar en un sitio y volver de él
+  // no pueden sentirse igual: la dirección es lo que le dice a la familia si
+  // está profundizando o deshaciendo, sin una sola palabra.
+  sentido?: "adelante" | "atras";
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
@@ -46,36 +51,51 @@ export function Pantalla({
         }}
       >
         {onVolver && (
+          // 44 px de zona tocable con 34 px de dibujo dentro. Volver es el gesto
+          // que más se repite en todo el producto y estaba en 34: el margen
+          // negativo mantiene el dibujo donde siempre estuvo.
           <button
             onClick={onVolver}
             aria-label="Volver"
             className="sc-boton"
             style={{
-              width: 34,
-              height: 34,
+              width: 44,
+              height: 44,
+              margin: "0 -5px",
               flex: "0 0 auto",
               display: "grid",
               placeItems: "center",
-              borderRadius: 10,
-              border: `1px solid ${color.renglon}`,
-              background: color.blanco,
+              border: 0,
+              background: "none",
               color: color.lapiz,
               cursor: "pointer",
               padding: 0,
             }}
           >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <span
+              style={{
+                width: 34,
+                height: 34,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: 10,
+                border: `1px solid ${color.renglon}`,
+                background: color.blanco,
+              }}
             >
-              <path d="m15 18-6-6 6-6" />
-            </svg>
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </span>
           </button>
         )}
 
@@ -131,7 +151,10 @@ export function Pantalla({
       </header>
       )}
 
-      <div className="sc-scroll" style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 1 }}>
+      <div
+        className={`sc-scroll sc-${sentido}`}
+        style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 1 }}
+      >
         {cuerpo}
       </div>
 
@@ -141,8 +164,11 @@ export function Pantalla({
             flex: "0 0 auto",
             position: "sticky",
             bottom: 0,
-            paddingBottom: 20,
             paddingTop: 12,
+            // Cuando no hay barra de navegación debajo, el pie es lo último de
+            // la pantalla y tiene que apartarse de la barra de gestos del
+            // teléfono. Con barra, de eso se encarga ella.
+            paddingBottom: navegacion ? 20 : "calc(20px + var(--abajo))",
             background: color.papel,
             zIndex: 2,
           }}

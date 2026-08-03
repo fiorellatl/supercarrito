@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SuperCarrito">
+  <rect width="64" height="64" rx="15" fill="#2E5D4B"/>
+  <g fill="none" stroke="#F5F3ED" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13 17.5h5.4l6 21.5h19.2L48 22.5H20.3"/>
+  </g>
+  <circle cx="27" cy="47.5" r="3.4" fill="#F5F3ED"/>
+  <circle cx="42" cy="47.5" r="3.4" fill="#F5F3ED"/>
+</svg>

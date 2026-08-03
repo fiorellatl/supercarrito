@@ -12,6 +12,47 @@
   --papaya: #e0864b;
   --ladrillo: #a8503c;
   --renglon-alto: 38px;
+  --curva: cubic-bezier(.22, .61, .36, 1);
+  /* Lo que el teléfono se reserva para su barra de gestos y su notch. En un
+     navegador de escritorio vale 0 y no cambia nada. */
+  --abajo: env(safe-area-inset-bottom, 0px);
+}
+
+/* El papel y la letra. Estaban en línea en el layout, y por eso el fondo se
+   pintaba después del primer fotograma: al abrir se veía un flash blanco. */
+html {
+  background: var(--papel);
+  /* Android e iOS agrandan la letra al girar el teléfono. En una lista de la
+     compra eso descuadra la columna de precios. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: ui-rounded, "SF Pro Rounded", "Segoe UI Variable Display", "Segoe UI",
+    system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* El rebote elástico al final de la lista delata que esto es una página. */
+  overscroll-behavior-y: none;
+}
+
+/* El destello gris de Android al tocar cualquier cosa. Ya tenemos nuestro
+   propio gesto —hundirse 1 px— y dos respuestas al mismo toque son una de más. */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Nada se selecciona por error al mantener pulsado un botón; lo que la familia
+   escribió, sí se puede seleccionar siempre. */
+button,
+nav,
+[role="status"] {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Debe sentirse antes de verse. Si se nota, está mal: 50 % de opacidad y
@@ -79,6 +120,37 @@
 @keyframes sc-trazo {
   to { stroke-dashoffset: 0; }
 }
+
+/* Cambiar de pantalla. Es lo que más se nota de todo lo que hay en este archivo:
+   sin esto, ir del carrito a la entrega era un corte seco y el producto parecía
+   recargar una página.
+
+   Se mueve SOLO el cuerpo. La cabecera y el pie se quedan quietos —siguen
+   siendo el mismo sitio— y así, además, la barra de abajo no se despega: un
+   `transform` sobre el contenedor rompería su `position: sticky`.
+
+   Entrar avanza desde la derecha; volver, desde la izquierda. Poco recorrido
+   (10 px) y nada de rebote: es un pasar de hoja, no una diapositiva. */
+@keyframes sc-adelante {
+  from { opacity: 0; transform: translate3d(10px, 0, 0); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes sc-atras {
+  from { opacity: 0; transform: translate3d(-10px, 0, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+.sc-adelante { animation: sc-adelante 260ms var(--curva) both; }
+.sc-atras    { animation: sc-atras 260ms var(--curva) both; }
+
+/* Un monto que cambia no puede cambiar de golpe: si la cifra salta sin avisar,
+   la familia no sabe si acaba de pasar algo o si siempre estuvo así. Se apaga
+   un instante y vuelve. Nunca cuenta hacia arriba como un marcador. */
+@keyframes sc-monto {
+  from { opacity: 0.25; transform: translate3d(0, 2px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+.sc-monto { animation: sc-monto 240ms var(--curva) both; }
 
 .sc-entra   { animation: sc-linea 220ms cubic-bezier(.22,.61,.36,1) both; }
 .sc-cae     { animation: sc-clip 260ms cubic-bezier(.22,.61,.36,1) both; }

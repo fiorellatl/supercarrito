@@ -29,26 +29,43 @@ export default function Cabecera({
       }}
     >
       <Logo tamano="chico" />
+      {/* 44 px tocables, 36 dibujados. El monograma estaba en 36 y es la única
+          puerta a la casa: fallar el toque es acabar en otro sitio. */}
       <button
         onClick={onCasa}
         aria-label={`Mi casa: ${nombre}`}
         className="sc-boton"
         style={{
-          width: 36,
-          height: 36,
+          width: 44,
+          height: 44,
+          margin: "0 -4px",
           flex: "0 0 auto",
-          borderRadius: 999,
-          border: `1px solid ${color.renglon}`,
-          background: color.blanco,
-          color: color.lapiz,
+          display: "grid",
+          placeItems: "center",
+          border: 0,
+          background: "none",
+          padding: 0,
           cursor: "pointer",
-          fontFamily: fuente,
-          fontSize: 12.5,
-          fontWeight: 600,
-          letterSpacing: "0.02em",
         }}
       >
-        {monograma}
+        <span
+          style={{
+            width: 36,
+            height: 36,
+            display: "grid",
+            placeItems: "center",
+            borderRadius: 999,
+            border: `1px solid ${color.renglon}`,
+            background: color.blanco,
+            color: color.lapiz,
+            fontFamily: fuente,
+            fontSize: 12.5,
+            fontWeight: 600,
+            letterSpacing: "0.02em",
+          }}
+        >
+          {monograma}
+        </span>
       </button>
     </header>
   );

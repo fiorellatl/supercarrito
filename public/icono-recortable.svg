@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SuperCarrito">
+  <!-- Recortable: Android le hace un círculo por encima, así que el carrito vive
+       dentro de la zona segura (el 80 % central) y el pino llega hasta el borde. -->
+  <rect width="64" height="64" fill="#2E5D4B"/>
+  <g fill="none" stroke="#F5F3ED" stroke-width="3.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18.4 22.2h4.3l4.8 17.2h15.4l3.5-13.2H24.2"/>
+  </g>
+  <circle cx="29.6" cy="45" r="2.7" fill="#F5F3ED"/>
+  <circle cx="41.6" cy="45" r="2.7" fill="#F5F3ED"/>
+</svg>

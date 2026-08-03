@@ -24,7 +24,8 @@ export default function Aviso({
         position: "fixed",
         left: 16,
         right: 16,
-        bottom: 96,
+        // Por encima de la barra de navegación, y de la del teléfono debajo.
+        bottom: "calc(96px + var(--abajo))",
         maxWidth: 488,
         margin: "0 auto",
         display: "flex",

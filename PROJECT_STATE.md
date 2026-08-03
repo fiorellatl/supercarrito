@@ -2471,3 +2471,81 @@ Un producto tiene identidad y tiene estado. El estado —precio, stock— caduca
 vuelve a preguntar. **La identidad no caduca: se guarda.** Cada vez que el
 producto la re-deduzca en silencio, va a acabar enseñando otra cosa.
 
+
+---
+
+## M · Primer sprint de experiencia (2026-08-03)
+
+Cambio de foco de la PO: se acabaron los bugs internos salvo bloqueantes. Ahora
+**experiencia y personalidad**, y cada sprint de UX termina en un despliegue —
+nada de documentos ni prototipos sueltos.
+
+De los nueve temas que abrió, este sprint cubre seis. Los tres que faltan
+—**cuenta, login y vincular tu Wong**— quedan fuera a propósito: hoy no hay
+servidor de identidad, y decidir si lo hay es una decisión de producto suya, no
+una de diseño.
+
+### Lo que no existía: la marca fuera de la aplicación
+
+Era el agujero más grande y no era estético. Sin icono, sin nombre y sin
+previsualización, un enlace **no se comparte y no se guarda**: el producto solo
+existía dentro de la pestaña en la que estaba abierto.
+
+- `app/icon.svg` · `public/icono.svg` · `public/icono-recortable.svg` (Android
+  recorta a círculo: el carrito vive en el 80 % central).
+- `app/manifest.ts` — instalable, en pie, con el papel como fondo. "Añadir a la
+  pantalla de inicio" deja de ser un acceso directo genérico.
+- `public/icono-apple.png` (180×180) y `public/enlace.png` (1200×630), dibujados
+  con `herramientas/marca.mjs`.
+- Metadata completa: OG, Twitter, `appleWebApp`, `robots: noindex` —esto es la
+  compra de una casa, no una web que quiera tráfico—.
+
+**Nota técnica cara:** `next/og` (ImageResponse) **no compila en Windows** —
+`TypeError: Invalid URL` al resolver su fuente por defecto. Se abandonó y las
+imágenes se generan con `sharp`, que ya venía con Next y trae rsvg. Es un
+script que se ejecuta a mano; lo que se publica son los PNG.
+
+### Que se sienta una aplicación y no una página
+
+- **Transiciones con dirección.** Entrar avanza desde la derecha, volver desde la
+  izquierda. Se mueve solo el cuerpo: la cabecera y el pie se quedan, y así
+  además no se rompe el `position: sticky` de la barra.
+- **Zona segura** (`env(safe-area-inset-bottom)`) en la barra, el pie, la hoja y
+  el aviso. Sin esto, "Mi casa" quedaba pegado a la barra de gestos.
+- `viewport-fit: cover`, sin rebote elástico, sin destello gris al tocar, sin
+  reajuste de letra al girar. El papel se pinta desde el CSS, no desde el
+  layout: se acabó el destello blanco al abrir.
+
+### Microinteracciones
+
+- **El monto se enciende cuando cambia.** Es la única cifra con derecho a llamar
+  la atención: es por la que se abrió la aplicación.
+- **Las líneas del carrito entran escalonadas** (26 ms, techo de 8). Un carrito
+  que aparece entero es una tabla; uno que se va escribiendo es alguien
+  apuntando.
+
+### Primera impresión
+
+La puerta enseña **el producto antes de pedir nada**: una nota manuscrita real
+convirtiéndose en dos productos de Wong con su precio. La promesa entera, hecha
+en vez de contada. Todo entra escalonado, y el nombre de la casa deja de parecer
+el primer paso de un alta.
+
+### Tocar
+
+El botón de volver y el monograma pasan a 44 px de zona tocable (dibujados
+igual, 34 y 36). Cierra las dos observaciones de la primera sesión de bitácora.
+
+### Lo que este sprint encontró y NO tocó
+
+Probando el recorrido completo salió otra vez, con datos reales:
+
+    "gracias mami"  →  Cama El Cisne Munay + Sofá Cama 2 Plazas · S/ 659
+
+Total de la compra: **S/ 709.69** por cuatro cosas del súper. Es la **tercera
+aparición** del patrón de comprensión de la intención, y la primera en la que se
+puede medir el daño: no impide comprar —se puede dejar anotado— pero es el
+número que haría cerrar la aplicación.
+
+Se anota y no se toca. La decisión de abrir el sprint de comprensión es de la PO.
+

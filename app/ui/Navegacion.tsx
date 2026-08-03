@@ -44,6 +44,10 @@ export default function Navegacion({
         borderTop: `1px solid ${color.renglon}`,
         background: color.papel2,
         marginTop: 4,
+        // La barra de gestos del teléfono vive justo debajo. Sin esto, "Mi casa"
+        // quedaba pegado a ella y tocarlo cerraba la aplicación tan a menudo
+        // como la abría.
+        paddingBottom: "var(--abajo)",
       }}
     >
       {LUGARES.map((l) => {

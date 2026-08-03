@@ -32,6 +32,7 @@ export default function LineaCarrito({
   acciones,
   mostrarPara,
   atenuada,
+  orden,
   onCantidad,
 }: {
   ingrediente: string;
@@ -43,6 +44,11 @@ export default function LineaCarrito({
   acciones?: { texto: string; onClick: () => void }[];
   mostrarPara?: boolean;
   atenuada?: boolean; // "dejarlo anotado": sigue a la vista, ya no compra
+  // Su sitio en el carrito. Las líneas entran una detrás de otra, no todas de
+  // golpe: un carrito que aparece entero es una tabla que se cargó; uno que se
+  // va escribiendo es alguien apuntando lo que encontró. 26 ms de diferencia y
+  // un techo bajo — con veinte productos, esperar el último sería absurdo.
+  orden?: number;
   // Elegir el producto y decidir cuánto llevas son dos decisiones distintas, y
   // la tarjeta permite las dos. Vale para TODO lo que se puede comprar, no solo
   // para lo que se vende al peso: que algo venga envasado no significa que la
@@ -50,12 +56,13 @@ export default function LineaCarrito({
   onCantidad?: { menos: () => void; mas: () => void; abrir: () => void };
 }) {
   const agotado = estado === "agotado";
+  const retraso = Math.min(orden ?? 0, 7) * 26;
 
   // Sin resultado no es un error de la familia: es algo que no supimos
   // encontrar. Se dice en primera persona y se deja su palabra intacta.
   if (estado === "sin-resultado") {
     return (
-      <Fila>
+      <Fila retraso={retraso}>
         <Foto alt={ingrediente} apagada />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14.5, fontWeight: 500, color: color.tinta, lineHeight: 1.28 }}>
@@ -69,7 +76,7 @@ export default function LineaCarrito({
   }
 
   return (
-    <Fila atenuada={atenuada}>
+    <Fila atenuada={atenuada} retraso={retraso}>
       {producto?.url ? (
         <a
           href={producto.url}
@@ -286,7 +293,15 @@ function Paso({
   );
 }
 
-function Fila({ children, atenuada }: { children: React.ReactNode; atenuada?: boolean }) {
+function Fila({
+  children,
+  atenuada,
+  retraso,
+}: {
+  children: React.ReactNode;
+  atenuada?: boolean;
+  retraso?: number;
+}) {
   return (
     <div
       className="sc-entra"
@@ -299,6 +314,8 @@ function Fila({ children, atenuada }: { children: React.ReactNode; atenuada?: bo
         // Lo que se deja anotado no se borra ni se esconde: se apaga. Sigue a
         // la vista para poder volver a ponerlo sin buscarlo.
         opacity: atenuada ? 0.45 : 1,
+        transition: "opacity 200ms var(--curva)",
+        animationDelay: retraso ? `${retraso}ms` : undefined,
       }}
     >
       {children}

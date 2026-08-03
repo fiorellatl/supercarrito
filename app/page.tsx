@@ -115,6 +115,19 @@ type CarritoApi = {
   faltantes: string[];
 };
 
+// Qué tan adentro está cada lugar. Solo sirve para saber si un cambio de
+// pantalla es entrar o salir; no ordena nada más.
+const profundidad: Record<Ruta, number> = {
+  libreta: 0,
+  casa: 0,
+  revision: 1,
+  tienda: 1,
+  boleta: 1,
+  compra: 2,
+  entregar: 3,
+  entregado: 4,
+};
+
 // `ItemResuelto` vive en `lib/carrito.ts`: es un modelo que se GUARDA, y por eso
 // ya no puede vivir dentro de una pantalla.
 
@@ -313,6 +326,7 @@ export default function App() {
   const archivoRef = useRef<HTMLInputElement>(null);
   const cargada = useRef(false);
   const carritoCargado = useRef(false);
+  const rutaPrevia = useRef<Ruta>("libreta");
 
   // --- Persistencia. El trabajo no se pierde jamás: se guarda en cada cambio.
   useEffect(() => {
@@ -546,6 +560,19 @@ export default function App() {
   // como monto sería enseñar que la compra vale cero.
   const montoDeTienda = totalTienda != null && totalTienda > 0 ? totalTienda : null;
   const montoEntrega = montoDeTienda ?? totalEntrega;
+
+  // --- Hacia dónde va cada cambio de pantalla --------------------------------
+  // Entrar y volver no pueden sentirse igual. Cada lugar tiene una profundidad y
+  // el movimiento la respeta: hacia dentro entra desde la derecha, hacia fuera
+  // desde la izquierda. Es lo único que le dice a la familia si está avanzando o
+  // deshaciendo, y se dice sin una palabra.
+  //
+  // Entre lugares de la misma profundidad —las tres pestañas— cuenta como
+  // avanzar: no hay jerarquía entre ellos, así que tampoco hay marcha atrás.
+  const sentido = profundidad[ruta] >= profundidad[rutaPrevia.current] ? "adelante" : "atras";
+  useEffect(() => {
+    rutaPrevia.current = ruta;
+  }, [ruta]);
 
   const ir = (r: Ruta) => setRuta(r);
 
@@ -834,6 +861,7 @@ export default function App() {
     <main className="sc-papel" style={marco}>
       {ruta === "libreta" && (
         <Pantalla
+          sentido={sentido}
           encabezado={
             <Cabecera monograma={monograma(casa)} nombre={casa.nombre} onCasa={() => ir("casa")} />
           }
@@ -974,6 +1002,7 @@ export default function App() {
 
       {ruta === "revision" && (
         <Pantalla
+          sentido={sentido}
           titulo="Antes de comprar"
           onVolver={() => ir("libreta")}
           cuerpo={
@@ -1026,7 +1055,10 @@ export default function App() {
                 </div>
               )}
               {vacia && (
-                <Vacio titulo="Quitaste todo." texto="Tu compra te espera igual." />
+                <Vacio
+                  titulo="Quitaste todo."
+                  texto="Sin problema. Vuelve cuando te acuerdes de algo; aquí te espera."
+                />
               )}
             </>
           }
@@ -1045,6 +1077,7 @@ export default function App() {
 
       {ruta === "compra" && (
         <Pantalla
+          sentido={sentido}
           titulo="El carrito"
           onVolver={() => ir(items ? "revision" : "libreta")}
           navegacion={
@@ -1063,8 +1096,8 @@ export default function App() {
               />
             ) : !items ? (
               <Vacio
-                titulo="Aquí verás tu carrito cuando busques precios."
-                texto="Se arma sola con lo que vayas anotando."
+                titulo="Tu carrito se arma aquí."
+                texto="Anota lo que falte en casa y, cuando quieras, le pongo los precios de tu tienda. Nada se compra sin que lo veas."
                 accion={
                   <Boton variante="fantasma" onClick={() => ir("libreta")}>
                     Ir a mi compra
@@ -1074,7 +1107,7 @@ export default function App() {
             ) : (
               <>
                 <p style={{ ...lapiz, margin: "0 0 8px" }}>Wong · precios de hoy</p>
-                {items.map((it) => {
+                {items.map((it, i) => {
                   const subtotal = subtotalDe(it, perfil);
                   const estado = estadoDe(it, subtotal);
                   const otras = it.candidatos.filter(
@@ -1119,6 +1152,7 @@ export default function App() {
                       confianza={it.fuera ? undefined : confianzaDe(it, perfil, estado)}
                       acciones={acciones}
                       atenuada={it.fuera}
+                      orden={i}
                       onCantidad={
                         estado === "confirmado" && !it.fuera
                           ? {
@@ -1196,7 +1230,15 @@ export default function App() {
                           ? "Subtotal confirmado"
                           : "Total"}
                     </span>
-                    <span style={{ ...plata, fontSize: 25, letterSpacing: "-0.03em" }}>
+                    {/* La `key` es el propio monto: cuando cambia, el número se
+                        vuelve a montar y se enciende. Es el único sitio de la
+                        aplicación donde una cifra tiene derecho a llamar la
+                        atención — es la cifra por la que se abrió. */}
+                    <span
+                      key={cuentan === 0 ? "vacio" : total}
+                      className="sc-monto"
+                      style={{ ...plata, fontSize: 25, letterSpacing: "-0.03em", display: "block" }}
+                    >
                       {cuentan === 0 ? "S/ —" : soles(total)}
                     </span>
                   </span>
@@ -1215,6 +1257,7 @@ export default function App() {
           pregunta con naturalidad y se puede cambiar cuando quiera. */}
       {ruta === "tienda" && (
         <Pantalla
+          sentido={sentido}
           titulo="¿Cuál es tu Wong?"
           onVolver={() => ir(items ? "compra" : "libreta")}
           cuerpo={
@@ -1282,6 +1325,7 @@ export default function App() {
           de Wong, con la compra ya empezada— es donde se pierde la confianza. */}
       {ruta === "entregar" && (
         <Pantalla
+          sentido={sentido}
           titulo="Llevar a Wong"
           onVolver={() => ir("compra")}
           cuerpo={
@@ -1327,7 +1371,11 @@ export default function App() {
                       : "precios referenciales · el total lo confirma tu tienda"}
                   </span>
                 </span>
-                <span style={{ ...plata, fontSize: 25, letterSpacing: "-0.03em" }}>
+                <span
+                  key={montoEntrega}
+                  className="sc-monto"
+                  style={{ ...plata, fontSize: 25, letterSpacing: "-0.03em", display: "block" }}
+                >
                   {montoEntrega > 0 ? soles(montoEntrega) : "S/ —"}
                 </span>
               </div>
@@ -1449,6 +1497,7 @@ export default function App() {
 
       {ruta === "casa" && (
         <Pantalla
+          sentido={sentido}
           titulo={casa.nombre}
           onVolver={() => ir("libreta")}
           navegacion={
@@ -1462,7 +1511,7 @@ export default function App() {
             nPrefs === 0 && compras.length === 0 && !perfil.tienda ? (
               <Vacio
                 titulo="Todavía no sé nada de ustedes."
-                texto="Después de la primera compra empiezo a aprender cómo compran. No hay nada que rellenar."
+                texto="Aquí van a ir apareciendo su tienda, sus marcas y sus compras — solo de verlos comprar. No hay nada que rellenar."
               />
             ) : (
               <>
@@ -1528,6 +1577,7 @@ export default function App() {
 
       {ruta === "boleta" && verCompra && (
         <Pantalla
+          sentido={sentido}
           titulo={cuando(verCompra.ts)}
           onVolver={() => ir("casa")}
           cuerpo={
