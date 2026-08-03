@@ -40,12 +40,14 @@ import {
 } from "@/lib/preferencias";
 import { etiquetaUnitaria, formatearCantidad } from "@/lib/cantidades";
 import {
+  repositorioCarrito,
   repositorioCompras,
   repositorioHistorial,
   repositorioLibreta,
   repositorioPerfil,
   type CompraCerrada,
 } from "@/lib/perfil-store";
+import { conservarIdentidad, type ItemResuelto } from "@/lib/carrito";
 import { ahora } from "@/lib/historial";
 import {
   anotar,
@@ -113,16 +115,8 @@ type CarritoApi = {
   faltantes: string[];
 };
 
-type ItemResuelto = {
-  ingrediente: string;
-  candidatos: ProductoWong[];
-  elegido: ProductoWong;
-  porPerfil: boolean;
-  cantidadPedida?: number;
-  unidadPedida?: "kg" | "un";
-  cantidadElegida?: number;
-  fuera?: boolean; // "dejarlo anotado": sigue a la vista y no compra
-};
+// `ItemResuelto` vive en `lib/carrito.ts`: es un modelo que se GUARDA, y por eso
+// ya no puede vivir dentro de una pantalla.
 
 type MenuResumen = { numero: string; nombre: string; platos: string[] };
 
@@ -198,16 +192,28 @@ function subtotalDe(it: ItemResuelto, perfil: Perfil): number | undefined {
 // cuando no lo está es el mismo pecado que un precio inexplicable, una escala
 // más arriba. Lo que se dejó anotado no suma y tampoco cuenta como pendiente:
 // ya no es una pregunta abierta, es una decisión tomada.
+//
+// Y hace falta saber CUÁNTOS productos aportan de verdad un monto. Un producto
+// agotado suma cero —correcto: no se va a pagar— pero si todos lo están, la
+// suma da 0 y la pantalla enseñaba «TOTAL S/ 0.00» con tres productos a la
+// vista. Ese número no es un total, es la ausencia de uno, y presentarlo como
+// total es la misma mentira que un monto inventado. La casa ya tiene la regla
+// escrita en cada línea del carrito: lo que no sabemos vale un guion, jamás un
+// cero.
 function totalDe(items: ItemResuelto[], perfil: Perfil) {
   let total = 0;
   let pendientes = 0;
+  let cuentan = 0;
   for (const it of items) {
     if (it.fuera) continue;
     const s = subtotalDe(it, perfil);
     if (s === undefined) pendientes++;
-    else total += s;
+    else {
+      total += s;
+      if (s > 0) cuentan++;
+    }
   }
-  return { total: Math.round(total * 100) / 100, pendientes };
+  return { total: Math.round(total * 100) / 100, pendientes, cuentan };
 }
 
 function estadoDe(it: ItemResuelto, subtotal?: number): EstadoLinea {
@@ -306,6 +312,7 @@ export default function App() {
   const compRef = useRef<HTMLInputElement>(null);
   const archivoRef = useRef<HTMLInputElement>(null);
   const cargada = useRef(false);
+  const carritoCargado = useRef(false);
 
   // --- Persistencia. El trabajo no se pierde jamás: se guarda en cada cambio.
   useEffect(() => {
@@ -319,6 +326,14 @@ export default function App() {
       setLibreta(l);
       cargada.current = true;
     });
+    // El carrito vuelve tal y como se dejó. Es lo que convierte "seguir con mi
+    // carrito" en verdad: los mismos productos, los mismos SKU, las mismas
+    // cantidades. Los precios y el stock los volverá a preguntar el efecto de la
+    // tienda —eso sí caduca—, pero nadie vuelve a decidir CUÁL era el producto.
+    void repositorioCarrito.cargar().then((c) => {
+      if (c && c.length > 0) setItems(c);
+      carritoCargado.current = true;
+    });
     fetch("/api/menus")
       .then((r) => r.json())
       .then((d) => setMenus(d.menus ?? []))
@@ -328,6 +343,10 @@ export default function App() {
   useEffect(() => {
     if (cargada.current) void repositorioLibreta.guardar(libreta);
   }, [libreta]);
+
+  useEffect(() => {
+    if (carritoCargado.current) void repositorioCarrito.guardar(items);
+  }, [items]);
 
   // El cursor ya está puesto: abrir y escribir son el mismo gesto.
   useEffect(() => {
@@ -355,7 +374,10 @@ export default function App() {
     });
   }, []);
 
-  const { total, pendientes } = useMemo(() => totalDe(items ?? [], perfil), [items, perfil]);
+  const { total, pendientes, cuentan } = useMemo(
+    () => totalDe(items ?? [], perfil),
+    [items, perfil]
+  );
 
   // --- Los precios de SU tienda ----------------------------------------------
   // Lo que la familia ve tiene que ser lo que va a pagar. El catálogo público no
@@ -441,7 +463,15 @@ export default function App() {
             if (!p || !dato) return it;
             return {
               ...it,
-              elegido: { ...p, precio: dato.precio ?? p.precio, disponible: dato.disponible },
+              elegido: {
+                ...p,
+                // Un precio de cero no es un precio: es la tienda diciendo que
+                // no tiene nada que cobrar por ese SKU hoy. Se conserva el que
+                // ya sabíamos —un producto nunca "pierde" su precio— y quien
+                // dice lo que pasa es `disponible`.
+                precio: dato.precio != null && dato.precio > 0 ? dato.precio : p.precio,
+                disponible: dato.disponible,
+              },
             };
           })
         );
@@ -510,6 +540,12 @@ export default function App() {
       ) / 100,
     [entrega]
   );
+
+  // El de la tienda manda, pero un cero no es un total: la simulación devuelve
+  // `Items: 0` cuando todo lo que le preguntamos está sin stock, y repetirlo
+  // como monto sería enseñar que la compra vale cero.
+  const montoDeTienda = totalTienda != null && totalTienda > 0 ? totalTienda : null;
+  const montoEntrega = montoDeTienda ?? totalEntrega;
 
   const ir = (r: Ruta) => setRuta(r);
 
@@ -624,7 +660,11 @@ export default function App() {
         return;
       }
       const { items: resueltos, evitadas } = resolver(data as CarritoApi, perfil);
-      setItems(resueltos);
+      // Del emparejamiento nuevo solo entra lo que todavía no estaba. Un
+      // producto que la familia ya tenía delante conserva su identidad entera
+      // —SKU, nombre, precio, la cantidad que decidió y su "lo dejé anotado"—
+      // aunque el catálogo de hoy propusiera otro. Ver `lib/carrito.ts`.
+      setItems((previos) => conservarIdentidad(previos, resueltos));
       setFaltantes(data.faltantes ?? []);
       if (evitadas > 0) actualizarPerfil((p) => contarPreguntasEvitadas(p, evitadas));
 
@@ -728,7 +768,20 @@ export default function App() {
     const nueva = resolverCompra(libreta, comprados.map((it) => it.ingrediente));
     setLibreta(nueva);
     setUltimaCompra({ n: comprados.length, quedaron: nueva.lineas.length });
-    setItems(null);
+
+    // El carrito tampoco se vacía: se resuelve, igual que la libreta. Lo que
+    // cruzó se fue con la compra; lo que NO cruzó sigue siendo exactamente el
+    // producto que la familia ya vio, y ese es el caso que más importa —lo que
+    // queda pendiente es justo lo que va a volver la semana que viene—. Borrarlo
+    // aquí obligaba a re-emparejarlo desde el texto, y volvía siendo otro.
+    //
+    // Lo único que no sobrevive es el "lo dejé anotado": esa fue una decisión
+    // sobre ESTA compra, no sobre la próxima. El producto vuelve entero; la
+    // renuncia, no.
+    const quedan = (items ?? [])
+      .filter((it) => !cruzaron.has(it.ingrediente))
+      .map((it) => (it.fuera ? { ...it, fuera: false } : it));
+    setItems(quedan.length > 0 ? quedan : null);
     ir("entregado");
   }
 
@@ -1133,11 +1186,18 @@ export default function App() {
                 )}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
                   <span>
+                    {/* Cuando nada suma —todo agotado, todo sin cantidad, todo
+                        dejado anotado— no hay total que enseñar. Un guion dice
+                        la verdad; "S/ 0.00" dice que su compra vale cero. */}
                     <span style={{ ...rotulo, display: "block" }}>
-                      {pendientes > 0 ? "Subtotal confirmado" : "Total"}
+                      {cuentan === 0
+                        ? "Aún no suma"
+                        : pendientes > 0
+                          ? "Subtotal confirmado"
+                          : "Total"}
                     </span>
                     <span style={{ ...plata, fontSize: 25, letterSpacing: "-0.03em" }}>
-                      {soles(total)}
+                      {cuentan === 0 ? "S/ —" : soles(total)}
                     </span>
                   </span>
                   <Boton variante="lleno" onClick={() => ir("entregar")}>
@@ -1262,13 +1322,13 @@ export default function App() {
                       cálculo nuestro y pasamos a repetir el suyo. Es la
                       diferencia entre "debería costar" y "cuesta". */}
                   <span style={{ ...lapiz, fontSize: 12 }}>
-                    {perfil.tienda && totalTienda != null
+                    {perfil.tienda && montoDeTienda != null
                       ? `precios de ${perfil.tienda.nombre}`
                       : "precios referenciales · el total lo confirma tu tienda"}
                   </span>
                 </span>
                 <span style={{ ...plata, fontSize: 25, letterSpacing: "-0.03em" }}>
-                  {soles(totalTienda ?? totalEntrega)}
+                  {montoEntrega > 0 ? soles(montoEntrega) : "S/ —"}
                 </span>
               </div>
 

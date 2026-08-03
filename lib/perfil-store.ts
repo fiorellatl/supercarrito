@@ -13,6 +13,7 @@ import { perfilVacio, type Perfil } from "@/lib/preferencias";
 import { historialVacio, registrar, type Hecho, type Historial } from "@/lib/historial";
 import { libretaVacia, type Libreta } from "@/lib/libreta";
 import { casaVacia, type Casa } from "@/lib/casa";
+import type { CarritoGuardado, ItemResuelto } from "@/lib/carrito";
 
 export interface RepositorioPerfil {
   cargar(): Promise<Perfil>;
@@ -201,6 +202,57 @@ export class ComprasLocalStorage implements RepositorioCompras {
 }
 
 export const repositorioCompras: RepositorioCompras = new ComprasLocalStorage();
+
+// --- El carrito en curso -----------------------------------------------------
+// Mismo puerto, misma disciplina. Existe por la misma razón que la libreta —"el
+// trabajo del usuario no se pierde jamás"— y por una más: un carrito que no se
+// guarda hay que reconstruirlo, y reconstruirlo significaba volver a emparejar
+// el texto y devolver un producto distinto. Ver `lib/carrito.ts`.
+//
+// `null` es un valor legítimo y quiere decir "no hay carrito": o nunca se armó,
+// o ya se entregó. Guardar `null` BORRA, no deja el anterior a medias.
+
+export interface RepositorioCarrito {
+  cargar(): Promise<ItemResuelto[] | null>;
+  guardar(items: ItemResuelto[] | null): Promise<void>;
+}
+
+const CLAVE_CARRITO = "supercarrito.carrito.v1";
+
+export class CarritoLocalStorage implements RepositorioCarrito {
+  async cargar(): Promise<ItemResuelto[] | null> {
+    if (typeof window === "undefined") return null;
+    try {
+      const crudo = window.localStorage.getItem(CLAVE_CARRITO);
+      if (!crudo) return null;
+      const c = JSON.parse(crudo) as CarritoGuardado;
+      if (c?.version !== 1 || !Array.isArray(c.items)) return null;
+      // Un carrito guardado a medias no puede romper la compra de hoy: si no
+      // trae lo mínimo para pintarse, se descarta y se empieza de nuevo.
+      return c.items.filter((it) => it?.ingrediente && it?.elegido);
+    } catch {
+      return null;
+    }
+  }
+
+  async guardar(items: ItemResuelto[] | null): Promise<void> {
+    if (typeof window === "undefined") return;
+    try {
+      if (!items) window.localStorage.removeItem(CLAVE_CARRITO);
+      else
+        window.localStorage.setItem(
+          CLAVE_CARRITO,
+          JSON.stringify({ version: 1, items } satisfies CarritoGuardado)
+        );
+    } catch {
+      // Igual que la libreta: si no se puede guardar, la familia sigue viendo
+      // su carrito. Lo que no puede pasar es que un fallo de disco la deje sin
+      // compra en curso.
+    }
+  }
+}
+
+export const repositorioCarrito: RepositorioCarrito = new CarritoLocalStorage();
 
 // --- La casa: quién entra ----------------------------------------------------
 // Mismo puerto, misma disciplina. Sin contraseñas y sin servidor: hoy es un

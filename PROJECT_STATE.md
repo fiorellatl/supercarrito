@@ -2400,3 +2400,74 @@ salida hasta que exista otra cosa.
 Recorrido completo en 375×812: desplegable con 14 opciones sin desbordes, enlace
 con `qcart=1`, aviso «Enlace copiado». El enlace exacto que genera la app metió
 sus 3 productos en un carrito real de Wong. `tsc` y `build` en verde.
+
+---
+
+## L · El carrito no se guardaba (2026-08-03)
+
+**Bug de consistencia, encontrado por la PO usando el producto.** Un producto que
+quedaba anotado volvía siendo otro y el total decía **S/ 0.00**. No era UX: era
+que el carrito no existía fuera de la memoria de React.
+
+### La causa, en una línea
+
+De todo lo que la familia decide, **solo se guardaba el texto**. `perfil-store.ts`
+tenía repositorio para el perfil, el historial, la libreta, las compras y la
+casa — y ninguno para el carrito. Al volver, la única forma de reconstruirlo era
+volver a pasar el texto por el matcher:
+
+    texto → matcher → producto
+
+Así que la identidad de un producto se **volvía a deducir** en cada sesión. No
+hace falta que el matcher sea inestable para que cambie el resultado: basta con
+que el Top-6 de hoy no traiga el SKU de ayer —`elegir()` cae entonces al filtro
+de marca y devuelve otro producto de la misma marca—, o con que exista ya una
+preferencia, que se crea sola al responder «¿cuánto llevas?», y que hace que
+`elegir()` tome un camino distinto al de la primera vez. Medido: con el mismo
+texto y en la misma tarde el matcher sí es determinista; lo que cambia entre
+sesiones es el catálogo y el perfil.
+
+Y el `entregar()` remataba: `setItems(null)` borraba el carrito entero, incluido
+**lo que no había cruzado** — justo lo que iba a volver la semana siguiente.
+
+### El S/ 0.00
+
+Otro sitio, misma familia de error. `subtotalDe` devuelve `0` para lo agotado
+(correcto: no se va a pagar) y `totalDe` lo sumaba sin contarlo como pendiente.
+Con toda la compra sin stock en esa tienda, el pie decía **«TOTAL S/ 0.00»** con
+tres productos a la vista. Reproducido en Wong Asia.
+
+La casa ya tenía la regla escrita en cada línea del carrito —*lo que no sabemos
+vale un guion, jamás un cero*— y el pie no la cumplía.
+
+### Lo que se hizo
+
+1. **`lib/carrito.ts`** — el carrito en curso pasa a ser un modelo que se guarda,
+   con `conservarIdentidad()`: de un emparejamiento nuevo solo entra lo que no
+   estaba. Lo que ya estaba conserva SKU, nombre, precio, cantidad y su «lo dejé
+   anotado». La libreta sigue mandando sobre QUÉ hay; lo que no se vuelve a
+   decidir es CUÁL es.
+2. **`repositorioCarrito`** en `perfil-store.ts`, mismo puerto que los demás.
+3. **Entregar resuelve el carrito, no lo vacía**: se va lo que cruzó, se queda lo
+   demás. Lo único que no sobrevive es el «lo dejé anotado» — fue una decisión
+   sobre esa compra, no sobre la próxima.
+4. **Ningún cero se presenta como total**: ni en el carrito ni en la entrega.
+   Cuando nada suma se dice «Aún no suma · S/ —».
+5. Un precio de cero devuelto por la tienda ya no pisa al que sabíamos.
+
+### Verificado
+
+Recorrido completo en 375×812. Con Wong Asia (todo sin stock): el pie dice «AÚN
+NO SUMA · S/ —». Recargando la aplicación entera el carrito vuelve idéntico —
+mismos SKU, 600 g de plátano intactos— y **sin una sola llamada al matcher**;
+solo `/api/precios`. Sembrando a mano un producto que el matcher de hoy NO
+propone, sobrevive a un «Buscar precios» explícito. Comprando y volviendo, lo que
+no cruzó conserva su identidad. Cambiando de tienda a Óvalo Gutiérrez, los mismos
+productos se revalúan: la trucha pasa de S/ 33.90 a S/ 30.90 sin cambiar de SKU.
+
+### Lo que deja como aprendizaje
+
+Un producto tiene identidad y tiene estado. El estado —precio, stock— caduca y se
+vuelve a preguntar. **La identidad no caduca: se guarda.** Cada vez que el
+producto la re-deduzca en silencio, va a acabar enseñando otra cosa.
+
