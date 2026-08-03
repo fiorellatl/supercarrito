@@ -46,8 +46,14 @@ Sí: la **Checkout API** de VTEX. Y la probamos entera.
 | Añadir ítems | `POST /api/checkout/pub/orderForm/{id}/items` | ❌ **401** `ORD021.5` «Seller no autorizado 1 con la política comercial 1» |
 | Añadir ítems con `sc=2` | idem `?sc=2` | ⚠️ **200 … y 0 ítems en el carrito** |
 | Leer carrito ajeno | `GET /api/checkout/pub/orderForm/{id}` | ✅ 200 (pero vacío) |
-| Simular precios | `POST /api/checkout/pub/orderForms/simulation` | ❌ **401** |
-| Resolver zona | `GET /api/checkout/pub/regions?country=PER&postalCode=…` | ✅ 200 · **`sellers: []`** — vacío |
+| Simular precios | `POST /api/checkout/pub/orderForms/simulation` | ❌ 401 — **pero con `?sc=70` da 200** ⚠️ |
+| Resolver zona | `GET /api/checkout/pub/regions?country=PER&postalCode=…` | ✅ 200 · `sellers: []` — **pero con `&sc=70` sí devuelve sellers** ⚠️ |
+
+> ⚠️ **Corregido el 2026-08-03, misma causa que todo lo demás: faltaba el canal.**
+> `simulation?sc=70` responde 200 con precio y disponibilidad reales, y acepta
+> `regionId`. Con región, los mismos SKUs cambian de precio y pueden salir
+> `withoutStock`. Es decir: **sí podemos preguntar por la tienda de una familia
+> antes de prometerle nada.** Lo que este documento daba por imposible.
 
 **La frontera está clarísima:** crear un carrito vacío es público; **meterle un
 producto, no**. Y hay dos formas de que no nos deje, que conviene distinguir:
