@@ -2162,3 +2162,66 @@ usar · consola limpia.
   semana vuelve a escribir la misma frase, se le vuelve a preguntar. Llevarlo al
   perfil es una decisión de producto, no un descuido.
 
+
+---
+
+## H · Sprint «La última milla» — investigación de arquitectura (2026-08-03)
+
+Encargo: explorar todas las arquitecturas posibles para que una compra preparada
+en SuperCarrito continúe en el supermercado. Sin implementar nada.
+
+### El resultado no fue una arquitectura nueva: fue que la premisa era falsa
+
+**El handoff sí funciona. Nos habíamos equivocado de canal de venta.** wong.pe
+opera en el canal `70` —público en `GET /api/segments`—, no en el 1 ni en el 2,
+los dos únicos que habíamos probado.
+
+Verificado hoy leyendo el carrito, que es la única prueba que vale:
+
+- `/checkout/cart/add?…&sc=70` → carrito real lleno.
+- 35 productos en un enlace de 1 010 caracteres → entran los 35 (S/ 1 079.57).
+- Al peso: trucha `unitMultiplier` 0.4 con `qty=3` → 1,2 kg, S/ 37.08. El
+  redondeo hacia arriba de `unidadesDeVenta` era exacto.
+- Repetir el enlace **no duplica**: fija la cantidad.
+- La API de checkout acepta escrituras con `sc=70` **también desde un servidor**,
+  y un carrito armado ahí se adopta en el navegador con `?orderFormId=…`.
+- `lib/wongvtex.ts` busca sin `sc`, y ese defecto **es** el canal 70: los SKUs
+  guardados ya son válidos donde se puede escribir.
+
+### Arquitectura recomendada
+
+**Entregar con el enlace. Verificar con el servidor. Degradar a «abrir cada
+producto». Pedir el acuerdo con Wong sin depender de él.**
+
+La verificación es la parte importante: antes de enseñar el enlace, armar ese
+mismo carrito en uno desechable y **leerlo**. Convierte en arquitectura la
+lección que costó dos sprints: nunca prometemos una entrega que no acabamos de
+comprobar. Y da precios de checkout, no de catálogo.
+
+La **extensión de navegador** —la opción que más interesaba a la PO— se estudió
+en serio y se descartó por una razón que no admite discusión: **no hay
+extensiones en móvil** (Chrome Android no las soporta, Kiwi cerró en 2025) y la
+compra se hace en el móvil. Queda en la recámara: es la única carta que no
+depende de que nadie nos autorice, si Wong cerrara el canal 70.
+
+Descartadas: Playwright remoto (exige custodiar la sesión de la familia, línea
+roja), Playwright local y app de escritorio (distribución imposible para
+familias), bookmarklet y userscript (gesto de programador), PWA (no resuelve
+este problema; buena por otras razones).
+
+Documento: `design/arquitecturas-ultima-milla.md`.
+`design/integracion-wong-investigacion.md` queda corregido en su conclusión.
+
+### Pendiente de verificar con la cuenta real
+
+1. **Móvil con `sc=70`** — la prueba que falló se hizo con `sc=2`, así que no
+   prueba nada. Decide la arquitectura.
+2. Con sesión iniciada (lo verificado es anónimo).
+3. Con tienda/zona asignada (se midió con `regionId: null`).
+4. Un producto agotado dentro del enlace: ¿entra el resto o falla todo?
+
+### Deuda que deja este sprint
+
+`lib/entrega.ts` conserva un comentario de cabecera que hoy es falso («EL ENLACE
+DE CARRITO NO FUNCIONA») y devuelve `url: null`. No se tocó porque el sprint era
+de investigación. Es una trampa para quien lea el código.

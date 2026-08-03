@@ -1,5 +1,19 @@
 # Cómo se integra un carrito con Wong, de forma oficial y sostenible
 
+> ## ⚠️ CORREGIDO EL 2026-08-03
+>
+> **La conclusión principal de este documento es falsa.** Decía que «no existe
+> ninguna vía técnica para llenarle el carrito a una familia sin un acuerdo con
+> Wong». Sí existe: **la tienda opera en el canal de venta `70`**, no en el 1 ni
+> en el 2, y con `sc=70` tanto la API de checkout como el enlace `cart/add`
+> funcionan —verificado leyendo el carrito, con 35 productos y con productos al
+> peso—. El canal es público: `GET /api/segments`.
+>
+> Lo que sigue siendo válido de aquí: appKey/appToken, Shareable Cart,
+> regionalización, la trampa del «200 que no añade nada» y la intercepción de la
+> app móvil. Lo que hay que leer en su lugar:
+> **[arquitecturas-ultima-milla.md](arquitecturas-ultima-milla.md)**.
+
 **Investigación · 2026-08-03.** Encargada tras falsar el deep link con la cuenta
 real de la PO. Documentación oficial de VTEX + medición directa contra
 www.wong.pe. No hay suposiciones: cada afirmación técnica lleva su prueba.
