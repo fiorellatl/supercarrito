@@ -168,6 +168,22 @@ function cantidadDe(it: ItemResuelto, perfil: Perfil): number | undefined {
   const unidad = it.elegido?.unidadVenta ?? "un";
   if (it.cantidadElegida != null) return it.cantidadElegida;
   if (it.cantidadPedida != null && it.unidadPedida === unidad) return it.cantidadPedida;
+  // La familia pidió en otra unidad que la de venta: «2 kg de papa» y Wong la
+  // vende en bolsas de 1 kg. Si la cuenta es exacta (2 bolsas) se usa, y se ve
+  // en la línea como «2 × S/ 3.20 · 1 kg». Si no es exacta, NO se redondea ni
+  // se cae a «1» en silencio: queda pendiente y la familia decide.
+  // (Encontrado en la prueba de punta a punta, 2026-11-26.)
+  if (it.cantidadPedida != null && it.unidadPedida && it.unidadPedida !== unidad) {
+    if (it.unidadPedida === "kg" && unidad === "un") {
+      const m = (it.elegido?.presentacion ?? it.elegido?.nombre ?? "").match(/(\d+(?:[.,]\d+)?)\s*(kg|g)\b/i);
+      if (m) {
+        const pesoKg = Number(m[1].replace(",", ".")) / (m[2].toLowerCase() === "g" ? 1000 : 1);
+        const n = it.cantidadPedida / pesoKg;
+        if (pesoKg > 0 && Math.abs(n - Math.round(n)) < 0.001 && Math.round(n) >= 1) return Math.round(n);
+      }
+    }
+    return undefined;
+  }
 
   const pref = preferenciaDe(perfil, it.ingrediente);
   const habitual = pref?.cantidadHabitual;

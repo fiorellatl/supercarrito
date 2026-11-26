@@ -2666,3 +2666,18 @@ amarillo ají para lo que espera a la familia y la letra Bricolage Grotesque.
 - Con pendientes, el botón del pie es «Decidir N cosas». Abre las hojas en
   fila, «1 de N», hasta que todo suma. Salida abierta: «Pedir así, sin decidirlo».
 - Los nombres de los colores en `app/ui/sistema.ts` se mantienen; cambian los valores.
+
+**Prueba de punta a punta (2026-11-26, catálogo de prueba, 375 px):** pasan 33 de 33
+chequeos. Cubren bienvenida, escribir, pegar WhatsApp con Deshacer, conversación
+plegada, sin resultado, menú, cambiar marca, cantidad ±, quitar, foto, «Decidir 1 de N»,
+recarga, revisar y pedir, enlace `sc=70&qcart=1`, copiar, entregado, Mis compras,
+Repetir y /editar.
+
+Encontrado y arreglado: la cantidad escrita al inicio de la línea se ignoraba
+(«2 kg de papa» salía como 1 bolsa). Ahora se lee con `cantidadEscrita()`
+(`lib/libreta.ts`). Si la unidad de venta es otra y la cuenta es exacta, se
+convierte (2 bolsas de 1 kg). Si no es exacta, la línea queda «¿Cuánto?»,
+nunca redondeada en silencio.
+
+Falta: lo mismo con Wong real en un celular (el sandbox no llega a wong.pe).
+
