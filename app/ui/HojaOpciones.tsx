@@ -23,18 +23,21 @@ export default function HojaOpciones({
   elegidaSku,
   onElegir,
   onCerrar,
+  paso,
 }: {
   ingrediente: string;
   opciones: ProductoWong[];
   elegidaSku?: string;
   onElegir: (p: ProductoWong) => void;
   onCerrar: () => void;
+  paso?: string;
 }) {
   return (
     <Hoja
       titulo={`Para “${ingrediente}”`}
       sub="Estas son las que encontré. Toca la que compras tú."
       onCerrar={onCerrar}
+      paso={paso}
       pie={
         // 🚪 La salida abierta de esta pregunta: si ninguna es, la familia no
         // tiene que elegir una mentira. Se queda como está y se va.

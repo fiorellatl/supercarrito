@@ -11,24 +11,31 @@
 
 import type { CSSProperties } from "react";
 
+// Estilo «puesto de mercado» (elegido por la PO, 2026-11-26): toldo rojo
+// tomate, verde de hoja para el dinero y la acción, amarillo ají para lo que
+// falta decidir. Los nombres de siempre se mantienen para no tocar cada
+// componente; cambian los valores.
 export const color = {
-  papel: "#F5F3ED", // fondo
-  papel2: "#EFEDE5", // hojas que suben
+  papel: "#FFFFFF", // fondo
+  papel2: "#F3F7EF", // filas y hojas que suben: verde muy pálido
   blanco: "#FFFFFF", // fondo de toda foto de producto
-  tinta: "#223354", // TODO lo que escribe la familia
-  tinta2: "#4A5A78", // lo pegado por la familia, un paso atrás
-  lapiz: "#7F8A80", // TODO lo que dice SuperCarrito
-  lapiz2: "#A3ADA5", // lo que dice y casi no importa
-  renglon: "#E2DED2", // la línea del cuaderno y todo borde
-  pino: "#2E5D4B", // dinero, confirmar, botón lleno. Nunca decoración.
-  papaya: "#E0864B", // el cursor. Aparece poquísimo.
-  ladrillo: "#A8503C", // agotado y error. Dos veces en toda la app.
+  tinta: "#15301F", // TODO lo que escribe la familia: verde casi negro
+  tinta2: "#3C5446", // lo pegado por la familia, un paso atrás
+  lapiz: "#4D6656", // TODO lo que dice SuperCarrito
+  lapiz2: "#8A9C90", // lo que dice y casi no importa
+  renglon: "#E1E9DC", // todo borde
+  pino: "#2F9E44", // dinero, confirmar, botón lleno. Nunca decoración.
+  papaya: "#E8412C", // tomate: el toldo, el foco y el cursor
+  ladrillo: "#B8321F", // agotado y error
+  aji: "#FFD23F", // lo que espera una decisión de la familia
+  noche: "#15301F", // la hoja oscura y el cartelito de «Elige»
 } as const;
 
-// Una sola familia, redondeada, del sistema. Sin serif (decisión de la PO) y sin
-// webfonts: una tipografía que tarda en cargar hace saltar la primera línea.
+// Una sola familia, sin serif (decisión de la PO): Bricolage Grotesque, la del
+// letrero pintado del puesto. Se carga con `display=swap` y cae a la redondeada
+// del sistema si no llega.
 export const fuente =
-  "ui-rounded, 'SF Pro Rounded', 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif";
+  "'Bricolage Grotesque', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, -apple-system, sans-serif";
 
 // El renglón. Todo lo que vive en la libreta cae en él o en un múltiplo.
 export const RENGLON = 38;
@@ -88,7 +95,7 @@ export const rotulo: CSSProperties = {
 // Nada más flota. Las tarjetas elevadas convierten una libreta en un panel.
 export const sombraHoja = "0 -24px 50px -28px rgba(0,0,0,.55)";
 
-export const radio = { boton: 13, hoja: 26, foto: 12, fotoGrande: 14 } as const;
+export const radio = { boton: 999, hoja: 26, foto: 12, fotoGrande: 14, fila: 16 } as const;
 
 export function soles(n: number): string {
   return `S/ ${n.toFixed(2)}`;

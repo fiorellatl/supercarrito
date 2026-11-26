@@ -322,6 +322,12 @@ export default function App() {
   // línea que ya tenía su producto se volvería a emparejar al abrir.
   const [arrancado, setArrancado] = useState(false);
   const [hojaTienda, setHojaTienda] = useState(false);
+  // «Una decisión a la vez»: al tocar Resolver, las hojas se suceden solas,
+  // una por producto que espera algo de la familia, hasta que no queda nada.
+  // `total` es cuántas había al empezar, para decir «2 de 3».
+  const [cola, setCola] = useState<{ total: number } | null>(null);
+  // La bienvenida termina en la tienda: es el paso 2 de 2.
+  const [primeraVez, setPrimeraVez] = useState(false);
   const [verRuido, setVerRuido] = useState(false);
   const [horaPrecios, setHoraPrecios] = useState<number | null>(null);
   const perfilRef = useRef(perfil);
@@ -665,6 +671,7 @@ export default function App() {
     actualizarPerfil((p) => elegirTienda(p, t));
     setFiltroTienda("");
     setHojaTienda(false);
+    setPrimeraVez(false);
   }
 
   // Una línea, una pregunta a Wong. Cada línea sabe qué productos salieron de
@@ -930,6 +937,34 @@ export default function App() {
   // Lo que hay en la lista para comprar, en el orden en que se escribió.
   const lineasCompra = libreta.lineas.filter((l) => lecturaDe(l).naturaleza === "compra");
   const vivos = (items ?? []).filter((i) => !i.fuera && i.elegido?.encontrado);
+  // Lo que espera una decisión de la familia: cuánto lleva, o qué lleva en vez
+  // de lo que hoy no hay. Ni una cosa más: la marca ya la propusimos nosotros.
+  const porDecidir = vivos.filter((it) => {
+    const e = estadoDe(it, subtotalDe(it, perfil));
+    return e === "pendiente" || e === "agotado";
+  });
+  const siguiente = porDecidir[0];
+
+  useEffect(() => {
+    if (!cola || hoja) return;
+    if (!siguiente) {
+      setCola(null);
+      setAviso({ texto: "Listo: todo lo de tu lista ya suma." });
+      return;
+    }
+    setHoja({
+      tipo: estadoDe(siguiente, subtotalDe(siguiente, perfil)) === "agotado" ? "opciones" : "cantidad",
+      ingrediente: siguiente.ingrediente,
+    });
+  }, [cola, hoja, siguiente, perfil]);
+
+  const pasoCola = cola
+    ? `${Math.min(cola.total, Math.max(1, cola.total - porDecidir.length + 1))} de ${cola.total}`
+    : undefined;
+  const cerrarHoja = () => {
+    setHoja(null);
+    setCola(null);
+  };
 
   async function copiarEnlace() {
     const url = entrega.url;
@@ -999,19 +1034,18 @@ export default function App() {
 
     const otras = it.candidatos.filter((c) => c.sku !== it.elegido?.sku && c.encontrado);
     const acciones: { texto: string; onClick: () => void }[] = [];
-    if (estado === "pendiente")
+    // La única decisión que la línea espera, en su cartelito amarillo.
+    const decision =
+      it.fuera
+        ? undefined
+        : estado === "pendiente"
+          ? { texto: "¿Cuánto?", onClick: () => setHoja({ tipo: "cantidad" as const, ingrediente: it.ingrediente }) }
+          : estado === "agotado"
+            ? { texto: "Elige otro", onClick: () => setHoja({ tipo: "opciones" as const, ingrediente: it.ingrediente }) }
+            : undefined;
+    if (estado !== "agotado" && otras.length > 0)
       acciones.push({
-        texto: "¿Cuánto llevas?",
-        onClick: () => setHoja({ tipo: "cantidad", ingrediente: it.ingrediente }),
-      });
-    if (estado === "agotado")
-      acciones.push({
-        texto: "Ver qué sí hay",
-        onClick: () => setHoja({ tipo: "opciones", ingrediente: it.ingrediente }),
-      });
-    else if (otras.length > 0)
-      acciones.push({
-        texto: `Otra marca o tamaño (${otras.length})`,
+        texto: `Cambiar (${otras.length})`,
         onClick: () => setHoja({ tipo: "opciones", ingrediente: it.ingrediente }),
       });
     if (deLaLinea === 1) acciones.push({ texto: "Quitar", onClick: quitarLinea });
@@ -1037,6 +1071,7 @@ export default function App() {
         confianza={it.fuera ? undefined : confianzaDe(it, perfil, estado)}
         acciones={acciones}
         atenuada={it.fuera}
+        decision={decision}
         orden={i}
         mostrarPara={!nombreDice(it.elegido?.nombre, deLaLinea > 1 ? it.ingrediente : l.texto)}
         onCantidad={
@@ -1074,6 +1109,8 @@ export default function App() {
             const nueva = crearCasa(nombre);
             setCasa(nueva);
             void repositorioCasa.guardar(nueva);
+            setPrimeraVez(true);
+            abrirTienda();
             // Sin foco automático: al entrar por primera vez, las cuatro formas
             // de empezar tienen que verse antes que un teclado abierto.
           }}
@@ -1090,6 +1127,9 @@ export default function App() {
             <Cabecera
               monograma={monograma(casa)}
               nombre={casa.nombre}
+              titulo={vacia ? "Arma tu lista" : `Tu lista, ${saludo(casa)}`}
+              tienda={perfil.tienda?.nombre}
+              onTienda={abrirTienda}
               onCasa={() => ir("casa")}
               onMarchaBlanca={() =>
                 setAviso({
@@ -1108,21 +1148,7 @@ export default function App() {
           }
           cuerpo={
             <>
-              <h1 style={tituloHome}>
-                {vacia ? "Arma tu lista" : `Tu lista, ${saludo(casa)}`}
-              </h1>
-
-              {/* Dónde estás en el camino. Tres pasos que se leen de un
-                  vistazo: la familia siempre sabe qué falta para terminar. */}
-              <Pasos actual={vivos.length > 0 ? 2 : 1} />
-
-              {/* La tienda vive aquí arriba, sobre la lista: de ella salen los
-                  precios que se ven debajo. Elegirla no es un paso: es un dato. */}
-              <BarraTienda
-                tienda={perfil.tienda?.nombre}
-                distrito={perfil.tienda?.distrito}
-                onCambiar={abrirTienda}
-              />
+<div style={{ height: 16 }} />
 
               {/* La caja es la puerta principal: una línea o un WhatsApp
                   entero, como salga. */}
@@ -1132,8 +1158,8 @@ export default function App() {
                   alignItems: "center",
                   gap: 8,
                   padding: "6px 6px 6px 14px",
-                  borderRadius: 14,
-                  border: `1.5px solid ${color.tinta}`,
+                  borderRadius: 999,
+                  border: `2px solid ${color.tinta}`,
                   background: color.blanco,
                 }}
               >
@@ -1280,13 +1306,6 @@ export default function App() {
           pie={
             vivos.length > 0 ? (
               <>
-                {pendientes > 0 && (
-                  <div style={{ ...lapiz, marginBottom: 8 }}>
-                    {pendientes === 1
-                      ? "Un producto todavía no suma: falta saber cuánto llevas."
-                      : `${pendientes} productos todavía no suman: falta saber cuánto llevas.`}
-                  </div>
-                )}
                 {perfil.tienda && preciosDeTienda === false && (
                   <div style={{ ...lapiz, marginBottom: 8 }}>
                     {perfil.tienda.nombre} no me contestó: estos son precios
@@ -1301,7 +1320,7 @@ export default function App() {
                         : cuentan === 0
                           ? "Aún no suma"
                           : pendientes > 0
-                            ? `${cuentan} ${cuentan === 1 ? "producto" : "productos"} · subtotal`
+                            ? `Subtotal de ${cuentan}`
                             : `${cuentan} ${cuentan === 1 ? "producto" : "productos"}`}
                     </span>
                     <span
@@ -1312,14 +1331,29 @@ export default function App() {
                       {esperandoTienda || cuentan === 0 ? "S/ —" : soles(total)}
                     </span>
                   </span>
-                  <Boton
-                    variante="lleno"
-                    onClick={() => ir("pedir")}
-                    disabled={buscandoIds.size > 0 && cuentan === 0}
-                  >
-                    Revisar y pedir
-                  </Boton>
+                  {porDecidir.length > 0 ? (
+                    <Boton variante="lleno" style={{ whiteSpace: "nowrap" }} onClick={() => setCola({ total: porDecidir.length })}>
+                      {porDecidir.length === 1 ? "Decidir 1 cosa" : `Decidir ${porDecidir.length} cosas`}
+                    </Boton>
+                  ) : (
+                    <Boton
+                      variante="lleno"
+                      onClick={() => ir("pedir")}
+                      disabled={buscandoIds.size > 0 && cuentan === 0}
+                    >
+                      Revisar y pedir
+                    </Boton>
+                  )}
                 </div>
+                {/* La salida abierta: decidir es una ayuda, no un peaje. */}
+                {porDecidir.length > 0 && (
+                  <button
+                    onClick={() => ir("pedir")}
+                    style={{ ...enlaceTexto, fontSize: 12.5, minHeight: 32, marginTop: 4 }}
+                  >
+                    Pedir así, sin decidirlo
+                  </button>
+                )}
               </>
             ) : undefined
           }
@@ -1611,8 +1645,12 @@ export default function App() {
       {hojaTienda && (
         <Hoja
           titulo="¿Cuál es tu Wong?"
+          paso={primeraVez ? "2 de 2" : undefined}
           sub="Cada tienda tiene sus precios y su stock. Con la tuya, lo que veas será lo que pagas."
-          onCerrar={() => setHojaTienda(false)}
+          onCerrar={() => {
+            setHojaTienda(false);
+            setPrimeraVez(false);
+          }}
         >
           {tiendas === null ? (
             <p style={lapiz}>Buscando las tiendas…</p>
@@ -1692,7 +1730,8 @@ export default function App() {
           ingrediente={itemHoja.ingrediente}
           producto={itemHoja.elegido}
           onResponder={(c) => responderCantidad(itemHoja.ingrediente, c)}
-          onCerrar={() => setHoja(null)}
+          onCerrar={cerrarHoja}
+          paso={pasoCola}
         />
       )}
 
@@ -1702,7 +1741,8 @@ export default function App() {
           opciones={itemHoja.candidatos.filter((c) => c.encontrado)}
           elegidaSku={itemHoja.elegido?.sku}
           onElegir={(p) => corregir(itemHoja.ingrediente, p)}
-          onCerrar={() => setHoja(null)}
+          onCerrar={cerrarHoja}
+          paso={pasoCola}
         />
       )}
 
@@ -1774,15 +1814,7 @@ function nombreDice(nombre: string | undefined, pedido: string): boolean {
   return palabras.some((w) => n.includes(w.replace(/s$/, "")));
 }
 
-const tituloHome: React.CSSProperties = {
-  fontFamily: fuente,
-  fontSize: 23,
-  fontWeight: 600,
-  color: color.tinta,
-  letterSpacing: "-0.03em",
-  lineHeight: 1.22,
-  margin: "2px 0 10px",
-};
+
 
 const enlaceTexto: React.CSSProperties = {
   background: "none",
@@ -1860,63 +1892,6 @@ function Pasos({ actual }: { actual: 1 | 2 | 3 }) {
   );
 }
 
-// De dónde salen los precios que se ven debajo. Siempre a la vista y siempre
-// cambiable: la tienda es un dato de la familia, no un paso del flujo.
-function BarraTienda({
-  tienda,
-  distrito,
-  onCambiar,
-}: {
-  tienda?: string;
-  distrito?: string;
-  onCambiar: () => void;
-}) {
-  return (
-    <button
-      onClick={onCambiar}
-      className="sc-boton"
-      style={{
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 10,
-        padding: "10px 12px",
-        margin: "0 0 12px",
-        borderRadius: 12,
-        border: `1px solid ${color.renglon}`,
-        background: color.blanco,
-        cursor: "pointer",
-        fontFamily: fuente,
-        textAlign: "left",
-        minHeight: 44,
-      }}
-    >
-      <span style={{ minWidth: 0 }}>
-        <span style={{ display: "block", fontSize: 11, color: color.lapiz }}>
-          {tienda ? "Precios y stock de" : "¿Dónde compras?"}
-        </span>
-        <span
-          style={{
-            display: "block",
-            fontSize: 14,
-            fontWeight: 600,
-            color: color.tinta,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {tienda ? `${tienda}${distrito ? ` · ${distrito}` : ""}` : "Elige tu Wong para ver tus precios"}
-        </span>
-      </span>
-      <span style={{ fontSize: 12.5, color: color.tinta, textDecoration: "underline", flex: "0 0 auto" }}>
-        {tienda ? "Cambiar" : "Elegir"}
-      </span>
-    </button>
-  );
-}
-
 // Formas de empezar, en pequeño y debajo de la caja: la caja es la puerta
 // principal, estas son atajos.
 function Atajos({ atajos }: { atajos: { clave: string; texto: string; onClick: () => void }[] }) {
@@ -1937,12 +1912,12 @@ function Atajos({ atajos }: { atajos: { clave: string; texto: string; onClick: (
             minHeight: 36,
             padding: "0 13px",
             borderRadius: 999,
-            border: `1px solid ${color.renglon}`,
-            background: color.blanco,
+            border: 0,
+            background: color.papel2,
             color: color.tinta,
             fontFamily: fuente,
-            fontSize: 13,
-            fontWeight: 500,
+            fontSize: 13.5,
+            fontWeight: 600,
             cursor: "pointer",
           }}
         >

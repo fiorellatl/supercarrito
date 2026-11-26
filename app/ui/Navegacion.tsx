@@ -43,7 +43,7 @@ export default function Navegacion({
         bottom: 0,
         display: "flex",
         borderTop: `1px solid ${color.renglon}`,
-        background: color.papel2,
+        background: color.papel,
         marginTop: 4,
         // La barra de gestos del teléfono vive justo debajo. Sin esto, "Mi casa"
         // quedaba pegado a ella y tocarlo cerraba la aplicación tan a menudo
@@ -71,7 +71,7 @@ export default function Navegacion({
               background: "none",
               cursor: "pointer",
               fontFamily: fuente,
-              color: on ? color.tinta : color.lapiz,
+              color: on ? color.papaya : color.lapiz,
             }}
           >
             <svg
@@ -87,7 +87,7 @@ export default function Navegacion({
             >
               <path d={l.d} />
             </svg>
-            <span style={{ fontSize: 11, fontWeight: on ? 600 : 400, letterSpacing: "-0.01em" }}>
+            <span style={{ fontSize: 11, fontWeight: on ? 800 : 500, letterSpacing: "-0.01em" }}>
               {l.nombre}
             </span>
             <span

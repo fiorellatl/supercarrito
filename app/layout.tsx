@@ -72,7 +72,7 @@ export const viewport: Viewport = {
   // teléfono moderno queda una franja blanca del navegador y se nota que esto
   // es una web dentro de una web.
   viewportFit: "cover",
-  themeColor: "#F5F3ED",
+  themeColor: "#E8412C",
   // Se puede ampliar. Una lista de la compra la lee mucha gente que necesita
   // acercarla, y bloquear el zoom por estética es dejarla fuera.
 };
@@ -80,6 +80,15 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&display=swap"
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

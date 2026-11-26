@@ -41,7 +41,7 @@ export default function Acciones({ acciones, titulo }: { acciones: Accion[]; tit
               cursor: "pointer",
               fontFamily: fuente,
               textAlign: "left",
-              boxShadow: "0 1px 2px rgba(34,51,84,.06)",
+              boxShadow: "0 1px 2px rgba(21,48,31,.06)",
             }}
           >
             <span

@@ -36,14 +36,17 @@ const formas: Record<Variante, CSSProperties> = {
     border: 0,
     background: color.pino,
     color: "#fff",
+    fontWeight: 800,
+    fontSize: 15.5,
+    padding: "14px 22px",
     boxShadow:
-      "0 1px 0 rgba(255,255,255,.18) inset, 0 2px 5px rgba(34,51,84,.18), 0 1px 1px rgba(34,51,84,.12)",
+      "0 1px 0 rgba(255,255,255,.18) inset, 0 2px 5px rgba(21,48,31,.18), 0 1px 1px rgba(21,48,31,.12)",
   },
   fantasma: {
     border: `1px solid ${color.renglon}`,
     background: color.blanco,
     color: color.tinta,
-    boxShadow: "0 1px 2px rgba(34,51,84,.07)",
+    boxShadow: "0 1px 2px rgba(21,48,31,.07)",
   },
   suave: {
     border: 0,
@@ -67,7 +70,7 @@ export default function Boton({
       style={{
         ...base,
         ...formas[variante],
-        ...(chico ? { fontSize: 12.5, padding: "10px 14px", borderRadius: 11 } : null),
+        ...(chico ? { fontSize: 12.5, padding: "10px 16px", borderRadius: 999 } : null),
         ...(props.disabled ? { opacity: 0.45 } : null),
         ...style,
       }}

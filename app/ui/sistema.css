@@ -2,15 +2,16 @@
    renglón del papel. Se importa una sola vez, en el layout. */
 
 :root {
-  --papel: #f5f3ed;
-  --papel-2: #efede5;
-  --tinta: #223354;
-  --lapiz: #7f8a80;
-  --lapiz-2: #a3ada5;
-  --renglon: #e2ded2;
-  --pino: #2e5d4b;
-  --papaya: #e0864b;
-  --ladrillo: #a8503c;
+  --papel: #ffffff;
+  --papel-2: #f3f7ef;
+  --tinta: #15301f;
+  --lapiz: #4d6656;
+  --lapiz-2: #8a9c90;
+  --renglon: #e1e9dc;
+  --pino: #2f9e44;
+  --papaya: #e8412c;
+  --ladrillo: #b8321f;
+  --aji: #ffd23f;
   --renglon-alto: 38px;
   --curva: cubic-bezier(.22, .61, .36, 1);
   /* Lo que el teléfono se reserva para su barra de gestos y su notch. En un
@@ -32,8 +33,8 @@ body {
   margin: 0;
   background: var(--papel);
   color: var(--tinta);
-  font-family: ui-rounded, "SF Pro Rounded", "Segoe UI Variable Display", "Segoe UI",
-    system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  font-family: "Bricolage Grotesque", ui-rounded, "SF Pro Rounded", "Segoe UI",
+    system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* El rebote elástico al final de la lista delata que esto es una página. */
@@ -60,7 +61,9 @@ nav,
 .sc-papel {
   position: relative;
 }
-.sc-papel::before {
+/* El renglón del cuaderno se fue con el estilo mercado: las filas son tarjetas. */
+.sc-papel::before { display: none; }
+.sc-renglon-viejo::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -197,4 +200,14 @@ nav,
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* El toldo del puesto: rayas rojo tomate y blanco, con el borde en ondas. */
+.sc-toldo {
+  height: 22px;
+  background: repeating-linear-gradient(90deg, var(--papaya) 0 22px, #fff 22px 44px);
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% 11px no-repeat,
+    radial-gradient(circle 11px at 11px 11px, #000 98%, #0000) 0 0 / 22px 22px repeat-x;
+  mask: linear-gradient(#000 0 0) top / 100% 11px no-repeat,
+    radial-gradient(circle 11px at 11px 11px, #000 98%, #0000) 0 0 / 22px 22px repeat-x;
 }

@@ -16,7 +16,9 @@ export default function Hoja({
   onCerrar,
   children,
   pie,
+  paso,
 }: {
+  paso?: string; // «1 de 3»: en qué decisión va la familia
   titulo: string;
   sub?: string;
   onCerrar: () => void;
@@ -42,7 +44,7 @@ export default function Hoja({
         display: "flex",
         alignItems: "flex-end",
         justifyContent: "center",
-        background: "rgba(34,51,84,.18)",
+        background: "rgba(21,48,31,.18)",
       }}
     >
       <div
@@ -59,7 +61,7 @@ export default function Hoja({
           maxHeight: "86vh",
           display: "flex",
           flexDirection: "column",
-          background: color.papel2,
+          background: color.papel,
           borderTopLeftRadius: radio.hoja,
           borderTopRightRadius: radio.hoja,
           borderTop: `1px solid ${color.renglon}`,
@@ -87,11 +89,16 @@ export default function Hoja({
           }}
         />
 
+        {paso && (
+          <div style={{ fontSize: 12.5, fontWeight: 800, color: color.papaya, marginBottom: 4, fontVariantNumeric: "tabular-nums" }}>
+            {paso}
+          </div>
+        )}
         <h2
           style={{
             margin: 0,
-            fontSize: 19,
-            fontWeight: 600,
+            fontSize: 23,
+            fontWeight: 800,
             color: color.tinta,
             letterSpacing: "-0.025em",
             lineHeight: 1.25,

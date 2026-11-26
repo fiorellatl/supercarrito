@@ -2653,3 +2653,16 @@ sin re-emparejar. Consola sin errores.
 Pendiente de ver con Wong real: precios de tienda en la lista, agotados,
 pesables con «¿Cuánto llevas?».
 
+## §P Estilo «puesto de mercado» y una decisión a la vez (2026-11-26)
+
+La PO aprobó el flujo de los bocetos y pidió un diseño «menos IA, con
+personalidad». Entre tres estilos (Chicha, Libreta, Mercado) eligió **Mercado**:
+cabecera rojo tomate con toldo a rayas, verde hoja para el dinero y la acción,
+amarillo ají para lo que espera a la familia y la letra Bricolage Grotesque.
+
+- Bienvenida en 2 pasos: nombre de la casa → «2 de 2 · ¿Cuál es tu Wong?» (se puede saltar).
+- Cada fila es una tarjeta; la que espera algo se pinta amarilla con un solo
+  cartelito («¿Cuánto?» / «Elige otro»).
+- Con pendientes, el botón del pie es «Decidir N cosas». Abre las hojas en
+  fila, «1 de N», hasta que todo suma. Salida abierta: «Pedir así, sin decidirlo».
+- Los nombres de los colores en `app/ui/sistema.ts` se mantienen; cambian los valores.

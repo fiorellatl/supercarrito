@@ -34,7 +34,11 @@ export default function LineaCarrito({
   orden,
   onCantidad,
   nota,
+  decision,
 }: {
+  // Lo que esta línea espera de la familia, si espera algo: un cartelito
+  // amarillo a la derecha, en el sitio del monto. Una sola decisión por línea.
+  decision?: { texto: string; onClick: () => void };
   nota?: string; // qué decir cuando no hay producto: «no lo encontré», «Wong no contestó»
   ingrediente: string;
   producto?: ProductoWong;
@@ -99,7 +103,7 @@ export default function LineaCarrito({
   }
 
   return (
-    <Fila atenuada={atenuada} retraso={retraso}>
+    <Fila atenuada={atenuada} retraso={retraso} pendiente={!!decision}>
       {producto?.url ? (
         <a
           href={producto.url}
@@ -117,10 +121,10 @@ export default function LineaCarrito({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: 14.5,
-            fontWeight: 500,
+            fontSize: 15,
+            fontWeight: 600,
             color: color.tinta,
-            lineHeight: 1.28,
+            lineHeight: 1.25,
             textWrap: "pretty",
           }}
         >
@@ -211,9 +215,13 @@ export default function LineaCarrito({
 
       {/* Lo que no sabemos vale un guion, jamás un cero: un S/ 0.00 al lado de
           su propia multiplicación es un monto que ya no se puede explicar. */}
-      <Monto apagado={subtotal === undefined || agotado}>
-        {subtotal === undefined || agotado ? "—" : soles(subtotal)}
-      </Monto>
+      {decision ? (
+        <Cartelito {...decision} />
+      ) : (
+        <Monto apagado={subtotal === undefined || agotado}>
+          {subtotal === undefined || agotado ? "—" : soles(subtotal)}
+        </Monto>
+      )}
     </Fila>
   );
 }
@@ -308,14 +316,45 @@ function Paso({
   );
 }
 
+// El cartelito del puesto: lo que falta decidir, en amarillo ají sobre verde
+// noche. Es lo único que grita en la lista, y grita poco.
+function Cartelito({ texto, onClick }: { texto: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="sc-boton"
+      style={{
+        flex: "0 0 auto",
+        alignSelf: "center",
+        border: 0,
+        borderRadius: 999,
+        background: color.noche,
+        color: color.aji,
+        padding: "8px 12px",
+        minHeight: 34,
+        font: "inherit",
+        fontSize: 12.5,
+        fontWeight: 800,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {texto}
+    </button>
+  );
+}
+
 function Fila({
   children,
   atenuada,
   retraso,
+  pendiente,
 }: {
   children: React.ReactNode;
   atenuada?: boolean;
   retraso?: number;
+  pendiente?: boolean;
 }) {
   return (
     <div
@@ -324,8 +363,10 @@ function Fila({
         display: "flex",
         alignItems: "flex-start",
         gap: 11,
-        padding: "10px 0",
-        borderBottom: `1px solid ${color.renglon}`,
+        padding: "10px 12px",
+        marginBottom: 8,
+        borderRadius: 16,
+        background: pendiente ? "#FFF4D6" : color.papel2,
         // Lo que se deja anotado no se borra ni se esconde: se apaga. Sigue a
         // la vista para poder volver a ponerlo sin buscarlo.
         opacity: atenuada ? 0.45 : 1,
@@ -343,7 +384,8 @@ function Monto({ children, apagado }: { children: React.ReactNode; apagado?: boo
     <div
       style={{
         ...plata,
-        fontSize: 14,
+        fontSize: 15,
+        fontWeight: 800,
         color: apagado ? color.lapiz2 : color.tinta,
         paddingTop: 1,
         flex: "0 0 auto",

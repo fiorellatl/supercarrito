@@ -58,7 +58,7 @@ function Muestra() {
         borderRadius: 16,
         background: color.blanco,
         padding: "13px 15px 14px",
-        boxShadow: "0 1px 2px rgba(34,51,84,.05)",
+        boxShadow: "0 1px 2px rgba(21,48,31,.05)",
       }}
     >
       <div style={{ fontSize: 15, fontWeight: 500, color: color.tinta, lineHeight: 1.35 }}>

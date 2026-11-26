@@ -10,7 +10,7 @@
 
 import { color, fuente } from "@/app/ui/sistema";
 
-export default function Logo({ tamano = "grande" }: { tamano?: "grande" | "chico" }) {
+export default function Logo({ tamano = "grande", claro = false }: { tamano?: "grande" | "chico"; claro?: boolean }) {
   const chico = tamano === "chico";
   const px = chico ? 20 : 30;
 
@@ -21,7 +21,7 @@ export default function Logo({ tamano = "grande" }: { tamano?: "grande" | "chico
         height={px}
         viewBox="0 0 24 24"
         fill="none"
-        stroke={color.pino}
+        stroke={claro ? "#fff" : color.pino}
         strokeWidth={1.6}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -35,9 +35,9 @@ export default function Logo({ tamano = "grande" }: { tamano?: "grande" | "chico
         style={{
           fontFamily: fuente,
           fontSize: chico ? 16 : 22,
-          fontWeight: 600,
+          fontWeight: 800,
           letterSpacing: "-0.035em",
-          color: color.tinta,
+          color: claro ? "#fff" : color.tinta,
         }}
       >
         SuperCarrito

@@ -104,10 +104,10 @@ export function Pantalla({
             flex: 1,
             minWidth: 0,
             margin: 0,
-            fontSize: 21,
-            fontWeight: 600,
+            fontSize: 26,
+            fontWeight: 800,
             color: color.tinta,
-            letterSpacing: "-0.03em",
+            letterSpacing: "-0.04em",
             lineHeight: 1.2,
           }}
         >
