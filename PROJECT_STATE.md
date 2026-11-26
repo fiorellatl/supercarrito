@@ -1,21 +1,39 @@
 # PROJECT_STATE — SuperCarrito
 
-> Memoria permanente del proyecto. Se actualiza al cerrar cada ciclo.
-> **Última actualización: 2026-08-02 — la arquitectura ARQ-3 está IMPLEMENTADA en
-> la aplicación real y lista para entrevistas. Ver §A al final.** Cambio de modo
-> de la PO: se prioriza aprendizaje sobre perfección; se decide y se construye,
-> y lo que solo puede responder un usuario se lleva a la entrevista.
->
-> Histórico — 2026-08-01: ciclo de importación por captura cerrado:
-> montos explicables, pasada de UX, benchmark de modelo/estrategia (Sonnet 5 +
-> `completar`), pipeline de búsqueda con matiz, `DEBUG_MATCHING` para
-> investigación. **Listo para pruebas con usuarios.**
-> **En curso:** sprint de **Product Design** de las cuatro puertas de entrada
-> (Lista → Menú → Recetas → Imagen), empezando por Lista. Cambio de método:
-> *la investigación ocurre ahora a través del producto, no antes*. Sin código.
-> Lo diseñado vive en **§H-D como hipótesis de diseño**, no como decisiones.
-> **Base fijada: la libreta es el Home** — la pantalla de inicio con tres formas de
-> empezar desaparece del prototipo. Siguiente paso: los estados de la Puerta 1.
+> Memoria permanente del proyecto. **La cabecera «Estado actual» es lo único que
+> hay que leer para retomar**; el resto es la historia de ciclos y decisiones,
+> que se consulta cuando hace falta. Estrategia y competencia: `PRODUCT_CONTEXT.md`.
+
+## ▶️ Estado actual — 2026-11-26 (retomada tras pausa desde el 2026-08-03)
+
+**Qué es hoy:** un acelerador de la compra en **Wong**. La libreta («Mi compra»)
+es el Home; se escribe o se pega (WhatsApp, captura, menú), se revisa, se elige
+tu Wong, el carrito sale con precios y stock de esa tienda y un enlace lo lleva
+al carrito de wong.pe. No hay chat. No compara cadenas ni calcula delivery.
+
+**Base:** `main` = `9c61b78`. `tsc --noEmit` y `npm run build` en verde
+(2026-11-26). Sin tests ni CI. Sin backend: todo en `localStorage`.
+
+**Uso real acumulado:** 1 entrevista (I-1) y 1 sesión de bitácora. H1 (la
+hipótesis fundacional) sigue sin validar con usuarios.
+
+**Defectos que bloquean enseñarlo a desconocidos** (auditoría 2026-11-26, §N):
+1. Saludos y frases de encuadre terminan en el carrito con precio (visto 3 veces).
+2. Si Wong falla en producción, se cae a FakeWong **sin avisar** (`degradado`
+   no se usa en la UI): precios y SKUs ficticios presentados como reales.
+3. El total cambia solo al llegar los precios de la tienda (bitácora O2).
+
+**Siguiente bloque propuesto (espera aprobación de la PO):** semana 1 «Que no
+mienta» → semana 2 cinco familias, dos domingos + «repetir mi compra» → semana 3
+spike de Metro con EAN y delivery → semana 4 según evidencia. Detalle en §N.
+
+**Decisiones abiertas de la PO:** rapidez o ahorro como propuesta de salida ·
+abrir Metro (revierte «solo Wong») · qué cinco familias · métricas anónimas de
+uso · texto del aviso de marcha blanca.
+
+> Histórico — 2026-08-02: ARQ-3 implementada (§A). 2026-08-01: ciclo de
+> importación por captura cerrado (montos explicables, benchmark Sonnet 5 +
+> `completar`, `DEBUG_MATCHING`). Los §A–M al final narran agosto en orden.
 
 ---
 
@@ -2548,4 +2566,48 @@ puede medir el daño: no impide comprar —se puede dejar anotado— pero es el
 número que haría cerrar la aplicación.
 
 Se anota y no se toca. La decisión de abrir el sprint de comprensión es de la PO.
+
+---
+
+## N · Retomada y auditoría (2026-11-26)
+
+El proyecto estuvo pausado del 2026-08-03 al 2026-11-26. La PO lo retoma con una
+visión ampliada (comparar y optimizar la canasta entre supermercados, delivery,
+memoria del hogar, listas familiares) y pide auditar antes de construir.
+
+### Hallazgos verificados en el repo
+
+- Build y tipos en verde. 29 commits; árbol limpio.
+- La interfaz de chat ya no existe (solo el nombre `/api/chat` y un README viejo,
+  corregido en esta revisión).
+- `lib/wong.ts` marca `degradado: true` al caer a FakeWong y ningún archivo de
+  `app/` lo lee. Reproducido con wong.pe bloqueado: `/api/chat` devolvió
+  productos ficticios con precio, sin aviso.
+- Delivery excluido a propósito del total (`sumarTotales` en `lib/tienda.ts`).
+- `playwright` en dependencias sin uso; `/editar` no persiste en Netlify.
+- Los menús de S/ 63.50 · 68.20 · 31.20 que se recordaban no aparecen en ningún
+  archivo: no son relevantes (los precios ahora los da la tienda).
+
+### Decisiones que la auditoría propone revisar (no revisadas todavía)
+
+- «Solo Wong» y «segundo supermercado: no ahora» → abrir **una** segunda cadena
+  (Metro: misma cuenta VTEX). Sin ella no hay ahorro que mostrar.
+- «El envío no es parte de la compra» → mostrar delivery aparte y explicable.
+- «Si Wong falla, FakeWong» en producción → decir que no pudimos consultar.
+- Congelar las cuatro puertas de entrada: el cuello de botella es el uso real.
+
+### Plan propuesto (espera aprobación)
+
+1. **Semana 1 — Que no mienta:** filtrar saludos/encuadres; degradación honesta;
+   no enseñar total hasta tener el de la tienda; aviso de marcha blanca;
+   métricas mínimas anónimas; quitar `playwright`; script de humo; verificar el
+   salto en iPhone y Android reales.
+2. **Semana 2 — Cinco familias, dos domingos** + «repetir mi compra anterior».
+3. **Semana 3 — Spike de Metro:** API pública, 30 productos emparejados por EAN,
+   delivery por distrito. Puerta: ¿la diferencia de canasta supera el delivery?
+4. **Semana 4 — Según evidencia:** comparación de canasta (tienda entera, sin
+   reparto) o lista compartida por enlace.
+
+Explícitamente no ahora: reparto entre 3+ tiendas, tarjetas de descuento,
+cuentas/login, app nativa, voz, Tottus, más documentos de diseño.
 
