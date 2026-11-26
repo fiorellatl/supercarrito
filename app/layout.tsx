@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "@/app/ui/sistema.css";
+import { TrazosDePapa } from "@/app/ui/Papa";
 
 // Lo que el producto es FUERA de la aplicación: la pestaña, el icono, el enlace
 // cuando alguien lo pega en un WhatsApp, y cómo se instala en el teléfono.
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
         url: "/enlace.png",
         width: 1200,
         height: 630,
-        alt: "SuperCarrito — anota lo que falta en casa como te salga",
+        alt: "SuperCarrito — la papa del carrito: tu lista de la compra, ya hecha en tu Wong",
       },
     ],
   },
@@ -86,10 +87,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Lilita+One&display=swap"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <TrazosDePapa />
+        {children}
+      </body>
     </html>
   );
 }

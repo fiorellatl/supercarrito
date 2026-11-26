@@ -3,6 +3,7 @@
 import { color, lapiz, plata, soles } from "@/app/ui/sistema";
 import type { ProductoWong } from "@/lib/catalog";
 import { etiquetaUnitaria, formatearCantidad } from "@/lib/cantidades";
+import Papa from "@/app/ui/Papa";
 import Foto from "@/app/ui/Foto";
 import Sello from "@/app/ui/Sello";
 
@@ -67,10 +68,14 @@ export default function LineaCarrito({
   // encontrar. Se dice en primera persona y se deja su palabra intacta.
   // Recién anotada: la línea ya está en su sitio, con sus palabras, mientras
   // Wong contesta. Nada salta ni se reordena cuando llega el producto.
+  // La papa saca la lupa mientras tanto (PO, 2026-11-26: «buscando» tenía que
+  // ser más divertido que un texto que parpadea).
   if (estado === "buscando") {
     return (
       <Fila retraso={retraso}>
-        <Foto alt={ingrediente} apagada />
+        <span style={{ width: 46, height: 46, flex: "0 0 auto", display: "grid", placeItems: "center" }}>
+          <Papa px={42} momento="busca" />
+        </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14.5, fontWeight: 500, color: color.tinta, lineHeight: 1.28 }}>
             {ingrediente}

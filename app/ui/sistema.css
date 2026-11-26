@@ -241,6 +241,95 @@ nav,
 }
 .sc-toldo { transform-origin: top; animation: sc-toldo-mece 700ms cubic-bezier(.22,.61,.36,1) both; }
 
+/* ── La papa del carrito (ver Papa.tsx) ─────────────────────────────────────
+   Todo a saltitos con steps(): es dibujo cuadro a cuadro, no una transición. */
+@keyframes sp-hierve { 0% { filter: url(#sc-trazo1); } 33% { filter: url(#sc-trazo2); } 66% { filter: url(#sc-trazo3); } }
+.sc-papa svg { animation: sp-hierve .375s steps(1) infinite; }
+.sc-papa .p-cuerpo { transform-box: fill-box; transform-origin: bottom center; }
+.sc-papa .p-ojo, .sc-papa .p-pupila, .sc-papa .p-rueda, .sc-papa .p-nariz,
+.sc-papa .p-signo, .sc-papa .p-pan, .sc-papa .p-chispa { transform-box: fill-box; transform-origin: center; }
+.sc-papa .p-brote { transform-box: fill-box; transform-origin: bottom left; }
+.sc-papa .p-chullo { transform-box: fill-box; transform-origin: center bottom; }
+.sc-papa .p-lupa { transform-box: view-box; transform-origin: 103px 26px; }
+.sc-papa .p-item, .sc-papa .p-viento, .sc-papa .p-chispa, .sc-papa .p-pan,
+.sc-papa .p-lupa, .sc-papa .p-signo, .sc-papa .p-mareo { opacity: 0; }
+
+@keyframes sp-guino { 0%, 88%, 100% { transform: none; } 91%, 94% { transform: scaleY(.12); } }
+@keyframes sp-respira { 0%, 100% { transform: none; } 50% { transform: translateY(-2px) scale(1.02, .98); } }
+.sc-papa .p-ojo { animation: sp-guino 4s steps(1) infinite; }
+.sc-papa-quieta .p-cuerpo, .sc-papa-reposo .p-cuerpo { animation: sp-respira 1s steps(2) infinite; }
+
+/* reposo: el viento le vuela el chullo y abre los ojos como ardilla loca */
+@keyframes sp-chullo { 0%, 54% { transform: none; } 58% { transform: translate(-4px, -22px) rotate(-28deg); } 64% { transform: translate(-10px, -30px) rotate(-40deg); } 72% { transform: translate(-6px, -26px) rotate(-18deg); } 80% { transform: translate(0, -6px) rotate(6deg); } 84% { transform: translateY(2px) scaleY(.9); } 88%, 100% { transform: none; } }
+@keyframes sp-viento { 0%, 52% { opacity: 0; transform: translateX(14px); } 56% { opacity: 1; } 68% { opacity: 0; transform: translateX(-10px); } 100% { opacity: 0; } }
+@keyframes sp-brote { 0%, 56% { transform: none; } 60% { transform: rotate(-30deg); } 74% { transform: rotate(-20deg); } 84%, 100% { transform: none; } }
+@keyframes sp-ojos-locos { 0%, 54% { transform: none; } 57% { transform: scale(1.7); } 60% { transform: scale(1.45); } 63% { transform: scale(1.65); } 66%, 80% { transform: scale(1.55); } 86%, 100% { transform: none; } }
+@keyframes sp-pupila-loca { 0%, 56% { transform: none; } 59% { transform: translate(-1.6px, -1.4px); } 62% { transform: translate(1.2px, 1.6px); } 65% { transform: translate(-1px, 1.4px); } 68%, 80% { transform: translate(1.4px, -1.2px); } 86%, 100% { transform: none; } }
+@keyframes sp-pupila-loca2 { 0%, 56% { transform: none; } 59% { transform: translate(1.4px, 1.2px); } 62% { transform: translate(-1.4px, -1.2px); } 65% { transform: translate(1.2px, -1px); } 68%, 80% { transform: translate(-1.2px, 1.4px); } 86%, 100% { transform: none; } }
+.sc-papa-reposo .p-chullo { animation: sp-chullo 3.6s steps(3) infinite; }
+.sc-papa-reposo .p-viento { animation: sp-viento 3.6s steps(3) infinite; }
+.sc-papa-reposo .p-brote { animation: sp-brote 3.6s steps(3) infinite; }
+.sc-papa-reposo .p-ojo { animation: sp-ojos-locos 3.6s steps(1) infinite; }
+.sc-papa-reposo .p-pupila { animation: sp-pupila-loca 3.6s steps(1) infinite; }
+.sc-papa-reposo .p-pupila2 { animation: sp-pupila-loca2 3.6s steps(1) infinite; }
+
+/* plaf: cae del cielo y aplasta el carrito; salen las ruedas, se reinfla y ve estrellas */
+@keyframes sp-cae-cielo { 0% { transform: translateY(-160px) scale(.9, 1.15); } 22% { transform: translateY(0) scale(.9, 1.15); } 26% { transform: scale(1.55, .32); } 60% { transform: scale(1.5, .34); } 70% { transform: translateY(-18px) scale(.85, 1.2); } 80% { transform: scale(1.08, .92); } 88%, 100% { transform: none; } }
+@keyframes sp-rueda1 { 0%, 24% { transform: none; } 34% { transform: translate(-34px, -26px) rotate(-200deg); } 46% { transform: translate(-46px, 2px) rotate(-320deg); } 58% { transform: translate(-44px, 0) rotate(-340deg); } 72% { transform: translate(-20px, -14px) rotate(-200deg); } 84%, 100% { transform: none; } }
+@keyframes sp-rueda2 { 0%, 24% { transform: none; } 34% { transform: translate(34px, -30px) rotate(200deg); } 46% { transform: translate(48px, 2px) rotate(320deg); } 58% { transform: translate(46px, 0) rotate(340deg); } 72% { transform: translate(20px, -14px) rotate(200deg); } 84%, 100% { transform: none; } }
+@keyframes sp-mareo { 0%, 76% { opacity: 0; transform: none; } 80%, 96% { opacity: 1; } 84% { transform: translateX(4px); } 88% { transform: translateX(-4px); } 92% { transform: translateX(3px); } 100% { opacity: 0; transform: none; } }
+@keyframes sp-pupila-mareo { 0%, 26% { transform: none; } 30%, 46%, 80% { transform: translate(1.6px, 0); } 34%, 50%, 84% { transform: translate(0, 1.6px); } 38%, 54%, 88% { transform: translate(-1.6px, 0); } 42%, 58%, 92% { transform: translate(0, -1.6px); } 62%, 76%, 96%, 100% { transform: none; } }
+.sc-papa-plaf svg { transform-origin: 50% 92%; animation: sp-cae-cielo 2s steps(18) both, sp-hierve .375s steps(1) infinite; }
+.sc-papa-plaf .p-r1 { animation: sp-rueda1 2s steps(16) both; }
+.sc-papa-plaf .p-r2 { animation: sp-rueda2 2s steps(16) both; }
+.sc-papa-plaf .p-mareo { animation: sp-mareo 2s steps(1) both; }
+.sc-papa-plaf .p-pupila { animation: sp-pupila-mareo 2s steps(1) both; }
+
+/* cae: un tomate cae al lomo; se aplasta y salta */
+@keyframes sp-item-cae { 0% { transform: translateY(-80px); opacity: 0; } 15% { opacity: 1; } 55% { transform: translateY(4px); } 70% { transform: translateY(-2px); } 100% { transform: translateY(10px) scale(.5); opacity: 0; } }
+@keyframes sp-aplasta { 0%, 50% { transform: none; } 58% { transform: scale(1.1, .84); } 72% { transform: translateY(-16px) scale(.95, 1.08); } 86% { transform: scale(1.04, .96); } 100% { transform: none; } }
+@keyframes sp-brinca { 0%, 55% { transform: none; } 70% { transform: translateY(-12px) rotate(-14deg); } 86% { transform: rotate(4deg); } 100% { transform: none; } }
+.sc-papa-cae .p-item { animation: sp-item-cae 900ms steps(11) both; }
+.sc-papa-cae .p-cuerpo { animation: sp-aplasta 900ms steps(11) both; }
+.sc-papa-cae .p-chullo { animation: sp-brinca 900ms steps(9) both; }
+
+/* suelta: tropieza, el pan se resbala y cae atrás; voltea con un «!» */
+@keyframes sp-pan { 0%, 25% { opacity: 1; transform: none; } 35% { transform: translate(-8px, -10px) rotate(-30deg); } 50% { transform: translate(-34px, 4px) rotate(-120deg); } 62% { transform: translate(-44px, 56px) rotate(-170deg); } 70% { transform: translate(-48px, 48px) rotate(-180deg); } 78% { opacity: 1; transform: translate(-50px, 56px) rotate(-180deg); } 100% { opacity: 0; transform: translate(-50px, 56px) rotate(-180deg); } }
+@keyframes sp-tropieza { 0%, 22% { transform: none; } 28% { transform: translateY(-10px) rotate(8deg); } 36% { transform: rotate(-4deg); } 44%, 100% { transform: none; } }
+@keyframes sp-voltea { 0%, 58% { transform: none; } 64%, 92% { transform: translateX(-2.6px); } 100% { transform: none; } }
+@keyframes sp-signo { 0%, 60% { opacity: 0; transform: translateY(6px); } 66% { opacity: 1; transform: translateY(-4px); } 72%, 94% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+.sc-papa-suelta .p-pan { animation: sp-pan 1.8s steps(14) both; }
+.sc-papa-suelta .p-cuerpo { animation: sp-tropieza 1.8s steps(10) both; }
+.sc-papa-suelta .p-pupila { animation: sp-voltea 1.8s steps(1) both; }
+.sc-papa-suelta .p-alerta { animation: sp-signo 1.8s steps(6) both; }
+
+/* busca: detective con lupa. Olfatea, revisa el piso, se le agranda el ojo, «?» */
+@keyframes sp-lupa { 0% { opacity: 1; transform: none; } 12% { transform: translate(-2px, 30px) rotate(-20deg); } 20% { transform: translate(8px, 32px) rotate(-10deg); } 28% { transform: translate(-6px, 30px) rotate(-24deg); } 40% { transform: none; } 52%, 74% { transform: translate(-23px, 0); } 86%, 100% { opacity: 1; transform: none; } }
+@keyframes sp-agacha { 0%, 6% { transform: none; } 12%, 32% { transform: rotate(9deg); } 20% { transform: rotate(11deg) translateY(1px); } 40% { transform: none; } 50% { transform: translateY(-6px); } 56%, 100% { transform: none; } }
+@keyframes sp-ojo-lupa { 0%, 50% { transform: none; } 54% { transform: scale(2.2); } 58% { transform: scale(1.8); } 62%, 72% { transform: scale(2.3); } 78%, 100% { transform: none; } }
+@keyframes sp-olfatea { 0%, 100% { transform: none; } 25% { transform: scale(1.5); } 75% { transform: scale(.8); } }
+@keyframes sp-gira { to { transform: rotate(360deg); } }
+@keyframes sp-duda { 0%, 74% { opacity: 0; transform: translateY(8px) scale(.5); } 78% { opacity: 1; transform: translateY(-4px) scale(1.2); } 82%, 96% { opacity: 1; transform: rotate(-12deg); } 100% { opacity: 0; } }
+.sc-papa-busca .p-lupa { opacity: 1; animation: sp-lupa 3.2s steps(3) infinite; }
+.sc-papa-busca .p-cuerpo { animation: sp-agacha 3.2s steps(10) infinite; }
+.sc-papa-busca .p-ojo { animation: sp-ojo-lupa 3.2s steps(1) infinite; }
+.sc-papa-busca .p-nariz { animation: sp-olfatea .4s steps(2) infinite; }
+.sc-papa-busca .p-rueda { animation: sp-gira 1.6s steps(8) infinite; }
+.sc-papa-busca .p-duda { animation: sp-duda 3.2s steps(6) infinite; }
+
+/* feliz: salto de alegría, el chullo vuela y vuelve, chispas */
+@keyframes sp-alegria { 0% { transform: none; } 30% { transform: translateY(-28px) rotate(-12deg); } 55% { transform: translateY(-32px) rotate(8deg); } 80% { transform: scale(1.08, .88); } 100% { transform: none; } }
+@keyframes sp-chullo-alegre { 0% { transform: none; } 35% { transform: translateY(-22px) rotate(-30deg); } 60% { transform: translateY(-14px) rotate(20deg); } 85%, 100% { transform: none; } }
+@keyframes sp-chispa { 0% { opacity: 0; transform: scale(.2); } 40% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.4); } }
+.sc-papa-feliz .p-cuerpo { animation: sp-alegria 900ms steps(10) both; }
+.sc-papa-feliz .p-chullo { animation: sp-chullo-alegre 900ms steps(10) both; }
+.sc-papa-feliz .p-chispa { animation: sp-chispa 900ms steps(6) both; }
+.sc-papa-feliz .p-chispa:nth-of-type(2) { animation-delay: .12s; }
+.sc-papa-feliz .p-chispa:nth-of-type(3) { animation-delay: .24s; }
+
+/* La marca: «SUPER / CARRITO» apilado, con el mismo trazo que hierve. */
+.sc-marca { animation: sp-hierve .375s steps(1) infinite; }
+
 /* Quien pidió que nada se mueva, no ve nada moverse. */
 
 @media (prefers-reduced-motion: reduce) {

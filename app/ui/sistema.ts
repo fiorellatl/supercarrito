@@ -37,6 +37,10 @@ export const color = {
 export const fuente =
   "'Bricolage Grotesque', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, -apple-system, sans-serif";
 
+// La marca, y solo la marca: «SUPER / CARRITO» apilado en Lilita One, gordita
+// y de cartel (decisión de la PO, 2026-11-26, junto con la papa).
+export const fuenteMarca = "'Lilita One', 'Bricolage Grotesque', system-ui, sans-serif";
+
 // El renglón. Todo lo que vive en la libreta cae en él o en un múltiplo.
 export const RENGLON = 38;
 

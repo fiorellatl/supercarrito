@@ -2712,3 +2712,25 @@ reales de Wong. El toldo se mece al llegar. Con `prefers-reduced-motion`, todo q
 - En la lista, el carrito del letrero cuenta los productos y salta cada vez que la lista crece.
 - Pendiente: llevar el logo nuevo al ícono de la pestaña y a la imagen para compartir.
 
+
+**La papa del carrito (decisión de la PO, 2026-11-26)** — reemplaza al carrito con compra:
+- Recorrido de la marca: el carrito con cosas le pareció «aburrido» y la primera ronda de logos, «genérica». Luego eligió un cuy en carrito, pero lo descartó porque otro súper en Perú ya usa un cuy. Entre la papa, el ají amarillo y el choclo, eligió **la papa**: con chullo y un brote que hace de oreja.
+- Estilo tomado de una referencia que le gustó (Goova, «parece dibujado»):
+  - el borde «hierve»: tres trazos con `feTurbulence` que se alternan 8 veces por segundo;
+  - la cáscara tiene rayado de lápiz;
+  - todo se mueve a saltitos con `steps()`;
+  - los ojos son redondos y se abren como de «ardilla loca».
+- La marca dice «SUPER / CARRITO» apilado en Lilita One.
+- Momentos (`app/ui/Papa.tsx`, animaciones `.sc-papa` en `sistema.css`):
+  - **¡plaf!** al abrir la bienvenida: cae del cielo, aplasta el carrito, salen las ruedas y ve estrellas. Es el favorito de la PO.
+  - **reposo:** el viento le vuela el chullo.
+  - **le cae un tomate:** cuando la lista crece.
+  - **se le cae el pan:** cuando la lista se achica.
+  - **lupa:** en cada línea «buscando en Wong…».
+- Ícono de pestaña, de iPhone, recortable e imagen del enlace regenerados con `herramientas/marca.mjs`.
+- Con `prefers-reduced-motion` no se mueve.
+- Pendiente:
+  - usar «feliz» (salto con chispas) al terminar de decidir y al abrir Wong;
+  - «se come algo» con la lista vacía;
+  - más adelante, que la papa vaya mutando a otras variedades (idea de la PO);
+  - antes de lanzar la marca, buscar «papa» en las marcas registradas de Indecopi.
