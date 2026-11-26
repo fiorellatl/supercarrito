@@ -2706,3 +2706,9 @@ pide al abrir.
 productos caen al carrito uno por uno, rotando entre tres encargos con precios
 reales de Wong. El toldo se mece al llegar. Con `prefers-reduced-motion`, todo queda quieto.
 
+**Logo con carrito vivo (pedido de la PO, 2026-11-26):**
+- El logo es ahora un carrito lleno, con una botella, un tomate y un pan asomando (`app/ui/Logo.tsx`, `Carrito`). En la bienvenida las cosas caen dentro una por una.
+- En la demo, cada producto que aparece cae también al carrito: el número sube y el carrito da un saltito.
+- En la lista, el carrito del letrero cuenta los productos y salta cada vez que la lista crece.
+- Pendiente: llevar el logo nuevo al ícono de la pestaña y a la imagen para compartir.
+

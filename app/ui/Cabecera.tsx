@@ -18,7 +18,9 @@ export default function Cabecera({
   onTienda,
   onCasa,
   onMarchaBlanca,
+  cuenta,
 }: {
+  cuenta?: number; // productos en la lista: el carrito del logo los cuenta
   monograma: string;
   nombre: string;
   titulo: string;
@@ -32,7 +34,7 @@ export default function Cabecera({
       <div style={{ background: color.papaya, color: "#fff", padding: "calc(12px + env(safe-area-inset-top, 0px)) 22px 14px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Logo tamano="chico" claro />
+            <Logo tamano="chico" claro cuenta={cuenta} />
             {/* Marcha blanca (2026-11-26): el producto sale a la calle sabiendo
                 que recién empieza, y prefiere que la familia lo sepa. */}
             {onMarchaBlanca && (

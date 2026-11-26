@@ -1173,6 +1173,7 @@ export default function App() {
               monograma={monograma(casa)}
               nombre={casa.nombre}
               titulo={vacia ? "Arma tu lista" : `Tu lista, ${saludo(casa)}`}
+              cuenta={vivos.length || undefined}
               tienda={perfil.tienda?.nombre}
               onTienda={abrirTienda}
               onCasa={() => ir("casa")}

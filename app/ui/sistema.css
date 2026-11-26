@@ -218,6 +218,21 @@ nav,
 }
 .sc-salto { animation: sc-salto 500ms ease 1; }
 
+/* El carrito del logo. Las cosas caen dentro al aparecer; y cada vez que la
+   lista crece, el carrito da un saltito. */
+@keyframes sc-item-cae {
+  0%   { opacity: 0; transform: translateY(-16px); }
+  70%  { opacity: 1; transform: translateY(1.5px); }
+  100% { opacity: 1; transform: none; }
+}
+.sc-item-cae { animation: sc-item-cae 480ms cubic-bezier(.22,.61,.36,1) both; }
+@keyframes sc-carrito-salta {
+  0%, 100% { transform: none; }
+  30%      { transform: translateY(-4px) rotate(-6deg); }
+  60%      { transform: translateY(1px) rotate(2deg); }
+}
+.sc-carrito-salta { animation: sc-carrito-salta 520ms cubic-bezier(.22,.61,.36,1) 1; }
+
 /* El toldo se mece apenas al llegar, como tela que se acomoda. */
 @keyframes sc-toldo-mece {
   0%   { transform: scaleY(0.4); }

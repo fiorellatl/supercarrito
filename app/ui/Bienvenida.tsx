@@ -31,7 +31,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Boton from "@/app/ui/Boton";
-import Logo from "@/app/ui/Logo";
+import Logo, { Carrito } from "@/app/ui/Logo";
 import { color, fuente, lapiz, plata, soles } from "@/app/ui/sistema";
 
 // Cuatro formas equivalentes de empezar. Ninguna va primera por ser mejor: van
@@ -102,6 +102,16 @@ function Muestra() {
 
   const total = ej.productos.reduce((a, p) => a + p.m, 0);
 
+  // Cada producto que cae a la lista cae también al carrito: su número sube
+  // y el carrito da un saltito, al compás de las tarjetas.
+  const [caidos, setCaidos] = useState(0);
+  useEffect(() => {
+    setCaidos(0);
+    if (!escrita) return;
+    const ts = ej.productos.map((_, i) => setTimeout(() => setCaidos(i + 1), 120 + i * 260 + 320));
+    return () => ts.forEach(clearTimeout);
+  }, [escrita, n, ej.productos]);
+
   return (
     <div
       className="sc-entra"
@@ -114,11 +124,9 @@ function Muestra() {
         {escrita && <>&rdquo;</>}
       </div>
 
-      <div aria-hidden style={{ display: "flex", alignItems: "center", gap: 7, margin: "9px 0 10px", color: escrita ? color.papaya : color.lapiz2 }}>
+      <div aria-hidden style={{ display: "flex", alignItems: "center", gap: 10, margin: "12px 0 12px" }}>
         <span style={{ height: 1, flex: 1, background: color.renglon }} />
-        <svg className={escrita ? "sc-salto" : undefined} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 5v14M6 13l6 6 6-6" />
-        </svg>
+<Carrito px={26} cuenta={caidos || undefined} />
         <span style={{ height: 1, flex: 1, background: color.renglon }} />
       </div>
 
@@ -185,7 +193,7 @@ export default function Bienvenida({ onEntrar }: { onEntrar: (nombre: string) =>
           }}
         >
           <div className="sc-bv-ancho">
-            <Logo claro />
+            <Logo claro animado />
             <h1
               style={{
                 fontFamily: fuente,
