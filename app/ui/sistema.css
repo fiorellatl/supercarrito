@@ -192,6 +192,40 @@ nav,
 }
 .sc-pulso { animation: sc-pulso 1.4s ease-in-out infinite; }
 
+/* La demo de la bienvenida. El cursor parpadea mientras «la familia» escribe;
+   cada producto cae al carrito con un pequeño rebote, y la flecha salta una
+   vez cuando la frase termina. Es el único sitio con rebote: aquí se celebra
+   la promesa, no una tarea. */
+@keyframes sc-parpadeo { 50% { opacity: 0; } }
+.sc-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--papaya);
+  animation: sc-parpadeo 900ms steps(1) infinite;
+}
+@keyframes sc-cae-carrito {
+  0%   { opacity: 0; transform: translateY(-14px) scale(0.96); }
+  70%  { opacity: 1; transform: translateY(2px) scale(1); }
+  100% { opacity: 1; transform: none; }
+}
+.sc-cae-carrito { animation: sc-cae-carrito 420ms cubic-bezier(.22,.61,.36,1) both; }
+@keyframes sc-salto {
+  0%, 100% { transform: none; }
+  40%      { transform: translateY(4px); }
+}
+.sc-salto { animation: sc-salto 500ms ease 1; }
+
+/* El toldo se mece apenas al llegar, como tela que se acomoda. */
+@keyframes sc-toldo-mece {
+  0%   { transform: scaleY(0.4); }
+  60%  { transform: scaleY(1.12); }
+  100% { transform: scaleY(1); }
+}
+.sc-toldo { transform-origin: top; animation: sc-toldo-mece 700ms cubic-bezier(.22,.61,.36,1) both; }
+
 /* Quien pidió que nada se mueva, no ve nada moverse. */
 
 @media (prefers-reduced-motion: reduce) {

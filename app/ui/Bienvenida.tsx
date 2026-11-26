@@ -29,10 +29,10 @@
 //   · **El nombre de la casa deja de ser un campo de registro.** Es la última
 //     frase de una conversación, no el primer paso de un alta.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Boton from "@/app/ui/Boton";
 import Logo from "@/app/ui/Logo";
-import { color, fuente, lapiz, plata } from "@/app/ui/sistema";
+import { color, fuente, lapiz, plata, soles } from "@/app/ui/sistema";
 
 // Cuatro formas equivalentes de empezar. Ninguna va primera por ser mejor: van
 // en el orden en que se le ocurren a una persona, y las cuatro terminan en el
@@ -44,55 +44,124 @@ const CAPACIDADES = [
   { icono: "☰", texto: "Carga el menú de la semana" },
 ];
 
-// La demostración. Es la aplicación de verdad, en pequeño: la letra de la
-// familia arriba, lo que contesta SuperCarrito abajo, y la flecha que hace de
-// verbo. Los datos son reales —ese producto y ese precio existen— porque una
+// La demostración. Es la aplicación de verdad, en pequeño: la frase de la
+// familia se escribe sola, la flecha hace de verbo y los productos caen al
+// carrito uno por uno, con su multiplicación y su total. Rota entre tres
+// encargos típicos (pedido de la PO, 2026-11-26: «más personalidad»).
+//
+// Los productos y precios son de Wong real, consultados el 2026-11-26: una
 // demostración con cifras inventadas es la primera mentira del producto.
+const EJEMPLOS: { frase: string; productos: { n: string; c: string; m: number }[] }[] = [
+  {
+    frase: "mami compra 2 kg de pollo y leche",
+    productos: [
+      { n: "Pollo Entero Fresco x kg", c: "2 kg × S/ 11.90/kg", m: 23.8 },
+      { n: "Leche Gloria Entera 400 g", c: "1 × S/ 4.50 c/u", m: 4.5 },
+    ],
+  },
+  {
+    frase: "papa 2 kg, aceite primor y huevos 🥚",
+    productos: [
+      { n: "Papa Negra Comcen 2 kg", c: "1 × S/ 11.00 c/u", m: 11 },
+      { n: "Aceite Vegetal Primor 1.8 L", c: "1 × S/ 17.10 c/u", m: 17.1 },
+      { n: "Huevos Pardos La Calera 14 un", c: "1 × S/ 18.20 c/u", m: 18.2 },
+    ],
+  },
+  {
+    frase: "medio kilo de cebolla pls",
+    productos: [{ n: "Cebolla Blanca x kg", c: "0.5 kg × S/ 5.29/kg", m: 2.65 }],
+  },
+];
+
 function Muestra() {
+  const [n, setN] = useState(0);
+  const [letras, setLetras] = useState(0);
+  const quieto = useRef(false);
+  const ej = EJEMPLOS[n];
+  const escrita = letras >= ej.frase.length;
+
+  useEffect(() => {
+    quieto.current = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    if (quieto.current) setLetras(EJEMPLOS[0].frase.length);
+  }, []);
+
+  useEffect(() => {
+    if (quieto.current) return;
+    if (!escrita) {
+      const t = setTimeout(() => setLetras((x) => x + 1), 38 + Math.random() * 40);
+      return () => clearTimeout(t);
+    }
+    // Escrita: caen los productos y se queda a la vista un rato antes de
+    // pasar al siguiente encargo.
+    const t = setTimeout(() => {
+      setN((x) => (x + 1) % EJEMPLOS.length);
+      setLetras(0);
+    }, 3600 + ej.productos.length * 260);
+    return () => clearTimeout(t);
+  }, [letras, escrita, ej.productos.length]);
+
+  const total = ej.productos.reduce((a, p) => a + p.m, 0);
+
   return (
     <div
       className="sc-entra"
-      style={{
-        animationDelay: "90ms",
-        borderRadius: 20,
-        background: color.papel2,
-        padding: "16px 16px 14px",
-      }}
+      aria-label={`Ejemplo: «${ej.frase}» se convierte en ${ej.productos.length} productos de Wong`}
+      style={{ animationDelay: "90ms", borderRadius: 20, background: color.papel2, padding: "16px 16px 14px", minHeight: 318 }}
     >
-      <div style={{ fontSize: 17, fontWeight: 600, color: color.tinta, lineHeight: 1.35 }}>
-        &ldquo;mami compra 2 kg de pollo y leche&rdquo;
+      <div style={{ fontSize: 17, fontWeight: 600, color: color.tinta, lineHeight: 1.35, minHeight: 46 }}>
+        &ldquo;{ej.frase.slice(0, letras)}
+        {!escrita && <span className="sc-cursor" aria-hidden />}
+        {escrita && <>&rdquo;</>}
       </div>
 
-      <div
-        aria-hidden
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 7,
-          margin: "9px 0 8px",
-          color: color.lapiz2,
-        }}
-      >
+      <div aria-hidden style={{ display: "flex", alignItems: "center", gap: 7, margin: "9px 0 10px", color: escrita ? color.papaya : color.lapiz2 }}>
         <span style={{ height: 1, flex: 1, background: color.renglon }} />
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg className={escrita ? "sc-salto" : undefined} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 5v14M6 13l6 6 6-6" />
         </svg>
         <span style={{ height: 1, flex: 1, background: color.renglon }} />
       </div>
 
       <div style={{ display: "grid", gap: 8 }}>
-        {[
-          { n: "Pollo Entero Fresco x kg", c: "2 kg × S/ 11.90/kg", m: "S/ 23.80" },
-          { n: "Leche Gloria Entera 400 g", c: "1 × S/ 4.50 c/u", m: "S/ 4.50" },
-        ].map((p) => (
-          <div key={p.n} style={{ display: "flex", alignItems: "baseline", gap: 10, background: color.blanco, borderRadius: 14, padding: "10px 12px" }}>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, color: color.tinta, lineHeight: 1.3 }}>
-              {p.n}
-              <span style={{ ...lapiz, fontSize: 11, display: "block", marginTop: 1 }}>{p.c}</span>
-            </span>
-            <span style={{ ...plata, fontSize: 15, fontWeight: 800, flex: "0 0 auto" }}>{p.m}</span>
+        {escrita &&
+          ej.productos.map((p, i) => (
+            <div
+              key={`${n}-${p.n}`}
+              className="sc-cae-carrito"
+              style={{
+                animationDelay: `${120 + i * 260}ms`,
+                display: "flex",
+                alignItems: "baseline",
+                gap: 10,
+                background: color.blanco,
+                borderRadius: 14,
+                padding: "10px 12px",
+              }}
+            >
+              <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, color: color.tinta, lineHeight: 1.3 }}>
+                {p.n}
+                <span style={{ ...lapiz, fontSize: 11, display: "block", marginTop: 1 }}>{p.c}</span>
+              </span>
+              <span style={{ ...plata, fontSize: 15, fontWeight: 800, flex: "0 0 auto" }}>{soles(p.m)}</span>
+            </div>
+          ))}
+        {escrita && (
+          <div
+            className="sc-cae-carrito"
+            style={{
+              animationDelay: `${120 + ej.productos.length * 260}ms`,
+              display: "flex",
+              justifyContent: "space-between",
+              padding: "2px 12px 0",
+              fontSize: 13,
+              fontWeight: 800,
+              color: color.pino,
+            }}
+          >
+            <span>Tu carrito de Wong</span>
+            <span style={{ fontVariantNumeric: "tabular-nums" }}>{soles(total)}</span>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

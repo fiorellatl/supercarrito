@@ -2695,3 +2695,14 @@ completo funciona con Wong real.
 - Pendiente de emparejamiento: «1 kilo de pollo» → «1/2 Pollo Rostizado»;
   «3 leches gloria» → base para torta tres leches.
 
+**Tienda primero (decisión de la PO, 2026-11-26):** sin tienda no se entra a la
+lista. Después del nombre de la casa viene la pantalla «2 de 2 · ¿Cuál es tu
+Wong?» (`app/ui/EligeTienda.tsx`), que tiene buscador por distrito. Si Wong no
+devuelve sus tiendas, la familia puede reintentar o «Seguir sin tienda
+(precios referenciales)». A quien ya usaba la app sin tienda también se le
+pide al abrir.
+
+**Bienvenida con personalidad:** la demostración se escribe sola y los
+productos caen al carrito uno por uno, rotando entre tres encargos con precios
+reales de Wong. El toldo se mece al llegar. Con `prefers-reduced-motion`, todo queda quieto.
+

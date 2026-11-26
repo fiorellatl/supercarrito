@@ -80,6 +80,7 @@ import Fila from "@/app/ui/Fila";
 import Hoja from "@/app/ui/Hoja";
 import HojaCantidad from "@/app/ui/HojaCantidad";
 import HojaOpciones from "@/app/ui/HojaOpciones";
+import EligeTienda, { ListaTiendas } from "@/app/ui/EligeTienda";
 import { Compositor } from "@/app/ui/Libreta";
 import LineaCarrito, { type EstadoLinea } from "@/app/ui/LineaCarrito";
 import { Pantalla, Seccion, Vacio } from "@/app/ui/Pantalla";
@@ -315,7 +316,6 @@ export default function App() {
   // no pregunté" de "pregunté y no me contestaron": callar la diferencia sería
   // enseñar un número sin decir de dónde viene.
   const [tiendas, setTiendas] = useState<Tienda[] | null>(null);
-  const [filtroTienda, setFiltroTienda] = useState("");
   const [preciosDeTienda, setPreciosDeTienda] = useState<boolean | null>(null);
   const [totalTienda, setTotalTienda] = useState<number | null>(null);
   // Para qué tienda ya contestó la valoración (bien o mal). Mientras la tienda
@@ -342,8 +342,15 @@ export default function App() {
   // una por producto que espera algo de la familia, hasta que no queda nada.
   // `total` es cuántas había al empezar, para decir «2 de 3».
   const [cola, setCola] = useState<{ total: number } | null>(null);
-  // La bienvenida termina en la tienda: es el paso 2 de 2.
-  const [primeraVez, setPrimeraVez] = useState(false);
+  // Sin tienda no se entra a la lista (decisión de la PO, 2026-11-26). La única
+  // excepción: Wong no devolvió sus tiendas y la familia eligió seguir sin ella.
+  const [perfilListo, setPerfilListo] = useState(false);
+  const [sinTiendaPorAhora, setSinTiendaPorAhora] = useState(false);
+  const pideTienda = perfilListo && !perfil.tienda && !sinTiendaPorAhora;
+  useEffect(() => {
+    if (pideTienda && tiendas === null) void cargarTiendas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pideTienda, tiendas]);
   const [verRuido, setVerRuido] = useState(false);
   const [horaPrecios, setHoraPrecios] = useState<number | null>(null);
   const perfilRef = useRef(perfil);
@@ -355,7 +362,10 @@ export default function App() {
       setCasa(c);
       setListo(true);
     });
-    void repositorioPerfil.cargar().then(setPerfil);
+    void repositorioPerfil.cargar().then((p) => {
+      setPerfil(p);
+      setPerfilListo(true);
+    });
     void repositorioCompras.cargar().then(setCompras);
     // El carrito vuelve tal y como se dejó: los mismos productos, los mismos
     // SKU, las mismas cantidades. Los precios y el stock los volverá a preguntar
@@ -685,9 +695,7 @@ export default function App() {
 
   function tomarTienda(t: Tienda) {
     actualizarPerfil((p) => elegirTienda(p, t));
-    setFiltroTienda("");
     setHojaTienda(false);
-    setPrimeraVez(false);
   }
 
   // Una línea, una pregunta a Wong. Cada línea sabe qué productos salieron de
@@ -1125,11 +1133,32 @@ export default function App() {
             const nueva = crearCasa(nombre);
             setCasa(nueva);
             void repositorioCasa.guardar(nueva);
-            setPrimeraVez(true);
-            abrirTienda();
+            void cargarTiendas();
             // Sin foco automático: al entrar por primera vez, las cuatro formas
             // de empezar tienen que verse antes que un teclado abierto.
           }}
+        />
+      </main>
+    );
+
+  if (pideTienda)
+    return (
+      <main className="sc-papel sc-marco" style={marco}>
+        <EligeTienda
+          tiendas={tiendas}
+          onElegir={tomarTienda}
+          onReintentar={() => {
+            setTiendas(null);
+            void (async () => {
+              try {
+                const data = await (await fetch("/api/tiendas")).json();
+                setTiendas(data.tiendas ?? []);
+              } catch {
+                setTiendas([]);
+              }
+            })();
+          }}
+          onSeguirSin={() => setSinTiendaPorAhora(true)}
         />
       </main>
     );
@@ -1665,11 +1694,9 @@ export default function App() {
       {hojaTienda && (
         <Hoja
           titulo="¿Cuál es tu Wong?"
-          paso={primeraVez ? "2 de 2" : undefined}
           sub="Cada tienda tiene sus precios y su stock. Con la tuya, lo que veas será lo que pagas."
           onCerrar={() => {
             setHojaTienda(false);
-            setPrimeraVez(false);
           }}
         >
           {tiendas === null ? (
@@ -1680,24 +1707,7 @@ export default function App() {
               precios serán referenciales.
             </p>
           ) : (
-            <select
-              className="sc-campo"
-              value={filtroTienda}
-              onChange={(e) => {
-                setFiltroTienda(e.target.value);
-                const t = tiendas.find((x) => x.id === e.target.value);
-                if (t) tomarTienda(t);
-              }}
-              style={{ width: "100%" }}
-            >
-              <option value="">Elige tu tienda…</option>
-              {tiendas.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nombre}
-                  {t.distrito ? ` · ${t.distrito}` : ""}
-                </option>
-              ))}
-            </select>
+<ListaTiendas tiendas={tiendas} elegidaId={perfil.tienda?.id} onElegir={tomarTienda} />
           )}
           <p style={{ ...lapiz, marginTop: 12 }}>
             No me conecto a tu cuenta ni veo tus datos. Es solo saber dónde compras.
