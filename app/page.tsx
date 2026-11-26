@@ -1392,7 +1392,11 @@ export default function App() {
               </p>
               <p style={{ ...lapiz, margin: "0 0 14px" }}>
                 {perfil.tienda && montoDeTienda != null
-                  ? `Precios de tu tienda${horaPrecios ? `, hoy ${hora(horaPrecios)}` : ""}.`
+                  ? // El enlace no lleva la tienda: Wong cobra según la tienda o la
+                    // dirección elegida ALLÁ. Probado con Wong real (2026-11-26):
+                    // Aldabas S/ 17.10, el carrito sin tienda S/ 18.90. Se dice antes
+                    // de saltar, no se descubre después.
+                    `Precios de ${perfil.tienda.nombre}${horaPrecios ? `, hoy ${hora(horaPrecios)}` : ""}. En Wong elige esa misma tienda al pagar: si eliges otra, el precio puede cambiar.`
                   : "Precios referenciales: el total lo confirma tu tienda."}{" "}
                 {!perfil.tienda && (
                   <button onClick={abrirTienda} style={enlaceTexto}>

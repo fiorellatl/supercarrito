@@ -188,12 +188,19 @@ function cantidadAplicable(p: ProductoWong, pedido: Pedido): number | undefined 
 // términos que traen sufijo, y todas van en paralelo.
 const SUFIJO_DE_VENTA = /\s+(?:x|por)\s+(?:kg|kilo|kilos|un|und|unid|unidad|unidades)\.?\s*$/i;
 
+const CANTIDAD_INICIAL =
+  /^\s*(?:\d+(?:[.,]\d+)?|1\/2|medio|media|un|una|dos|tres|cuatro|cinco|seis)\s*(?:kg|kgs|kilos?|k|g|gr|grs|gramos)?\.?\s+(?:de\s+)?(?=\S)/i;
+
 export function terminoDeBusqueda(texto: string): string {
   // Y por delante, el encabezado del mensaje: "mami compra 2 kg de pollo" se
   // busca como "2 kg de pollo". Ver `sinEncabezado` — lista cerrada, solo al
   // principio, y solo para BUSCAR: la línea escrita no se toca.
   const sinCabeza = sinEncabezado(texto) || texto;
-  return sinCabeza.replace(SUFIJO_DE_VENTA, "").replace(/\s+/g, " ").trim() || texto.trim();
+  // La cantidad del principio tampoco se busca: ya viaja aparte (ver
+  // `cantidadEscrita` en lib/libreta.ts). Con ella dentro, Wong contestaba a
+  // «6 huevos» con un pack de 6 galletas (prueba con Wong real, 2026-11-26).
+  const sinCantidad = sinCabeza.replace(CANTIDAD_INICIAL, "");
+  return sinCantidad.replace(SUFIJO_DE_VENTA, "").replace(/\s+/g, " ").trim() || texto.trim();
 }
 
 function unidadDelSufijo(texto: string): "kg" | "un" | undefined {
