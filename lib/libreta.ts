@@ -13,7 +13,7 @@
 
 import { naturalezaDe, type Lectura } from "@/lib/contexto";
 
-export type OrigenLinea = "escrita" | "pegada" | "captura" | "menu";
+export type OrigenLinea = "escrita" | "pegada" | "captura" | "menu" | "repetida";
 
 export type Linea = {
   id: string;
@@ -67,6 +67,11 @@ export function lecturaDe(linea: Linea): Lectura {
   if (linea.esCompra === true) return { naturaleza: "compra", motivo: "" };
   if (linea.esCompra === false)
     return { naturaleza: "contexto", motivo: "dijiste que no era una compra" };
+  // Lo que viene de una compra que ya existió (una captura de boleta o de
+  // carrito, o «Repetir») es compra por definición. Sus nombres son los largos
+  // del catálogo —«Galletas con Chips de Cacao Sin Azúcar»— y el filtro de
+  // conversación los plegaba como «frase» (prueba con Wong real, 2026-11-26).
+  if (linea.origen === "captura" || linea.origen === "repetida") return { naturaleza: "compra", motivo: "" };
   return naturalezaDe(linea.texto);
 }
 
@@ -182,5 +187,7 @@ export function origenLegible(origen: OrigenLinea): string {
       ? "de la captura"
       : origen === "menu"
         ? "del menú"
+        : origen === "repetida"
+          ? "de tu compra anterior"
         : "lo escribiste tú";
 }

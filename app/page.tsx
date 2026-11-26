@@ -820,7 +820,7 @@ export default function App() {
           anotar(
             acc,
             x.nombre,
-            "pegada",
+            "repetida",
             x.cantidad != null ? { cantidad: x.cantidad, unidad: x.unidad } : undefined
           ),
         lb
