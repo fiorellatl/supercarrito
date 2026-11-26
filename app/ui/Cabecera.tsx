@@ -13,10 +13,12 @@ export default function Cabecera({
   monograma,
   nombre,
   onCasa,
+  onMarchaBlanca,
 }: {
   monograma: string;
   nombre: string;
   onCasa: () => void;
+  onMarchaBlanca?: () => void;
 }) {
   return (
     <header
@@ -28,7 +30,33 @@ export default function Cabecera({
         padding: "16px 0 10px",
       }}
     >
-      <Logo tamano="chico" />
+      <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <Logo tamano="chico" />
+        {/* Marcha blanca (2026-11-26): el producto sale a la calle sabiendo que
+            recién empieza, y prefiere que la familia lo sepa desde el primer
+            día. En lápiz, sin color: es honestidad, no una alarma. */}
+        {onMarchaBlanca && (
+          <button
+            onClick={onMarchaBlanca}
+            className="sc-boton"
+            style={{
+              border: `1px solid ${color.renglon}`,
+              background: "none",
+              borderRadius: 999,
+              padding: "3px 9px",
+              minHeight: 28,
+              color: color.lapiz,
+              fontFamily: fuente,
+              fontSize: 11.5,
+              fontWeight: 500,
+              letterSpacing: "0.01em",
+              cursor: "pointer",
+            }}
+          >
+            marcha blanca
+          </button>
+        )}
+      </span>
       {/* 44 px tocables, 36 dibujados. El monograma estaba en 36 y es la única
           puerta a la casa: fallar el toque es acabar en otro sitio. */}
       <button

@@ -35,7 +35,7 @@ export type ProductoWong = {
 
   motivo?: string; // por qué no se encontró (debug / QA)
   proveedor?: "fake" | "wong"; // de dónde salió el dato (debug)
-  degradado?: boolean; // true si Wong falló y se usó FakeWong de respaldo
+  degradado?: boolean; // true si Wong no respondió: no sabemos si existe, no que no exista
 
   // Ciclo 5: los otros candidatos del catálogo para el MISMO ingrediente.
   // Son la materia prima de la corrección ("esta no, quiero otra") y, por tanto,

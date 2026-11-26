@@ -427,7 +427,8 @@ export type Carrito = ResultadoMenu & {
   items: ItemCarrito[];
   total: number; // SOLO lo confirmado: los pendientes no suman
   pendientes: number; // cuántos productos esperan que se defina su cantidad
-  faltantes: string[];
+  faltantes: string[]; // Wong contestó y no lo tiene
+  sinRespuesta: string[]; // Wong no contestó: no sabemos si lo tiene
   // Solo presente con DEBUG_MATCHING=1. Herramienta de investigación, no de
   // producto: nunca se pinta en la interfaz normal.
   trazas?: TrazaMatching[];
@@ -462,7 +463,12 @@ async function armarCarrito(base: Intencion, pedidos: Pedido[]): Promise<Carrito
 
   const total = items.reduce((s, it) => s + (subtotalDe(it) ?? 0), 0);
   const pendientes = items.filter((it) => subtotalDe(it) === undefined).length;
-  const faltantes = items.filter((it) => !it.encontrado).map((it) => it.ingrediente);
+  // «No lo tiene» y «no contestó» son dos verdades distintas y se dicen
+  // distinto: la primera es sobre el producto; la segunda, sobre la tienda hoy.
+  const faltantes = items
+    .filter((it) => !it.encontrado && !it.degradado)
+    .map((it) => it.ingrediente);
+  const sinRespuesta = items.filter((it) => it.degradado).map((it) => it.ingrediente);
 
   return {
     ...base,
@@ -470,6 +476,7 @@ async function armarCarrito(base: Intencion, pedidos: Pedido[]): Promise<Carrito
     total: Math.round(total * 100) / 100,
     pendientes,
     faltantes,
+    sinRespuesta,
     ...(trazas ? { trazas } : {}),
   };
 }

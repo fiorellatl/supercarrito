@@ -113,6 +113,7 @@ type CarritoApi = {
   total: number;
   pendientes: number;
   faltantes: string[];
+  sinRespuesta?: string[];
 };
 
 // Qué tan adentro está cada lugar. Solo sirve para saber si un cambio de
@@ -303,6 +304,9 @@ export default function App() {
 
   const [items, setItems] = useState<ItemResuelto[] | null>(null);
   const [faltantes, setFaltantes] = useState<string[]>([]);
+  // Lo que no sabemos porque Wong no contestó. No es «no lo tiene»: se dice
+  // distinto y se queda anotado para intentarlo otra vez.
+  const [sinRespuesta, setSinRespuesta] = useState<string[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [leyendo, setLeyendo] = useState(false);
   const [aviso, setAviso] = useState<{ texto: string; deshacer?: number } | null>(null);
@@ -319,6 +323,11 @@ export default function App() {
   const [filtroTienda, setFiltroTienda] = useState("");
   const [preciosDeTienda, setPreciosDeTienda] = useState<boolean | null>(null);
   const [totalTienda, setTotalTienda] = useState<number | null>(null);
+  // Para qué tienda ya contestó la valoración (bien o mal). Mientras la tienda
+  // elegida no haya contestado, el total del pie NO se enseña: el de catálogo
+  // cambiaba un segundo después al llegar el de la tienda (bitácora O2), y un
+  // total que se mueve solo enseña a desconfiar del total.
+  const [valoradaPara, setValoradaPara] = useState<string | null>(null);
   const [sinTienda, setSinTienda] = useState(false); // "ahora no", solo esta sesión
   const [copiado, setCopiado] = useState(false);
 
@@ -451,6 +460,7 @@ export default function App() {
           aTantear.length > 0 ? preguntar(aTantear) : Promise.resolve({ ok: true, lineas: [] }),
         ]);
         if (!vivo) return;
+        setValoradaPara(perfil.tienda?.id ?? null);
         if (!cobro.ok || !tanteo.ok) {
           setPreciosDeTienda(false);
           return;
@@ -490,7 +500,10 @@ export default function App() {
           })
         );
       } catch {
-        if (vivo) setPreciosDeTienda(false);
+        if (vivo) {
+          setValoradaPara(perfil.tienda?.id ?? null);
+          setPreciosDeTienda(false);
+        }
       }
     })();
     return () => {
@@ -560,6 +573,10 @@ export default function App() {
   // como monto sería enseñar que la compra vale cero.
   const montoDeTienda = totalTienda != null && totalTienda > 0 ? totalTienda : null;
   const montoEntrega = montoDeTienda ?? totalEntrega;
+
+  // ¿Estamos esperando a que la tienda elegida diga sus precios?
+  const esperandoTienda =
+    !!perfil.tienda && firmaValorar !== "" && valoradaPara !== perfil.tienda.id;
 
   // --- Hacia dónde va cada cambio de pantalla --------------------------------
   // Entrar y volver no pueden sentirse igual. Cada lugar tiene una profundidad y
@@ -693,6 +710,7 @@ export default function App() {
       // aunque el catálogo de hoy propusiera otro. Ver `lib/carrito.ts`.
       setItems((previos) => conservarIdentidad(previos, resueltos));
       setFaltantes(data.faltantes ?? []);
+      setSinRespuesta(data.sinRespuesta ?? []);
       if (evitadas > 0) actualizarPerfil((p) => contarPreguntasEvitadas(p, evitadas));
 
       void repositorioHistorial.agregar({
@@ -863,7 +881,17 @@ export default function App() {
         <Pantalla
           sentido={sentido}
           encabezado={
-            <Cabecera monograma={monograma(casa)} nombre={casa.nombre} onCasa={() => ir("casa")} />
+            <Cabecera
+              monograma={monograma(casa)}
+              nombre={casa.nombre}
+              onCasa={() => ir("casa")}
+              onMarchaBlanca={() =>
+                setAviso({
+                  texto:
+                    "SuperCarrito recién empieza. Los precios los confirma tu Wong antes de pagar; si algo sale raro, cuéntanos y lo arreglamos.",
+                })
+              }
+            />
           }
           navegacion={
             <Navegacion
@@ -1172,6 +1200,12 @@ export default function App() {
                     No encontré en Wong: {faltantes.join(", ")}. Sigue anotado.
                   </p>
                 )}
+                {sinRespuesta.length > 0 && (
+                  <p style={{ ...lapiz, marginTop: 14 }}>
+                    Wong no me contestó para: {sinRespuesta.join(", ")}. Sigue
+                    anotado; vuelve a buscar precios en unos minutos.
+                  </p>
+                )}
               </>
             )
           }
@@ -1224,7 +1258,9 @@ export default function App() {
                         dejado anotado— no hay total que enseñar. Un guion dice
                         la verdad; "S/ 0.00" dice que su compra vale cero. */}
                     <span style={{ ...rotulo, display: "block" }}>
-                      {cuentan === 0
+                      {esperandoTienda
+                        ? `Preguntando a ${perfil.tienda?.nombre ?? "tu Wong"}…`
+                        : cuentan === 0
                         ? "Aún no suma"
                         : pendientes > 0
                           ? "Subtotal confirmado"
@@ -1235,11 +1271,11 @@ export default function App() {
                         aplicación donde una cifra tiene derecho a llamar la
                         atención — es la cifra por la que se abrió. */}
                     <span
-                      key={cuentan === 0 ? "vacio" : total}
+                      key={esperandoTienda ? "esperando" : cuentan === 0 ? "vacio" : total}
                       className="sc-monto"
                       style={{ ...plata, fontSize: 25, letterSpacing: "-0.03em", display: "block" }}
                     >
-                      {cuentan === 0 ? "S/ —" : soles(total)}
+                      {esperandoTienda || cuentan === 0 ? "S/ —" : soles(total)}
                     </span>
                   </span>
                   <Boton variante="lleno" onClick={() => ir("entregar")}>

@@ -74,12 +74,72 @@ const CORTESIA = new Set([
   "jaja", "jajaja", "jeje", "jejeje", "xd", "emm", "eh",
 ]);
 
+// Palabras con las que se habla a alguien, no con las que se pide algo. Sirven
+// para reconocer una cortesía con destinatario: «gracias mami», «besos amor»,
+// «buenos días hija». Solo se descartan si TODA la línea es conversación (ver
+// `esSoloConversacion`): «leche para mami» sigue siendo leche.
+const VOCATIVO = new Set([
+  "mami", "mama", "mamá", "mamita", "mamacita", "ma", "hija", "hijita", "hijo",
+  "hijito", "amor", "amorcito", "mi", "corazon", "corazón", "reina", "rey",
+  "tia", "tía", "tio", "tío", "abuela", "abuelita", "abue", "chicos", "chicas",
+  "familia", "todos", "gente",
+]);
+
+// Piezas sueltas de conversación. Una línea hecha SOLO de esto —más vocativos y
+// cortesías— no pide nada: «hola amor, cómo estás», «te quiero mucho», «mami
+// compra esto porfa». Ninguna es un producto del súper.
+const CHARLA = new Set([
+  "hola", "holi", "holis", "buenas", "buenos", "dias", "días", "tardes", "noches",
+  "como", "cómo", "estas", "estás", "esta", "está", "que", "qué", "tal",
+  "te", "quiero", "amo", "mucho", "muchos", "muchas", "mil", "gracias", "besos",
+  "beso", "besito", "besitos", "abrazo", "abrazos", "cuidate", "cuídate",
+  "esto", "estos", "estas", "eso", "lo", "siguiente", "aqui", "aquí", "va",
+  "porfa", "porfis", "por", "favor", "please", "plis", "pls", "ok", "ya", "y",
+  "bien", "todo", "nada", "mas", "más", "hasta", "luego", "pronto", "chau", "chao",
+]);
+
+// Verbos con los que se ANUNCIA una lista. Si la línea termina en uno de ellos
+// («para el almuerzo del domingo necesito»), lo que viene después es la compra;
+// esta línea no.
+const ANUNCIO_FINAL = new Set([
+  "necesito", "necesitamos", "necesitas", "falta", "faltan", "compra", "compras",
+  "comprar", "traer", "trae", "traes", "siguiente", "esto", "lista",
+]);
+
 const desnudo = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 const ENCABEZADO_PLANO = new Set([...ENCABEZADO].map(desnudo));
 const RELLENO_PLANO = new Set([...RELLENO].map(desnudo));
 const CORTESIA_PLANA = new Set([...CORTESIA].map(desnudo));
+const VOCATIVO_PLANO = new Set([...VOCATIVO].map(desnudo));
+const CHARLA_PLANA = new Set([...CHARLA].map(desnudo));
+const ANUNCIO_FINAL_PLANO = new Set([...ANUNCIO_FINAL].map(desnudo));
+
+// Las palabras de la línea tal como se comparan: sin tildes, sin signos ni
+// emojis. Nunca se usa para mostrar nada.
+const palabrasPlanas = (s: string) =>
+  desnudo(s)
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+
+// ¿Toda la línea es conversación? Exige que NO quede ni una palabra fuera de
+// las listas: basta un «pollo» para que la línea vuelva a ser una compra.
+function esSoloConversacion(texto: string): boolean {
+  const palabras = palabrasPlanas(texto);
+  if (palabras.length === 0) return false;
+  // «té» a secas es una compra; sin tilde se confunde con el «te» de «te quiero».
+  if (palabras.length === 1 && palabras[0] === "te") return false;
+  return palabras.every(
+    (p) =>
+      VOCATIVO_PLANO.has(p) ||
+      CHARLA_PLANA.has(p) ||
+      ENCABEZADO_PLANO.has(p) ||
+      RELLENO_PLANO.has(p) ||
+      CORTESIA_PLANA.has(p)
+  );
+}
 
 // Devuelve la línea sin su encabezado. Si no queda nada, la línea ERA el
 // encabezado. Nunca modifica lo que la familia ve: solo lo que se busca.
@@ -121,6 +181,10 @@ const TIENE_NUMERO = /\p{N}/u;
 // esto NO descarta: pregunta.
 const PALABRAS_DE_MAS = 6;
 
+// Quita emojis y espacios del final, para ver si la línea termina en «:».
+const limpiarFinEmojis = (s: string) =>
+  s.replace(/[\s\p{Extended_Pictographic}\u200d\ufe0f]+$/gu, "");
+
 const limpiarBordes = (s: string) =>
   s.replace(/^[\s\p{P}\p{S}]+|[\s\p{P}\p{S}]+$/gu, "").trim();
 
@@ -156,8 +220,15 @@ export function naturalezaDe(texto: string): Lectura {
     return { naturaleza: "contexto", motivo: "es cómo empieza el mensaje" };
 
   const plano = desnudo(limpiarBordes(util));
-  if (CORTESIA_PLANA.has(plano))
+  if (CORTESIA_PLANA.has(plano) || esSoloConversacion(bruto))
     return { naturaleza: "contexto", motivo: "es una fórmula de conversación" };
+
+  // «para el almuerzo del domingo necesito:» — la línea que presenta la lista.
+  // Termina en dos puntos, o en el verbo con el que se pide. Lo que la familia
+  // quiere comprar viene en las líneas siguientes, no en esta.
+  const finales = palabrasPlanas(bruto);
+  if (/:\s*$/.test(limpiarFinEmojis(bruto)) || ANUNCIO_FINAL_PLANO.has(finales[finales.length - 1] ?? ""))
+    return { naturaleza: "contexto", motivo: "es cómo presenta la lista" };
 
   // Una pregunta no es un encargo: «¿compramos pollo?» puede serlo, pero
   // decidirlo por ella sería inventarle una compra. Se pregunta.
