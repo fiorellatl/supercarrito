@@ -3,7 +3,6 @@
 import { color, lapiz, plata, soles } from "@/app/ui/sistema";
 import type { ProductoWong } from "@/lib/catalog";
 import { etiquetaUnitaria, formatearCantidad } from "@/lib/cantidades";
-import Boton from "@/app/ui/Boton";
 import Foto from "@/app/ui/Foto";
 import Sello from "@/app/ui/Sello";
 
@@ -20,7 +19,7 @@ import Sello from "@/app/ui/Sello";
 // sustituye en silencio: si desaparece, la familia cree que no la entendimos;
 // viéndolo, entiende que el problema es la tienda.
 
-export type EstadoLinea = "confirmado" | "pendiente" | "agotado" | "sin-resultado";
+export type EstadoLinea = "confirmado" | "pendiente" | "agotado" | "sin-resultado" | "buscando";
 
 export default function LineaCarrito({
   ingrediente,
@@ -34,7 +33,9 @@ export default function LineaCarrito({
   atenuada,
   orden,
   onCantidad,
+  nota,
 }: {
+  nota?: string; // qué decir cuando no hay producto: «no lo encontré», «Wong no contestó»
   ingrediente: string;
   producto?: ProductoWong;
   estado: EstadoLinea;
@@ -60,6 +61,25 @@ export default function LineaCarrito({
 
   // Sin resultado no es un error de la familia: es algo que no supimos
   // encontrar. Se dice en primera persona y se deja su palabra intacta.
+  // Recién anotada: la línea ya está en su sitio, con sus palabras, mientras
+  // Wong contesta. Nada salta ni se reordena cuando llega el producto.
+  if (estado === "buscando") {
+    return (
+      <Fila retraso={retraso}>
+        <Foto alt={ingrediente} apagada />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14.5, fontWeight: 500, color: color.tinta, lineHeight: 1.28 }}>
+            {ingrediente}
+          </div>
+          <div className="sc-pulso" style={{ ...lapiz, fontSize: 11.5, marginTop: 2 }}>
+            buscando en Wong…
+          </div>
+        </div>
+        <Monto apagado>—</Monto>
+      </Fila>
+    );
+  }
+
   if (estado === "sin-resultado") {
     return (
       <Fila retraso={retraso}>
@@ -68,9 +88,12 @@ export default function LineaCarrito({
           <div style={{ fontSize: 14.5, fontWeight: 500, color: color.tinta, lineHeight: 1.28 }}>
             {ingrediente}
           </div>
-          <div style={{ ...lapiz, fontSize: 11.5, marginTop: 2 }}>no lo encontré en Wong</div>
+          <div style={{ ...lapiz, fontSize: 11.5, marginTop: 2 }}>
+            {nota ?? "no lo encontré en Wong"}
+          </div>
+          {acciones && acciones.length > 0 && <AccionesLinea acciones={acciones} />}
         </div>
-        <Monto>—</Monto>
+        <Monto apagado>—</Monto>
       </Fila>
     );
   }
@@ -183,15 +206,7 @@ export default function LineaCarrito({
           </div>
         )}
 
-        {acciones && acciones.length > 0 && (
-          <div style={{ marginTop: 7, display: "flex", flexWrap: "wrap", gap: 7 }}>
-            {acciones.map((a) => (
-              <Boton key={a.texto} variante="fantasma" chico onClick={a.onClick}>
-                {a.texto}
-              </Boton>
-            ))}
-          </div>
-        )}
+        {acciones && acciones.length > 0 && <AccionesLinea acciones={acciones} />}
       </div>
 
       {/* Lo que no sabemos vale un guion, jamás un cero: un S/ 0.00 al lado de
@@ -335,6 +350,40 @@ function Monto({ children, apagado }: { children: React.ReactNode; apagado?: boo
       }}
     >
       {children}
+    </div>
+  );
+}
+
+// Las decisiones de una línea, en una sola fila de enlaces. En la lista hay
+// veinte productos: si cada uno trae dos botones grandes, la compra deja de
+// verse. Son tocables (32 px de alto) sin gritar.
+function AccionesLinea({ acciones }: { acciones: { texto: string; onClick: () => void }[] }) {
+  return (
+    <div style={{ marginTop: 4, display: "flex", flexWrap: "wrap", columnGap: 16 }}>
+      {acciones.map((a) => (
+        <button
+          key={a.texto}
+          type="button"
+          onClick={a.onClick}
+          className="sc-boton"
+          style={{
+            border: "none",
+            background: "none",
+            padding: 0,
+            minHeight: 32,
+            cursor: "pointer",
+            font: "inherit",
+            fontSize: 12.5,
+            fontWeight: 500,
+            color: color.tinta,
+            textDecoration: "underline",
+            textDecorationColor: color.renglon,
+            textUnderlineOffset: 3,
+          }}
+        >
+          {a.texto}
+        </button>
+      ))}
     </div>
   );
 }

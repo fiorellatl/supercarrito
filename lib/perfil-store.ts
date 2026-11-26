@@ -165,7 +165,15 @@ export const repositorioLibreta: RepositorioLibreta = new LibretaLocalStorage();
 export type CompraCerrada = {
   ts: number;
   total: number;
-  lineas: { nombre: string; cuenta: string; monto: number }[];
+  lineas: {
+    nombre: string;
+    cuenta: string;
+    monto: number;
+    // Para «Repetir esta compra». Las compras anteriores al 2026-11-26 no lo
+    // traen: se repiten sin cantidad y la lista la pregunta, nunca la inventa.
+    cantidad?: number;
+    unidad?: "kg" | "un";
+  }[];
 };
 
 export interface RepositorioCompras {

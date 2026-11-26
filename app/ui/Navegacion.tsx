@@ -15,15 +15,16 @@
 
 import { color, fuente } from "@/app/ui/sistema";
 
-export type Lugar = "lista" | "compra" | "casa";
+// Rediseño 2026-11-26: dos lugares. La lista y el carrito son la misma
+// pantalla, así que «Carrito» deja de ser un lugar aparte.
+export type Lugar = "lista" | "casa";
 
 // El primer lugar es donde se PREPARA la compra; el segundo, la compra ya con
 // precios. Ninguno se llama "libreta": la libreta es cómo lo tenemos hecho por
 // dentro, no cómo lo vive una familia (decisión de la PO, 2026-08-02).
 const LUGARES: { k: Lugar; nombre: string; d: string }[] = [
-  { k: "lista", nombre: "Mi compra", d: "M4 4h13a3 3 0 013 3v13H7a3 3 0 01-3-3z M8 4v16" },
-  { k: "compra", nombre: "Carrito", d: "M4 5h2l2.5 10h9L20 8H7 M9.5 19.5h.01 M16.5 19.5h.01" },
-  { k: "casa", nombre: "Mi casa", d: "M4 11l8-7 8 7 M6 10v9h12v-9" },
+  { k: "lista", nombre: "Mi lista", d: "M4 5h2l2.5 10h9L20 8H7 M9.5 19.5h.01 M16.5 19.5h.01" },
+  { k: "casa", nombre: "Mis compras", d: "M4 11l8-7 8 7 M6 10v9h12v-9" },
 ];
 
 export default function Navegacion({
@@ -98,7 +99,7 @@ export default function Navegacion({
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              {l.k === "compra" && cuantos ? cuantos : ""}
+              {l.k === "lista" && cuantos ? cuantos : ""}
             </span>
           </button>
         );

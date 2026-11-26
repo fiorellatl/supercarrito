@@ -40,6 +40,10 @@ export type ItemResuelto = {
   unidadPedida?: "kg" | "un";
   cantidadElegida?: number;
   fuera?: boolean; // "dejarlo anotado": sigue a la vista y no compra
+  // De qué línea de la lista salió. Desde el rediseño (2026-11-26) la lista y el
+  // carrito son la misma pantalla: cada línea se resuelve sola al anotarla, y
+  // quitar o corregir la línea quita o rehace exactamente sus productos.
+  lineaId?: string;
 };
 
 export type CarritoGuardado = { version: 1; items: ItemResuelto[] };

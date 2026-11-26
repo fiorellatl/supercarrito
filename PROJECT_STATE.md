@@ -6,30 +6,30 @@
 
 ## ▶️ Estado actual — 2026-11-26 (retomada tras pausa desde el 2026-08-03)
 
-**Qué es hoy:** un acelerador de la compra en **Wong**. La libreta («Mi compra»)
-es el Home; se escribe o se pega (WhatsApp, captura, menú), se revisa, se elige
-tu Wong, el carrito sale con precios y stock de esa tienda y un enlace lo lleva
-al carrito de wong.pe. No hay chat. No compara cadenas ni calcula delivery.
+**Qué es hoy:** un acelerador de la compra en **Wong** con un flujo de dos
+pasos (rediseño del 2026-11-26, §O). **Mi lista** es a la vez la lista y el
+carrito: cada línea escrita o pegada (WhatsApp, captura, menú) se convierte al
+momento en su producto con foto, `cantidad × precio` y acciones (cantidad, otra
+marca o tamaño, quitar). La tienda se elige en la cabecera. **Revisar y pedir**
+enseña qué va, qué se ajusta y qué no, y abre el carrito en wong.pe. **Mis
+compras** guarda lo pedido con «Repetir». No compara cadenas ni calcula delivery.
 
-**Base:** `main` = `9c61b78`. `tsc --noEmit` y `npm run build` en verde
-(2026-11-26). Sin tests ni CI. Sin backend: todo en `localStorage`.
+**Base:** rama `claude/project-thread-f0igdg` (PR #1). `tsc`, `build` y `npm run
+humo` en verde. Sin tests ni CI. Sin backend: todo en `localStorage`.
 
-**Uso real acumulado:** 1 entrevista (I-1) y 1 sesión de bitácora. H1 (la
-hipótesis fundacional) sigue sin validar con usuarios.
+**Uso real acumulado:** 1 entrevista (I-1) y 1 sesión de bitácora. H1 sigue sin
+validar con usuarios. **Lo siguiente es ponerlo delante de familias.**
 
-**Defectos que bloquean enseñarlo a desconocidos** (auditoría 2026-11-26, §N):
-1. Saludos y frases de encuadre terminan en el carrito con precio (visto 3 veces).
-2. Si Wong falla en producción, se cae a FakeWong **sin avisar** (`degradado`
-   no se usa en la UI): precios y SKUs ficticios presentados como reales.
-3. El total cambia solo al llegar los precios de la tienda (bitácora O2).
+**Arreglado el 2026-11-26** (§N–O): saludos y frases de encuadre ya no llegan al
+buscador; si Wong falla se dice y no se inventa; el total espera a la tienda;
+aviso de marcha blanca; `playwright` fuera.
 
-**Siguiente bloque propuesto (espera aprobación de la PO):** semana 1 «Que no
-mienta» → semana 2 cinco familias, dos domingos + «repetir mi compra» → semana 3
-spike de Metro con EAN y delivery → semana 4 según evidencia. Detalle en §N.
+**Pendiente:** verificar el salto en iPhone y Android reales · probar con 5
+familias · spike de Metro (semana 3) · métricas anónimas de uso (decisión PO).
 
-**Decisiones abiertas de la PO:** rapidez o ahorro como propuesta de salida ·
-abrir Metro (revierte «solo Wong») · qué cinco familias · métricas anónimas de
-uso · texto del aviso de marcha blanca.
+**Modelo de negocio (PO, 2026-11-26):** primero la capa gratuita. Después,
+supermercados (tráfico, destacados etiquetados, datos agregados) y suscripción
+familiar pro. Ver `PRODUCT_CONTEXT.md`.
 
 > Histórico — 2026-08-02: ARQ-3 implementada (§A). 2026-08-01: ciclo de
 > importación por captura cerrado (montos explicables, benchmark Sonnet 5 +
@@ -2610,4 +2610,46 @@ memoria del hogar, listas familiares) y pide auditar antes de construir.
 
 Explícitamente no ahora: reparto entre 3+ tiendas, tarjetas de descuento,
 cuentas/login, app nativa, voz, Tottus, más documentos de diseño.
+
+---
+
+## O · El flujo nuevo: la lista es el carrito (2026-11-26)
+
+Pedido de la PO: *«todo el flujo debe cambiar, por uno enfocado en el UX como
+Nada Menos»*. Wireframes en el hilo; la PO eligió «una sola pantalla».
+
+**Antes:** libreta (sin fotos) → revisión → ¿cuál es tu Wong? → carrito →
+llevar a Wong. Cinco pantallas.
+**Ahora:** **Mi lista** (lista y carrito a la vez) → **Revisar y pedir**. Más
+**Mis compras** con «Repetir».
+
+Decisiones de agosto que se revierten a conciencia:
+- «La foto marca la frontera entre escribir y comprar» (sin fotos en la
+  libreta): ahora cada línea muestra su producto al anotarla.
+- Decisión 22 «la revisión sobrevive»: desaparece. Lo que no parece compra se
+  pliega en «N líneas no parecían compra», con «Sí es compra» y «Quitar».
+- Decisión 21 «barra de tres lugares»: quedan dos (Mi lista · Mis compras).
+- La tienda deja de ser una pantalla: es una barra sobre la lista y una hoja.
+
+Cómo está hecho:
+- Cada línea compra se resuelve sola con **una llamada a `/api/chat` por
+  línea**; cada producto guarda su `lineaId`. Quitar o corregir la línea toca
+  exactamente sus productos; un menú es una línea con varios productos y
+  «Quitar todo».
+- Lo repetido (mismo ingrediente o mismo SKU en otra línea) no se compra dos
+  veces: la línea dice «ya está en tu lista».
+- Al pedir, se va la línea cuyos productos cruzaron todos; la conversación
+  pegada se va con la compra; lo demás queda marcado.
+- Las compras guardan cantidad y unidad: «Repetir» vuelve a anotar cada
+  producto por su nombre exacto (la búsqueda que mejor acierta en Wong).
+- Pasos visibles «Arma tu lista · Revisa · Pide en Wong».
+
+Verificado a 375×812 con `CATALOG_PROVIDER=fake` (wong.pe bloqueado en el
+entorno): pegar un WhatsApp de 8 líneas (3 de conversación plegadas, menú
+abierto en productos, duplicados evitados), otra marca, elegir tienda (sin
+red: degrada con mensaje), revisar y pedir, compra registrada, repetir, recarga
+sin re-emparejar. Consola sin errores.
+
+Pendiente de ver con Wong real: precios de tienda en la lista, agotados,
+pesables con «¿Cuánto llevas?».
 

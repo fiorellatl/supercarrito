@@ -182,7 +182,15 @@ nav,
 .sc-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 .sc-scroll::-webkit-scrollbar { display: none; }
 
+/* «buscando en Wong…»: respira mientras la tienda contesta. */
+@keyframes sc-pulso {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 1; }
+}
+.sc-pulso { animation: sc-pulso 1.4s ease-in-out infinite; }
+
 /* Quien pidió que nada se mueva, no ve nada moverse. */
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;

@@ -82,9 +82,9 @@ Todo lo de la familia vive en `localStorage` detrás de repositorios async
 (`lib/perfil-store.ts`): migrar a backend = escribir otra implementación.
 
 ```
-app/page.tsx  (orquesta: Mi compra · Carrito · Mi casa)  ── app/ui/* (sistema visual)
+app/page.tsx  (orquesta: Mi lista = carrito · Revisar y pedir · Mis compras) ── app/ui/*
    │
-   ├─ /api/chat            → lib/cart.ts  comprarLibreta(): normaliza POR LÍNEA
+   ├─ /api/chat (una llamada por línea) → lib/cart.ts comprarLibreta()
    │                           (lib/contexto.ts separa compra · contexto · duda)
    │                           → lib/wong.ts (dispatcher) → lib/wongvtex.ts | lib/fakewong.ts
    ├─ /api/tiendas, /precios → lib/tienda.ts  directorio de tiendas + orderForms/simulation
@@ -100,8 +100,8 @@ Reglas permanentes:
   `EntregaEnTienda` (handoff), `ExtractorDeEvidencia` (lectura de evidencia).
 - **Degradación elegante, sin inventar.** Cada proveedor tiene sustituto local
   (FakeWong, ExtractorDeMuestra) para desarrollar sin red ni credenciales.
-  ⚠️ Hoy, si Wong falla en producción, se cae a FakeWong **sin avisar**
-  (`degradado` no se lee en la UI). Es un defecto conocido, no una regla.
+  En producción, si Wong falla la línea vuelve `degradado` y la pantalla dice
+  «Wong no contestó»: nunca se rellena con FakeWong (solo `CATALOG_PROVIDER=fake`).
 - **Toda evidencia entra por el mismo normalizador** (`lib/cart.ts`).
 - **El historial es hecho; el perfil es opinión derivada.** Append-only.
 - **La identidad de un producto se guarda; su estado (precio, stock) se vuelve a preguntar.**
@@ -133,6 +133,7 @@ npm install
 npm run dev                         # Wong real por defecto (necesita red a wong.pe)
 CATALOG_PROVIDER=fake npm run dev   # catálogo ficticio, sin red
 npx tsc --noEmit                    # tipos
+npm run humo                        # prueba de humo (scripts/humo.mts)
 npm run build                       # build de producción
 DEBUG_MATCHING=1 npm run dev        # /api/chat devuelve trazas de matching
 ```
@@ -140,10 +141,10 @@ DEBUG_MATCHING=1 npm run dev        # /api/chat devuelve trazas de matching
 Variables: `CATALOG_PROVIDER` (`wong`|`fake`), `ANTHROPIC_API_KEY` (opcional;
 sin ella la captura usa el extractor de muestra), `EXTRACTOR_PROVIDER`.
 
-**No hay tests ni CI.** Verificar = `tsc` + `build` + recorrido en navegador a
-375×812 (bienvenida → libreta → revisión → tienda → carrito → entrega).
-Ojo: con wong.pe bloqueado (p. ej. sandbox) la app cae a FakeWong en silencio;
-no confundir eso con datos reales.
+**No hay tests ni CI.** Verificar = `tsc` + `build` + `npm run humo` (reglas de
+contexto; con `SUPERCARRITO_URL` también la API) + recorrido en navegador a
+375×812 (bienvenida → lista → elegir tienda → revisar y pedir → mis compras →
+repetir). Con wong.pe bloqueado (p. ej. sandbox) usa `CATALOG_PROVIDER=fake`.
 
 ## Secretos y datos personales
 
