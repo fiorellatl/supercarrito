@@ -54,14 +54,12 @@ function Muestra() {
       className="sc-entra"
       style={{
         animationDelay: "90ms",
-        border: `1px solid ${color.renglon}`,
-        borderRadius: 16,
-        background: color.blanco,
-        padding: "13px 15px 14px",
-        boxShadow: "0 1px 2px rgba(21,48,31,.05)",
+        borderRadius: 20,
+        background: color.papel2,
+        padding: "16px 16px 14px",
       }}
     >
-      <div style={{ fontSize: 15, fontWeight: 500, color: color.tinta, lineHeight: 1.35 }}>
+      <div style={{ fontSize: 17, fontWeight: 600, color: color.tinta, lineHeight: 1.35 }}>
         &ldquo;mami compra 2 kg de pollo y leche&rdquo;
       </div>
 
@@ -82,17 +80,17 @@ function Muestra() {
         <span style={{ height: 1, flex: 1, background: color.renglon }} />
       </div>
 
-      <div style={{ display: "grid", gap: 4 }}>
+      <div style={{ display: "grid", gap: 8 }}>
         {[
           { n: "Pollo Entero Fresco x kg", c: "2 kg × S/ 11.90/kg", m: "S/ 23.80" },
           { n: "Leche Gloria Entera 400 g", c: "1 × S/ 4.50 c/u", m: "S/ 4.50" },
         ].map((p) => (
-          <div key={p.n} style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: color.tinta, lineHeight: 1.3 }}>
+          <div key={p.n} style={{ display: "flex", alignItems: "baseline", gap: 10, background: color.blanco, borderRadius: 14, padding: "10px 12px" }}>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, color: color.tinta, lineHeight: 1.3 }}>
               {p.n}
               <span style={{ ...lapiz, fontSize: 11, display: "block", marginTop: 1 }}>{p.c}</span>
             </span>
-            <span style={{ ...plata, fontSize: 13, flex: "0 0 auto" }}>{p.m}</span>
+            <span style={{ ...plata, fontSize: 15, fontWeight: 800, flex: "0 0 auto" }}>{p.m}</span>
           </div>
         ))}
       </div>
@@ -103,124 +101,137 @@ function Muestra() {
 export default function Bienvenida({ onEntrar }: { onEntrar: (nombre: string) => void }) {
   const [nombre, setNombre] = useState("");
 
+  // Estilo «puesto de mercado» (2026-11-26): el letrero rojo con su toldo es
+  // lo primero que se ve, igual que en la lista. En escritorio, dos columnas:
+  // la promesa a la izquierda, la demostración y la puerta a la derecha.
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        gap: 20,
-        padding: "40px 0 calc(28px + var(--abajo))",
-      }}
-    >
-      <div className="sc-entra">
-        <Logo />
-        <h1
+    <div className="sc-bienvenida" style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
+      <div className="sc-bv-letrero" style={{ margin: "0 -22px" }}>
+        <div
+          className="sc-entra"
           style={{
-            fontFamily: fuente,
-            fontSize: 28,
-            fontWeight: 600,
-            color: color.tinta,
-            letterSpacing: "-0.035em",
-            lineHeight: 1.15,
-            margin: "18px 0 8px",
-            textWrap: "balance",
+            background: color.papaya,
+            color: "#fff",
+            padding: "calc(28px + env(safe-area-inset-top, 0px)) 22px 22px",
           }}
         >
-          Tu lista de la compra,
-          <br />
-          ya hecha.
-        </h1>
-        {/* La frase que define el producto. Sin "IA", sin "plataforma", sin
-            "optimiza": lo que hace, dicho como lo diría una vecina. */}
-        <p style={{ ...lapiz, fontSize: 15, lineHeight: 1.55, margin: 0, maxWidth: "31ch" }}>
-          Anota lo que falta en casa como te salga. Yo lo convierto en tu carrito
-          de Wong, con los precios de tu tienda.
-        </p>
-      </div>
-
-      <Muestra />
-
-      <ul
-        className="sc-entra"
-        style={{
-          animationDelay: "180ms",
-          listStyle: "none",
-          margin: 0,
-          padding: 0,
-          display: "grid",
-          gap: 9,
-        }}
-      >
-        {CAPACIDADES.map((c) => (
-          <li key={c.texto} style={{ display: "flex", alignItems: "center", gap: 11 }}>
-            <span
-              aria-hidden
+          <div className="sc-bv-ancho">
+            <Logo claro />
+            <h1
               style={{
-                width: 30,
-                height: 30,
-                flex: "0 0 auto",
-                display: "grid",
-                placeItems: "center",
-                borderRadius: 9,
-                border: `1px solid ${color.renglon}`,
-                background: color.blanco,
-                color: color.lapiz,
-                fontSize: 13,
+                fontFamily: fuente,
+                fontSize: "clamp(34px, 6vw, 56px)",
+                fontWeight: 800,
+                letterSpacing: "-0.045em",
+                lineHeight: 1,
+                margin: "22px 0 12px",
+                textWrap: "balance",
               }}
             >
-              {c.icono}
-            </span>
-            <span style={{ fontSize: 14, color: color.tinta, lineHeight: 1.35 }}>{c.texto}</span>
-          </li>
-        ))}
-      </ul>
+              Tu lista de la compra, ya hecha.
+            </h1>
+            {/* La frase que define el producto. Sin "IA", sin "plataforma", sin
+                "optimiza": lo que hace, dicho como lo diría una vecina. */}
+            <p style={{ fontSize: 16, lineHeight: 1.5, margin: 0, maxWidth: "34ch", opacity: 0.95 }}>
+              Anota lo que falta en casa como te salga. Yo lo convierto en tu
+              carrito de Wong, con los precios de tu tienda.
+            </p>
+          </div>
+        </div>
+        <div className="sc-toldo" aria-hidden />
+      </div>
 
-      <form
-        className="sc-entra"
-        style={{ animationDelay: "270ms" }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (nombre.trim()) onEntrar(nombre);
-        }}
-      >
-        <label htmlFor="sc-nombre" style={{ ...lapiz, display: "block", marginBottom: 6 }}>
-          ¿Cómo llamamos a tu casa?
-        </label>
-        <input
-          id="sc-nombre"
-          className="sc-campo"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          placeholder="Rosa · los Torres · casa"
-          autoComplete="off"
-          enterKeyHint="go"
-          style={{
-            width: "100%",
-            fontFamily: fuente,
-            fontSize: 16,
-            color: color.tinta,
-            background: color.blanco,
-            border: `1px solid ${color.renglon}`,
-            borderRadius: 13,
-            padding: "12px 14px",
-            outline: "none",
-            marginBottom: 12,
-            boxSizing: "border-box",
+      <div className="sc-bv-cuerpo" style={{ display: "grid", gap: 20, padding: "22px 0 calc(28px + var(--abajo))" }}>
+        <div className="sc-bv-izq" style={{ display: "grid", gap: 20, alignContent: "start" }}>
+          <Muestra />
+          <ul
+            className="sc-entra"
+            style={{ animationDelay: "180ms", listStyle: "none", margin: 0, padding: 0, display: "flex", flexWrap: "wrap", gap: 8 }}
+          >
+            {CAPACIDADES.map((c, i) => (
+              <li
+                key={c.texto}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "8px 12px 8px 8px",
+                  borderRadius: 999,
+                  background: color.papel2,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: color.tinta,
+                }}
+              >
+                <span
+                  aria-hidden
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 999,
+                    display: "grid",
+                    placeItems: "center",
+                    fontSize: 12,
+                    color: "#fff",
+                    background: [color.papaya, color.pino, "#C9A227", "#3B82C4"][i % 4],
+                  }}
+                >
+                  {c.icono}
+                </span>
+                {c.texto}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <form
+          className="sc-entra sc-bv-der"
+          style={{ animationDelay: "270ms", alignSelf: "start" }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (nombre.trim()) onEntrar(nombre);
           }}
-        />
-        <Boton variante="lleno" type="submit" disabled={!nombre.trim()} style={{ width: "100%" }}>
-          Empezar
-        </Boton>
+        >
+          <label
+            htmlFor="sc-nombre"
+            style={{ display: "block", marginBottom: 8, fontSize: 18, fontWeight: 800, color: color.tinta, letterSpacing: "-0.02em" }}
+          >
+            ¿Cómo llamamos a tu casa?
+          </label>
+          <input
+            id="sc-nombre"
+            className="sc-campo"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Rosa · los Torres · casa"
+            autoComplete="off"
+            enterKeyHint="go"
+            style={{
+              width: "100%",
+              fontFamily: fuente,
+              fontSize: 16,
+              color: color.tinta,
+              background: color.blanco,
+              border: `2px solid ${color.tinta}`,
+              borderRadius: 999,
+              padding: "13px 18px",
+              outline: "none",
+              marginBottom: 12,
+              boxSizing: "border-box",
+            }}
+          />
+          <Boton variante="lleno" type="submit" disabled={!nombre.trim()} style={{ width: "100%" }}>
+            Empezar
+          </Boton>
 
-        {/* Se dice antes de que lo pregunte, y pegado al botón: sin esta línea,
-            un campo de texto en la primera pantalla parece el principio de un
-            registro largo. */}
-        <p style={{ ...lapiz, fontSize: 12, margin: "10px 0 0", textAlign: "center" }}>
-          Sin contraseñas y sin correo. Nada sale de este teléfono.
-        </p>
-      </form>
+          {/* Se dice antes de que lo pregunte, y pegado al botón: sin esta
+              línea, un campo de texto en la primera pantalla parece el
+              principio de un registro largo. */}
+          <p style={{ ...lapiz, fontSize: 12.5, margin: "10px 0 0", textAlign: "center" }}>
+            Sin contraseñas y sin correo. Nada sale de este teléfono.
+          </p>
+        </form>
+      </div>
     </div>
   );
 }

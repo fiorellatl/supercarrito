@@ -36,9 +36,10 @@ export function Pantalla({
   sentido?: "adelante" | "atras";
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
-      {encabezado}
+    <div className="sc-pantalla" style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
+      {encabezado && <div className="sc-p-cabeza">{encabezado}</div>}
       {!encabezado && (
+      <div className="sc-p-cabeza">
       <header
         style={{
           display: "flex",
@@ -149,10 +150,11 @@ export function Pantalla({
           </button>
         )}
       </header>
+      </div>
       )}
 
       <div
-        className={`sc-scroll sc-${sentido}`}
+        className={`sc-scroll sc-p-cuerpo sc-${sentido}`}
         style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 1 }}
       >
         {cuerpo}
@@ -160,6 +162,7 @@ export function Pantalla({
 
       {pie && (
         <div
+          className="sc-p-pie"
           style={{
             flex: "0 0 auto",
             position: "sticky",
@@ -177,7 +180,7 @@ export function Pantalla({
         </div>
       )}
 
-      {navegacion}
+      {navegacion && <div className="sc-p-nav">{navegacion}</div>}
     </div>
   );
 }

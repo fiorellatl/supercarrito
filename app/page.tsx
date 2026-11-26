@@ -1114,12 +1114,12 @@ export default function App() {
 
   // Antes de saber quién entra no se pinta nada. El papel ya está, así que no
   // hay parpadeo ni spinner: simplemente todavía no hay contenido.
-  if (!listo) return <main className="sc-papel" style={marco} />;
+  if (!listo) return <main className="sc-papel sc-marco" style={marco} />;
 
   // La puerta. Solo la ve quien nunca ha entrado aquí.
   if (!tieneCasa(casa))
     return (
-      <main className="sc-papel" style={marco}>
+      <main className="sc-papel sc-marco" style={marco}>
         <Bienvenida
           onEntrar={(nombre) => {
             const nueva = crearCasa(nombre);
@@ -1135,7 +1135,7 @@ export default function App() {
     );
 
   return (
-    <main className="sc-papel" style={marco}>
+    <main className="sc-papel sc-marco" style={marco}>
       {ruta === "lista" && (
         <Pantalla
           sentido={sentido}

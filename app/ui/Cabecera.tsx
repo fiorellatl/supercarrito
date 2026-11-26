@@ -28,7 +28,7 @@ export default function Cabecera({
   onMarchaBlanca?: () => void;
 }) {
   return (
-    <header style={{ margin: "0 -22px", flex: "0 0 auto" }}>
+    <header data-letrero style={{ margin: "0 -22px", flex: "0 0 auto" }}>
       <div style={{ background: color.papaya, color: "#fff", padding: "calc(12px + env(safe-area-inset-top, 0px)) 22px 14px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>

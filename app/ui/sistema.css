@@ -211,3 +211,48 @@ nav,
   mask: linear-gradient(#000 0 0) top / 100% 11px no-repeat,
     radial-gradient(circle 11px at 11px 11px, #000 98%, #0000) 0 0 / 22px 22px repeat-x;
 }
+
+/* Envoltorios que solo existen para el escritorio: en el teléfono no son
+   cajas, así el pie y la barra siguen pegados abajo con su `sticky`. */
+.sc-p-cabeza, .sc-p-nav { display: contents; }
+
+/* ── Escritorio (≥ 900 px). En el teléfono no cambia nada. ──────────────────
+   La lista a la izquierda; a la derecha, fija, la cuenta con su botón y la
+   navegación. La cabecera roja va de lado a lado. */
+@media (min-width: 900px) {
+  .sc-marco { max-width: 1080px !important; padding: 0 40px !important; }
+  .sc-pantalla {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-areas: "cabeza cabeza" "cuerpo pie" "cuerpo nav" "cuerpo .";
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 40px;
+    align-items: start;
+  }
+  .sc-p-cabeza { grid-area: cabeza; display: block; }
+  body { overflow-x: clip; }
+  /* El letrero y su toldo van de borde a borde de la ventana; su contenido,
+     alineado con la columna de la lista. */
+  .sc-p-cabeza > header[data-letrero] { margin: 0 calc(50% - 50vw) !important; }
+  .sc-p-cabeza > header[data-letrero] > div:first-child {
+    padding-left: max(40px, calc(50vw - 500px)) !important;
+    padding-right: max(40px, calc(50vw - 500px)) !important;
+  }
+  .sc-p-cuerpo { grid-area: cuerpo; padding-bottom: 40px; }
+  .sc-p-pie {
+    grid-area: pie;
+    position: sticky !important;
+    top: 24px;
+    margin-top: 24px;
+    padding: 20px !important;
+    border-radius: 20px;
+    background: var(--papel-2) !important;
+  }
+  .sc-p-nav { grid-area: nav; display: block; position: sticky; top: 260px; }
+  .sc-p-nav nav { position: static !important; border: 0 !important; background: none !important; margin-top: 8px; }
+
+  .sc-bv-letrero { margin: 0 calc(50% - 50vw) !important; }
+  .sc-bv-letrero > div:first-child { padding: 56px max(40px, calc(50vw - 500px)) 40px !important; }
+  .sc-bv-cuerpo { grid-template-columns: minmax(0, 1fr) 380px; column-gap: 48px; padding-top: 40px !important; }
+  .sc-bv-der { position: sticky; top: 32px; padding: 24px; border-radius: 24px; background: var(--papel-2); }
+}
