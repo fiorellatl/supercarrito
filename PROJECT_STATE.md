@@ -2681,3 +2681,17 @@ nunca redondeada en silencio.
 
 Falta: lo mismo con Wong real en un celular (el sandbox no llega a wong.pe).
 
+**Prueba con Wong real (2026-11-26, vista previa de Netlify):** el recorrido
+completo funciona con Wong real.
+- El enlace llena el carrito de Wong en `sc=70` con los SKU y las cantidades
+  (leído del `orderForm`).
+- Arreglado: lo que viene de una captura o de «Repetir» se plegaba como «frase»
+  por sus nombres largos de catálogo.
+- Arreglado: la cantidad del principio entraba en la búsqueda («6 huevos» → pack de 6 galletas).
+- Hallazgo: el enlace no lleva la tienda. Con la tienda Aldabas el aceite
+  Primor costaba S/ 17.10 en SuperCarrito y S/ 18.90 en el carrito de Wong sin
+  tienda elegida. Se avisa en «Revisar y pedir»; queda pendiente verificar que,
+  eligiendo la misma tienda en Wong, el precio coincide.
+- Pendiente de emparejamiento: «1 kilo de pollo» → «1/2 Pollo Rostizado»;
+  «3 leches gloria» → base para torta tres leches.
+
