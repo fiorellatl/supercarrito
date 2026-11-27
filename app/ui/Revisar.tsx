@@ -764,10 +764,10 @@ export function TottusCard({
             </>
           )}
         </div>
-        <p style={{ ...lapiz, margin: "8px 0 0" }}>
-          Solo productos: Tottus no publica su envío. {conCmr && totalCmr != null ? "El ahorro ya cuenta tu CMR. " : ""}
-          Su carrito no se llena solo: si te conviene, lo agregas allá producto por producto.
-        </p>
+        <AvisoTottus />
+        {conCmr && totalCmr != null && (
+          <p style={{ ...lapiz, margin: "6px 0 0" }}>La diferencia ya cuenta tu CMR.</p>
+        )}
         <button
           type="button"
           onClick={onPasoAPaso}
@@ -810,6 +810,34 @@ export function TottusCard({
   );
 }
 
+// El aviso de Tottus, igual en la tarjeta y en la hoja (pedido de la PO: que
+// se vea claro, antes de que nadie lo descubra allá).
+function AvisoTottus() {
+  return (
+    <div
+      role="note"
+      style={{
+        marginTop: 10,
+        padding: "10px 12px",
+        borderRadius: 12,
+        background: "#FFF7D6",
+        border: `2px solid ${color.aji}`,
+        color: color.tinta,
+        fontSize: 13.5,
+        lineHeight: 1.4,
+      }}
+    >
+      <strong style={{ display: "block", fontSize: 14.5, marginBottom: 4 }}>⚠️ Ojo con Tottus</strong>
+      <span style={{ display: "block" }}>
+        <strong>Su carrito no se llena solo:</strong> agregas cada producto a mano en su web.
+      </span>
+      <span style={{ display: "block" }}>
+        <strong>El envío no está incluido:</strong> Tottus no lo publica; lo ves al pagar allá.
+      </span>
+    </div>
+  );
+}
+
 export function HojaTottus({
   lineas,
   marcados,
@@ -825,7 +853,7 @@ export function HojaTottus({
   return (
     <Hoja
       titulo="Agregar en Tottus, paso a paso"
-      sub="Tottus no deja llenar su carrito desde aquí. Abre cada producto, agrégalo allá y márcalo. Lo que marques se recuerda en este celular."
+      sub="Abre cada producto, agrégalo allá y márcalo aquí. Lo que marques se recuerda en este celular."
       onCerrar={onCerrar}
       pie={
         <Boton variante="lleno" style={{ width: "100%" }} onClick={onCerrar}>
@@ -833,6 +861,9 @@ export function HojaTottus({
         </Boton>
       }
     >
+      <div style={{ marginTop: -10, marginBottom: 12 }}>
+        <AvisoTottus />
+      </div>
       <div style={{ display: "grid", gap: 8 }}>
         {lineas.map((l) => {
           const hecho = marcados.includes(l.sku);
