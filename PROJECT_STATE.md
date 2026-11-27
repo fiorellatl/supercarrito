@@ -12,9 +12,14 @@
 - **Tottus (Falabella):** otra plataforma. El buscador es público y en JSON:
   `www.tottus.com.pe/s/browse/v1/search/pe?Ntt=<texto>` (48 por página), con
   `prices[]` de tipo `internetPrice`, `normalPrice` y **`cmrPrice`** (tarjeta CMR,
-  explícito: Pilsen twelve pack ×3 S/ 121.90 → CMR S/ 118.90). Sin medir aún:
-  precio/stock por tienda, directorio de tiendas, envío y, sobre todo, si un
-  enlace puede llenar un carrito real. Sin eso no se activa.
+  explícito: Pilsen twelve pack ×3 S/ 121.90 → CMR S/ 118.90). Medido además:
+  · EAN: no viene en el buscador, sí en la página del producto
+    (`okayToShopBarcodes`); coincide con Wong (arroz Costeño 5 kg = SKU 521).
+  · Zona: los precios salen para una zona de reparto (`zones=` derivadas de la
+    ubicación; por defecto Las Begonias/San Isidro), no por tienda.
+  · Carrito: vive en su servidor (`/s/checkout/v1/carts`, con cabeceras propias)
+    atado a la sesión del navegador en tottus.com.pe. No hay enlace que lo llene
+    desde fuera → hoy Tottus solo podría COMPARAR, no recibir el pedido.
 
 ## ▶️ Novedad 2026-11-27 (tarde) — Plaza Vea, tercera cadena (PR #3)
 
