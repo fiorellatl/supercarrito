@@ -214,7 +214,7 @@ export default function Bienvenida({ onEntrar }: { onEntrar: (nombre: string) =>
                 "optimiza": lo que hace, dicho como lo diría una vecina. */}
             <p style={{ fontSize: 16, lineHeight: 1.5, margin: 0, maxWidth: "34ch", opacity: 0.95 }}>
               Anota lo que falta en casa como te salga. Yo lo convierto en tu
-              carrito de Wong, con los precios de tu tienda.
+              carrito de Wong, Metro o Plaza Vea, con los precios de tu tienda.
             </p>
           </div>
         </div>
