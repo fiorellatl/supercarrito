@@ -86,6 +86,7 @@ import LineaCarrito, { type EstadoLinea } from "@/app/ui/LineaCarrito";
 import { Pantalla, Seccion, Vacio } from "@/app/ui/Pantalla";
 import PantallaCalma from "@/app/ui/PantallaCalma";
 import Papaya, { type Pepa } from "@/app/ui/Papaya";
+import AsiFunciona from "@/app/ui/AsiFunciona";
 
 // Rediseño del flujo (2026-11-26, PO): dos pasos y no cinco. La lista ES el
 // carrito —cada línea se convierte en su producto al anotarla— y «pedir» es el
@@ -348,6 +349,8 @@ export default function App() {
   // línea que ya tenía su producto se volvería a emparejar al abrir.
   const [arrancado, setArrancado] = useState(false);
   const [hojaTienda, setHojaTienda] = useState(false);
+  // «Así funciona»: solo justo después de elegir la tienda por primera vez.
+  const [verAsiFunciona, setVerAsiFunciona] = useState(false);
   // «Una decisión a la vez»: al tocar Resolver, las hojas se suceden solas,
   // una por producto que espera algo de la familia, hasta que no queda nada.
   // `total` es cuántas había al empezar, para decir «2 de 3».
@@ -1210,7 +1213,10 @@ export default function App() {
       <main className="sc-papel sc-marco" style={marco}>
         <EligeTienda
           tiendas={tiendas}
-          onElegir={tomarTienda}
+          onElegir={(t) => {
+            tomarTienda(t);
+            setVerAsiFunciona(true);
+          }}
           onReintentar={() => {
             setTiendas(null);
             void (async () => {
@@ -1224,6 +1230,13 @@ export default function App() {
           }}
           onSeguirSin={() => setSinTiendaPorAhora(true)}
         />
+      </main>
+    );
+
+  if (verAsiFunciona)
+    return (
+      <main className="sc-papel sc-marco" style={marco}>
+        <AsiFunciona tienda={perfil.tienda?.nombre} onSeguir={() => setVerAsiFunciona(false)} />
       </main>
     );
 

@@ -35,6 +35,16 @@ familiar pro. Ver `PRODUCT_CONTEXT.md`.
 > importación por captura cerrado (montos explicables, benchmark Sonnet 5 +
 > `completar`, `DEBUG_MATCHING`). Los §A–M al final narran agosto en orden.
 
+
+> **2026-11-27 — Marca y primera vez (PR #2).** La PO aprobó el universo de marca
+> «Más papaya» (https://claude.ai/artifact/QtCrwQkMYDnTAXZBd8gaKR): Papa
+> protagonista, Papaya con cara como meta e indicador de 4 pepas comprobables
+> (cantidad, encontrado, disponible, precios de tu tienda; no mide ahorro), Piña
+> en agotados y «Wong no contestó», Yuca en «no lo encontré». Firma «Más papaya.».
+> Decisiones de producto del día: **una línea sin marca con varias opciones la
+> elige la familia la primera vez** (no suma hasta elegir; luego el perfil la
+> recuerda) y **una pantalla «Así funciona»** tras elegir la tienda (revierte
+> «sin tour» de agosto). Pendiente: probarlo con la pareja de la PO y las 5 familias.
 ---
 
 ## 1. Visión del producto
