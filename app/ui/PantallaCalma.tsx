@@ -23,6 +23,7 @@ export default function PantallaCalma({
   texto,
   accion,
   sello = false,
+  children,
 }: {
   estado: Estado;
   titulo: string;
@@ -32,6 +33,7 @@ export default function PantallaCalma({
   // PO el 2026-11-27). Es el único momento de celebración del producto, y aun
   // así el título sigue siendo un dato, no una exclamación.
   sello?: boolean;
+  children?: React.ReactNode; // lo que se ofrece antes de volver (p. ej. nombrar la lista)
 }) {
   return (
     <div
@@ -107,6 +109,8 @@ export default function PantallaCalma({
       {sello && (
         <div style={{ fontFamily: fuenteMarca, fontSize: 18, color: color.papaya }}>Más papaya, imposible.</div>
       )}
+
+      {children}
 
       {accion && (
         <Boton variante="fantasma" chico onClick={accion.onClick}>
