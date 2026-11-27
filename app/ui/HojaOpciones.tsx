@@ -5,6 +5,7 @@ import type { ProductoWong } from "@/lib/catalog";
 import Foto from "@/app/ui/Foto";
 import Hoja from "@/app/ui/Hoja";
 import Sello from "@/app/ui/Sello";
+import { Dice } from "@/app/ui/Elenco";
 
 // "Prefiero otra". Es la única puerta al aprendizaje del producto: si nadie
 // entra aquí, el perfil nunca aprende nada.
@@ -21,6 +22,7 @@ export default function HojaOpciones({
   ingrediente,
   opciones,
   elegidaSku,
+  agotado,
   onElegir,
   onCerrar,
   paso,
@@ -28,6 +30,9 @@ export default function HojaOpciones({
   ingrediente: string;
   opciones: ProductoWong[];
   elegidaSku?: string;
+  // Si se llega aquí porque lo que tenía puesto se acabó, la Piña lo dice una
+  // vez, con la tienda que lo dijo, y deja paso a las opciones.
+  agotado?: { nombre: string; tienda?: string };
   onElegir: (p: ProductoWong) => void;
   onCerrar: () => void;
   paso?: string;
@@ -46,6 +51,11 @@ export default function HojaOpciones({
         </p>
       }
     >
+      {agotado && (
+        <Dice quien="pina">
+          Qué piña: {agotado.nombre} se acabó en {agotado.tienda ?? "tu Wong"}. Mira estas otras.
+        </Dice>
+      )}
       {opciones.map((o) => {
         const esta = o.sku === elegidaSku;
         const agotado = o.disponible === false;

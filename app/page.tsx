@@ -1061,7 +1061,14 @@ export default function App() {
           ? "ya está en tu lista"
           : it.elegido?.motivo === "no lo entendí"
           ? "no entendí qué buscar"
-          : "no lo encontré en Wong";
+          : "no lo encontré tal cual en Wong";
+      // La Yuca solo cuando de verdad no está; la Piña cuando Wong no contestó.
+      // Una repetida o una línea que no entendimos no es un problema de nadie.
+      const personaje: "yuca" | "pina" | undefined = it.elegido?.degradado
+        ? "pina"
+        : repetida || it.elegido?.motivo === "no lo entendí"
+          ? undefined
+          : "yuca";
       const acciones = [
         ...(it.elegido?.degradado
           ? [{ texto: "Intentar de nuevo", onClick: () => reintentar(l.id) }]
@@ -1085,6 +1092,7 @@ export default function App() {
           ingrediente={deLaLinea > 1 ? it.ingrediente : l.texto}
           estado="sin-resultado"
           nota={nota}
+          personaje={personaje}
           acciones={acciones}
           orden={i}
         />
@@ -1564,6 +1572,7 @@ export default function App() {
       {ruta === "entregado" && (
         <PantallaCalma
           estado="listo"
+          sello
           titulo={`Tu compra está en Wong: ${ultimaCompra?.n ?? 0} ${
             ultimaCompra?.n === 1 ? "producto" : "productos"
           }.`}
@@ -1807,6 +1816,11 @@ export default function App() {
           ingrediente={itemHoja.ingrediente}
           opciones={itemHoja.candidatos.filter((c) => c.encontrado)}
           elegidaSku={itemHoja.elegido?.sku}
+          agotado={
+            itemHoja.elegido?.disponible === false
+              ? { nombre: itemHoja.elegido.nombre ?? itemHoja.ingrediente, tienda: perfil.tienda?.nombre }
+              : undefined
+          }
           onElegir={(p) => corregir(itemHoja.ingrediente, p)}
           onCerrar={cerrarHoja}
           paso={pasoCola}

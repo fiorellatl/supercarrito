@@ -331,7 +331,15 @@ nav,
 .sc-marca { animation: sp-hierve .375s steps(1) infinite; }
 
 /* La Papaya del indicador: el mismo trazo que hierve; la pepa que se llena da un saltito. */
-.sc-papaya svg { animation: sp-hierve .375s steps(1) infinite; }
+.sc-papaya svg, .sc-elenco svg { animation: sp-hierve .375s steps(1) infinite; }
+/* El sello de compra lista: la Papaya cae del cielo, se aplasta y rebota. ¡Plaf! */
+.sc-plaf { animation: sp-plaf .9s steps(9) both; transform-origin: 50% 100%; }
+@keyframes sp-plaf {
+  0% { transform: translateY(-160px); }
+  45% { transform: translateY(0) scale(1.25, .7); }
+  65% { transform: translateY(-14px) scale(.92, 1.08); }
+  100% { transform: translateY(0) scale(1); }
+}
 .sc-papaya .sc-pepa { transform-box: fill-box; transform-origin: center; animation: sp-pepa .45s steps(4) both; }
 @keyframes sp-pepa { 0% { transform: scale(.2); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
 

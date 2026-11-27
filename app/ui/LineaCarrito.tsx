@@ -5,6 +5,7 @@ import type { ProductoWong } from "@/lib/catalog";
 import { etiquetaUnitaria, formatearCantidad } from "@/lib/cantidades";
 import Papa from "@/app/ui/Papa";
 import Foto from "@/app/ui/Foto";
+import { Pina, Yuca } from "@/app/ui/Elenco";
 import Sello from "@/app/ui/Sello";
 
 // Una línea del carrito. Es la pantalla donde se gana o se pierde la confianza,
@@ -35,12 +36,16 @@ export default function LineaCarrito({
   orden,
   onCantidad,
   nota,
+  personaje,
   decision,
 }: {
   // Lo que esta línea espera de la familia, si espera algo: un cartelito
   // amarillo a la derecha, en el sitio del monto. Una sola decisión por línea.
   decision?: { texto: string; onClick: () => void };
   nota?: string; // qué decir cuando no hay producto: «no lo encontré», «Wong no contestó»
+  // Quién da la cara cuando no hay producto: la Yuca si no lo encontramos tal
+  // cual, la Piña si Wong no contestó. Sin personaje, la foto apagada de siempre.
+  personaje?: "yuca" | "pina";
   ingrediente: string;
   producto?: ProductoWong;
   estado: EstadoLinea;
@@ -92,7 +97,13 @@ export default function LineaCarrito({
   if (estado === "sin-resultado") {
     return (
       <Fila retraso={retraso}>
-        <Foto alt={ingrediente} apagada />
+        {personaje === "yuca" ? (
+          <Yuca px={46} />
+        ) : personaje === "pina" ? (
+          <Pina px={46} />
+        ) : (
+          <Foto alt={ingrediente} apagada />
+        )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14.5, fontWeight: 500, color: color.tinta, lineHeight: 1.28 }}>
             {ingrediente}
