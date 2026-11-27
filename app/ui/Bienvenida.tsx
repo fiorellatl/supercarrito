@@ -37,11 +37,14 @@ import { color, fuente, lapiz, plata, soles } from "@/app/ui/sistema";
 // Cuatro formas equivalentes de empezar. Ninguna va primera por ser mejor: van
 // en el orden en que se le ocurren a una persona, y las cuatro terminan en el
 // mismo sitio.
+// Cards, no pasos (PO, 2026-11-27): son caminos paralelos. Cada una con un
+// ejemplo real, porque se entiende antes viendo qué escribir. Informativas: en
+// la bienvenida no hay lista todavía, así que no se tocan ni lo aparentan.
 const CAPACIDADES = [
-  { icono: "✎", texto: "Escríbelo como te salga" },
-  { icono: "⌘", texto: "Pega un WhatsApp entero, tal cual" },
-  { icono: "◫", texto: "Importa una compra que ya hiciste" },
-  { icono: "☰", texto: "Carga el menú de la semana" },
+  { icono: "✎", texto: "Escríbelo como te salga", ejemplo: "«pan, leche, 2 kg de pollo»" },
+  { icono: "⌘", texto: "Pega un WhatsApp", ejemplo: "«Mami compra huevos y…», tal cual" },
+  { icono: "◫", texto: "Importa una compra", ejemplo: "foto de la boleta o captura del carrito" },
+  { icono: "☰", texto: "Carga el menú de la semana", ejemplo: "«lunes: ají de gallina»" },
 ];
 
 // La demostración. Es la aplicación de verdad, en pequeño: la frase de la
@@ -222,40 +225,39 @@ export default function Bienvenida({ onEntrar }: { onEntrar: (nombre: string) =>
         <div className="sc-bv-izq" style={{ display: "grid", gap: 20, alignContent: "start" }}>
           <Muestra />
           <ul
-            className="sc-entra"
-            style={{ animationDelay: "180ms", listStyle: "none", margin: 0, padding: 0, display: "flex", flexWrap: "wrap", gap: 8 }}
+            className="sc-entra sc-bv-cards"
+            style={{ animationDelay: "180ms", listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}
           >
             {CAPACIDADES.map((c, i) => (
               <li
                 key={c.texto}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "8px 12px 8px 8px",
-                  borderRadius: 999,
+                  display: "grid",
+                  gap: 6,
+                  alignContent: "start",
+                  padding: "12px 12px 13px",
+                  borderRadius: 16,
                   background: color.papel2,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: color.tinta,
+                  minWidth: 0,
                 }}
               >
                 <span
                   aria-hidden
                   style={{
-                    width: 24,
-                    height: 24,
+                    width: 28,
+                    height: 28,
                     borderRadius: 999,
                     display: "grid",
                     placeItems: "center",
-                    fontSize: 12,
+                    fontSize: 13,
                     color: "#fff",
                     background: [color.papaya, color.pino, "#C9A227", "#3B82C4"][i % 4],
                   }}
                 >
                   {c.icono}
                 </span>
-                {c.texto}
+                <span style={{ fontSize: 14.5, fontWeight: 700, color: color.tinta, lineHeight: 1.2 }}>{c.texto}</span>
+                <span style={{ ...lapiz, fontSize: 12.5, lineHeight: 1.35 }}>{c.ejemplo}</span>
               </li>
             ))}
           </ul>
