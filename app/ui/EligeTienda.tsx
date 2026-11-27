@@ -13,6 +13,12 @@ import Logo from "@/app/ui/Logo";
 import { color, fuente, lapiz } from "@/app/ui/sistema";
 import type { Tienda } from "@/lib/tienda";
 
+import { CADENAS, type CadenaId } from "@/lib/cadenas";
+
+const NOMBRE_CADENA: Record<string, string> = Object.fromEntries(
+  Object.values(CADENAS).map((c) => [c.id, c.nombre] as [CadenaId, string])
+);
+
 export function ListaTiendas({
   tiendas,
   elegidaId,
@@ -23,6 +29,14 @@ export function ListaTiendas({
   onElegir: (t: Tienda) => void;
 }) {
   const [filtro, setFiltro] = useState("");
+  // Wong o Metro. Solo se pregunta si hay más de una cadena que atender.
+  const cadenas = useMemo(
+    () => [...new Set(tiendas.map((t) => t.cadena ?? "wong"))],
+    [tiendas]
+  );
+  const [cadena, setCadena] = useState<string>(
+    tiendas.find((t) => t.id === elegidaId)?.cadena ?? cadenas[0] ?? "wong"
+  );
   const visibles = useMemo(() => {
     const f = filtro
       .trim()
@@ -30,17 +44,50 @@ export function ListaTiendas({
       .normalize("NFD")
       .replace(/\p{Diacritic}/gu, "");
     const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
-    return tiendas.filter((t) => !f || norm(`${t.nombre} ${t.distrito ?? ""}`).includes(f));
-  }, [tiendas, filtro]);
+    return tiendas
+      .filter((t) => cadenas.length < 2 || (t.cadena ?? "wong") === cadena)
+      .filter((t) => !f || norm(`${t.nombre} ${t.distrito ?? ""}`).includes(f));
+  }, [tiendas, filtro, cadena, cadenas.length]);
 
   return (
     <div style={{ display: "grid", gap: 10 }}>
+      {cadenas.length > 1 && (
+        <div role="radiogroup" aria-label="Supermercado" style={{ display: "flex", gap: 8 }}>
+          {cadenas.map((c) => {
+            const on = c === cadena;
+            return (
+              <button
+                key={c}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => setCadena(c)}
+                className="sc-boton"
+                style={{
+                  flex: 1,
+                  minHeight: 48,
+                  borderRadius: 999,
+                  border: `2px solid ${color.tinta}`,
+                  background: on ? color.tinta : color.blanco,
+                  color: on ? color.blanco : color.tinta,
+                  fontFamily: fuente,
+                  fontSize: 16,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                {NOMBRE_CADENA[c] ?? c}
+              </button>
+            );
+          })}
+        </div>
+      )}
       <input
         id="sc-filtro-tienda"
         className="sc-campo"
         value={filtro}
         onChange={(e) => setFiltro(e.target.value)}
-        placeholder="Busca tu distrito o tu Wong…"
+        placeholder={`Busca tu distrito o tu ${NOMBRE_CADENA[cadena] ?? "tienda"}…`}
         autoComplete="off"
         style={{
           width: "100%",
@@ -125,7 +172,7 @@ export default function EligeTienda({
               margin: "4px 0 10px",
             }}
           >
-            ¿Cuál es tu Wong?
+            ¿Dónde compras?
           </h1>
           <p style={{ fontSize: 15, lineHeight: 1.45, margin: 0, maxWidth: "36ch", opacity: 0.95 }}>
             Cada tienda tiene su stock y sus precios. Con la tuya, lo que veas es lo que pagas.
@@ -137,12 +184,12 @@ export default function EligeTienda({
       <div style={{ padding: "20px 0 calc(28px + var(--abajo))", maxWidth: 560, width: "100%", margin: "0 auto" }}>
         {tiendas === null ? (
           <p className="sc-pulso" style={{ ...lapiz, fontSize: 15 }}>
-            Preguntando a Wong por sus tiendas…
+            Buscando las tiendas…
           </p>
         ) : tiendas.length === 0 ? (
           <div style={{ display: "grid", gap: 12 }}>
             <p style={{ fontSize: 16, fontWeight: 600, color: color.tinta, margin: 0 }}>
-              Wong no me pasó la lista de tiendas.
+              No me llegó la lista de tiendas.
             </p>
             <button
               type="button"

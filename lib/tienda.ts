@@ -136,16 +136,14 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
       const p = punto.pickupPoint;
       const bruto = p?.friendlyName ?? "";
       const coords = p?.address?.geoCoordinates;
-      // Nos quedamos con las entradas "Retiro en tienda X": son las que traen el
-      // nombre escrito como lo escribiría una persona. La misma tienda aparece
-      // también en MAYÚSCULAS por otra vía, y no queremos duplicados.
-      if (!/^retiro en tienda/i.test(bruto) || !coords || coords.length < 2) continue;
-
-      const nombre = bruto.replace(/^retiro en tienda\s+/i, "").trim();
-      // El directorio de Wong trae también los Metro de Cencosud. Cada cadena
-      // enseña solo las suyas: una tienda se atiende con el catálogo, los
-      // precios y el carrito de SU cadena, nunca con los de otra.
-      if (!cadena.prefijoTienda.test(nombre)) continue;
+      // Cada cadena dice cuáles de estas entradas son sus tiendas y cómo se
+      // llaman (lib/cadenas.ts). El directorio de Wong trae también los Metro,
+      // y una tienda se atiende con el catálogo, los precios y el carrito de SU
+      // cadena, nunca con los de otra.
+      const nombre = bruto.match(cadena.puntoDeRetiro)?.[1]?.trim();
+      if (!nombre || !coords || coords.length < 2) continue;
+      // La misma tienda llega también en MAYÚSCULAS por otra vía: fuera.
+      if (nombre === nombre.toUpperCase()) continue;
 
       const clave = limpiar(nombre);
       if (porNombre.has(clave)) continue;

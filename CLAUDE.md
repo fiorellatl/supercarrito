@@ -119,8 +119,14 @@ Reglas permanentes:
   `orderForms/simulation?sc=70`; el carrito se entrega por deep link con
   `sc=70&qcart=1` (`qcart` evita la app en iPhone; en Android la app se come el
   enlace → «Copiar el enlace»).
-- Solo Wong por ahora. **En revisión** (ver `PRODUCT_CONTEXT.md`): Metro es la
-  candidata natural, misma cuenta VTEX de Cencosud.
+- **Dos cadenas: Wong y Metro** (2026-11-27), como configuración en
+  `lib/cadenas.ts` (dirección, canal, seller). Metro: `sc=1`, verificado leyendo
+  el carrito. Comparten los IDs de SKU: el mismo producto tiene el mismo SKU en
+  las dos, con precio propio. Buscador: **Intelligent Search**
+  (`/api/io/_v/api/intelligent-search/product_search/`), no catalog_system.
+- Envío: la simulación con `shippingData.address.geoCoordinates` lo trae en
+  `availableDeliveryWindows[].price` (hora de Lima aunque diga `+00:00`).
+  Descuentos con tarjeta: no se pueden leer desde fuera; no se restan.
 - Menús/recetas: JSON estático en `data/`; `/editar` solo persiste en local.
 - Extracción desde imagen: modelo multimodal, no OCR (`claude-sonnet-5`, estrategia
   `completar`; override `EXTRACTOR_MODELO` / `EXTRACTOR_ESTRATEGIA`). La IA solo

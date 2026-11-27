@@ -382,6 +382,9 @@ export default function App() {
   }, [pideTienda, tiendas]);
   const [verRuido, setVerRuido] = useState(false);
   const [horaPrecios, setHoraPrecios] = useState<number | null>(null);
+  // La cadena de la tienda elegida («Wong», «Metro»): todo lo que la pantalla
+  // dice de «la tienda» la nombra así. Sin tienda, Wong, como siempre.
+  const tuCadena = cadenaDe(perfil.tienda?.cadena).nombre;
   const perfilRef = useRef(perfil);
   perfilRef.current = perfil;
 
@@ -641,7 +644,7 @@ export default function App() {
         nombre: it.elegido?.nombre ?? it.ingrediente,
         motivo: it.elegido?.encontrado
           ? "falta saber cuánto llevas"
-          : "no lo encontré en Wong",
+          : `no lo encontré en ${tuCadena}`,
       }));
 
     return { ...preparada, sequedan: [...nuncaLlegaron, ...preparada.sequedan] };
@@ -766,7 +769,13 @@ export default function App() {
   }
 
   function tomarTienda(t: Tienda) {
+    // Cambiar de cadena es cambiar de catálogo: los productos se vuelven a
+    // buscar en la nueva (la lista y lo aprendido —marcas, tamaños— se quedan).
+    // Cambiar de tienda dentro de la misma cadena solo revalora precios.
+    const otraCadena = cadenaDe(perfilRef.current.tienda?.cadena).id !== cadenaDe(t.cadena).id;
+    perfilRef.current = elegirTienda(perfilRef.current, t);
     actualizarPerfil((p) => elegirTienda(p, t));
+    if (otraCadena) setItems(null);
     setHojaTienda(false);
   }
 
@@ -790,7 +799,7 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lineas: aPedidos({ version: 1, lineas: [l] }),
-          cadena: perfil.tienda?.cadena,
+          cadena: perfilRef.current.tienda?.cadena,
         }),
       });
       const data = await res.json();
@@ -846,7 +855,7 @@ export default function App() {
     } catch {
       setItems((xs) => [
         ...(xs ?? []).filter((x) => x.lineaId !== l.id),
-        sinProducto("no pude preguntarle a Wong"),
+        sinProducto(`no pude preguntarle a ${tuCadena}`),
       ]);
     } finally {
       enVuelo.current.delete(l.id);
@@ -999,6 +1008,7 @@ export default function App() {
     // lo que pasó fueron 800 g — guardar 500 sería inventarle un recuerdo.
     const compra: CompraCerrada = {
       ts: Date.now(),
+      tienda: perfil.tienda?.nombre ?? tuCadena,
       total: totalEntrega,
       lineas: entrega.viajan.map((v) => ({
         nombre: v.nombre,
@@ -1091,7 +1101,7 @@ export default function App() {
     },
     {
       ok: sinEncontrar.length === 0,
-      texto: "Todo encontrado en Wong",
+      texto: `Todo encontrado en ${tuCadena}`,
       falta: `no encontré ${nombrar(sinEncontrar)}`,
     },
     {
@@ -1101,8 +1111,8 @@ export default function App() {
     },
     {
       ok: preciosSuyos,
-      texto: `Precios de hoy de ${perfil.tienda?.nombre ?? "tu Wong"}`,
-      falta: "tu Wong no contestó: son precios referenciales",
+      texto: `Precios de hoy de ${perfil.tienda?.nombre ?? `tu ${tuCadena}`}`,
+      falta: `tu ${tuCadena} no contestó: son precios referenciales`,
     },
   ];
   const opinaPapaya = vivos.length > 0 && buscandoIds.size === 0 && !esperandoTienda && preciosDeTienda !== null;
@@ -1162,12 +1172,12 @@ export default function App() {
     if (estado === "sin-resultado") {
       const repetida = it.elegido?.motivo === "ya está en tu lista";
       const nota = it.elegido?.degradado
-        ? "Wong no contestó · sigue en tu lista"
+        ? `${tuCadena} no contestó · sigue en tu lista`
         : repetida
           ? "ya está en tu lista"
           : it.elegido?.motivo === "no lo entendí"
           ? "no entendí qué buscar"
-          : "no lo encontré tal cual en Wong";
+          : `no lo encontré tal cual en ${tuCadena}`;
       // La Yuca solo cuando de verdad no está; la Piña cuando Wong no contestó.
       // Una repetida o una línea que no entendimos no es un problema de nadie.
       const personaje: "yuca" | "pina" | undefined = it.elegido?.degradado
@@ -1321,7 +1331,7 @@ export default function App() {
   if (verAsiFunciona)
     return (
       <main className="sc-papel sc-marco" style={marco}>
-        <AsiFunciona tienda={perfil.tienda?.nombre} onSeguir={() => setVerAsiFunciona(false)} />
+        <AsiFunciona tienda={perfil.tienda?.nombre} cadena={tuCadena} onSeguir={() => setVerAsiFunciona(false)} />
       </main>
     );
 
@@ -1342,7 +1352,7 @@ export default function App() {
               onMarchaBlanca={() =>
                 setAviso({
                   texto:
-                    "SuperCarrito recién empieza. Los precios los confirma tu Wong antes de pagar; si algo sale raro, cuéntanos y lo arreglamos.",
+                    `SuperCarrito recién empieza. Los precios los confirma tu ${tuCadena} antes de pagar; si algo sale raro, cuéntanos y lo arreglamos.`,
                 })
               }
             />
@@ -1421,7 +1431,7 @@ export default function App() {
               {vacia && (
                 <p style={{ ...lapiz, margin: "18px 0 0", maxWidth: "34ch" }}>
                   Cada cosa que anotes se convierte al momento en su producto de
-                  Wong, con foto y precio. Tú decides marca, tamaño y cantidad.
+                  {` ${tuCadena}`}, con foto y precio. Tú decides marca, tamaño y cantidad.
                 </p>
               )}
 
@@ -1525,7 +1535,7 @@ export default function App() {
                   <span>
                     <span style={{ ...rotulo, display: "block" }}>
                       {esperandoTienda
-                        ? `Preguntando a ${perfil.tienda?.nombre ?? "tu Wong"}…`
+                        ? `Preguntando a ${perfil.tienda?.nombre ?? `tu ${tuCadena}`}…`
                         : cuentan === 0
                           ? "Aún no suma"
                           : pendientes > 0
@@ -1579,9 +1589,9 @@ export default function App() {
           onVolver={() => ir("lista")}
           cuerpo={
             <>
-              <Pasos actual={3} />
+              <Pasos actual={3} cadena={tuCadena} />
               <p style={{ lineHeight: 1.55, margin: "6px 0 4px", color: color.tinta, fontWeight: 500 }}>
-                {perfil.tienda ? `Tu compra en ${perfil.tienda.nombre}` : "Tu compra en Wong"}
+                {perfil.tienda ? `Tu compra en ${perfil.tienda.nombre}` : `Tu compra en ${tuCadena}`}
               </p>
               <p style={{ ...lapiz, margin: "0 0 14px" }}>
                 {perfil.tienda && montoDeTienda != null
@@ -1589,7 +1599,7 @@ export default function App() {
                     // dirección elegida ALLÁ. Probado con Wong real (2026-11-26):
                     // Aldabas S/ 17.10, el carrito sin tienda S/ 18.90. Se dice antes
                     // de saltar, no se descubre después.
-                    `Precios de ${perfil.tienda.nombre}${horaPrecios ? `, hoy ${hora(horaPrecios)}` : ""}. En Wong elige esa misma tienda al pagar: si eliges otra, el precio puede cambiar.`
+                    `Precios de ${perfil.tienda.nombre}${horaPrecios ? `, hoy ${hora(horaPrecios)}` : ""}. En ${tuCadena} elige esa misma tienda al pagar: si eliges otra, el precio puede cambiar.`
                   : "Precios referenciales: el total lo confirma tu tienda."}{" "}
                 {!perfil.tienda && (
                   <button onClick={abrirTienda} style={enlaceTexto}>
@@ -1635,7 +1645,7 @@ export default function App() {
               {/* Redondeos a la vista. Siempre hacia arriba y jamás en silencio. */}
               {ajustes.length > 0 && (
                 <div style={{ marginBottom: 10 }}>
-                  <Seccion>Ajustado para que Wong pueda venderlo</Seccion>
+                  <Seccion>Ajustado para que {tuCadena} pueda venderlo</Seccion>
                   {ajustes.map((a) => (
                     <p key={a.nombre} style={{ ...lapiz, margin: "4px 0" }}>
                       {a.nombre}: pediste {a.pedida} · van {a.cruza}
@@ -1656,8 +1666,8 @@ export default function App() {
               )}
 
               <p style={{ ...lapiz, margin: "16px 0 0" }}>
-                Abro tu carrito en Wong con todo dentro. Pagas allá, con tu cuenta
-                de siempre; nosotros no tocamos tu tarjeta. Si Wong te pide
+                Abro tu carrito en {tuCadena} con todo dentro. Pagas allá, con tu cuenta
+                de siempre; nosotros no tocamos tu tarjeta. Si {tuCadena} te pide
                 iniciar sesión, es normal.
               </p>
             </>
@@ -1673,7 +1683,7 @@ export default function App() {
                   style={{ textDecoration: "none", display: "block" }}
                 >
                   <Boton variante="lleno" style={{ width: "100%" }}>
-                    Abrir mi carrito en Wong
+                    Abrir mi carrito en {tuCadena}
                   </Boton>
                 </a>
                 {/* En Android la app de Wong se come el enlace: la copia es el
@@ -1682,7 +1692,7 @@ export default function App() {
                   {copiado ? "✓ Copiado — pégalo en tu navegador" : "Copiar el enlace"}
                 </Boton>
                 <p style={{ ...lapiz, marginTop: 8, textAlign: "center" }}>
-                  Si se abre la app de Wong con el carrito vacío, usa el enlace.
+                  Si se abre la app de {tuCadena} con el carrito vacío, usa el enlace.
                 </p>
               </>
             ) : (
@@ -1701,7 +1711,7 @@ export default function App() {
         <PantallaCalma
           estado="listo"
           sello
-          titulo={`Tu compra está en Wong: ${ultimaCompra?.n ?? 0} ${
+          titulo={`Tu compra está en ${tuCadena}: ${ultimaCompra?.n ?? 0} ${
             ultimaCompra?.n === 1 ? "producto" : "productos"
           }.`}
           texto={
@@ -1828,7 +1838,7 @@ export default function App() {
                       <Fila
                         key={c.ts}
                         titulo={cuando(c.ts)}
-                        nota={`${c.lineas.length} ${c.lineas.length === 1 ? "cosa" : "cosas"} · Wong`}
+                        nota={`${c.lineas.length} ${c.lineas.length === 1 ? "cosa" : "cosas"} · ${c.tienda ?? "Wong"}`}
                         derecha={
                           <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
                             <span style={{ ...plata, fontSize: 14 }}>{soles(c.total)}</span>
@@ -2055,7 +2065,7 @@ export default function App() {
 
       {hojaTienda && (
         <Hoja
-          titulo="¿Cuál es tu Wong?"
+          titulo="¿Dónde compras?"
           sub="Cada tienda tiene sus precios y su stock. Con la tuya, lo que veas será lo que pagas."
           onCerrar={() => {
             setHojaTienda(false);
@@ -2231,8 +2241,8 @@ const enlaceTexto: React.CSSProperties = {
 
 // Los tres pasos, siempre a la vista. La familia sabe dónde está y qué falta,
 // sin que nadie se lo explique.
-function Pasos({ actual }: { actual: 1 | 2 | 3 }) {
-  const pasos = ["Arma tu lista", "Revisa", "Pide en Wong"];
+function Pasos({ actual, cadena = "Wong" }: { actual: 1 | 2 | 3; cadena?: string }) {
+  const pasos = ["Arma tu lista", "Revisa", `Pide en ${cadena}`];
   return (
     <ol
       aria-label="Pasos"

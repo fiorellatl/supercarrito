@@ -4,6 +4,19 @@
 > hay que leer para retomar**; el resto es la historia de ciclos y decisiones,
 > que se consulta cuando hace falta. Estrategia y competencia: `PRODUCT_CONTEXT.md`.
 
+## ▶️ Novedad 2026-11-27 — Metro, envío y mejor emparejamiento (PR #3)
+
+- **Metro** es la segunda cadena: se elige en «¿Dónde compras?» (Wong | Metro).
+  Cambiar de cadena vuelve a buscar los productos; lo aprendido se queda.
+  Verificado leyendo un carrito real de metro.pe (`sc=1`).
+- **Emparejamiento:** Intelligent Search + packs y comida de mascota al fondo.
+  Sobre 30 productos típicos, de ~16 bien elegidos a 28.
+- **Envío real por distrito** en «Revisar y pedir», aparte y sumado a la vista.
+- **Tarjetas/Prime:** se pregunta (con «Otra» y «Ninguna»), se guarda, no resta.
+- **Siguiente (bloque B, aprobado si hay diferencia):** comparar la canasta.
+  Pista: el mismo SKU vale distinto (aceite Primor 1.8 L: Wong S/ 17.10, Metro
+  S/ 16.10), así que comparar es simular el mismo carrito en las dos.
+
 ## ▶️ Estado actual — 2026-11-26 (retomada tras pausa desde el 2026-08-03)
 
 **Qué es hoy:** un acelerador de la compra en **Wong** con un flujo de dos

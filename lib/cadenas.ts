@@ -20,9 +20,11 @@ export type Cadena = {
   // Canal de venta de su web. Wong lo publica en /api/segments -> {"channel":"70"}.
   canal: string;
   seller: string;
-  // Cómo empiezan sus tiendas en el directorio de puntos de retiro:
-  // "Retiro en tienda Wong Óvalo Gutiérrez".
-  prefijoTienda: RegExp;
+  // Qué entradas del directorio de puntos de retiro son SUS tiendas, y cómo se
+  // llaman (primer grupo). Cada cuenta lo escribe a su manera:
+  //   Wong:  "Retiro en tienda Wong Aldabas" (y la misma en MAYÚSCULAS, que no)
+  //   Metro: "Metro Chorrillos", "Retiro en Metro Breña - Martinto"
+  puntoDeRetiro: RegExp;
   verificada: boolean;
 };
 
@@ -33,20 +35,19 @@ export const CADENAS: Record<CadenaId, Cadena> = {
     base: "https://www.wong.pe",
     canal: "70", // verificado el 2026-08-03 leyendo el carrito
     seller: "1",
-    prefijoTienda: /^wong/i,
+    puntoDeRetiro: /^retiro en tienda\s+(wong\b.*)$/i,
     verificada: true,
   },
   metro: {
     id: "metro",
     nombre: "Metro",
     base: "https://www.metro.pe",
-    // SIN VERIFICAR: metro.pe no se pudo consultar desde el entorno de
-    // desarrollo (2026-11-27). Canal y seller se leen de su /api/segments y de
-    // su catálogo antes de poner `verificada: true`.
+    // Medido el 2026-11-27: /api/segments de metro.pe -> {"channel":"1"} y el
+    // catálogo vende con sellerId "1" (CENCOSUD RETAIL PERU S.A.).
     canal: "1",
     seller: "1",
-    prefijoTienda: /^metro/i,
-    verificada: false,
+    puntoDeRetiro: /^(?:retiro en\s+)?(metro\b.*)$/i,
+    verificada: true,
   },
 };
 

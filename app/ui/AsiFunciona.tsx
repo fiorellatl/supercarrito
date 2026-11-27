@@ -13,13 +13,21 @@ import Papa from "@/app/ui/Papa";
 import { DibujoPapaya } from "@/app/ui/Papaya";
 import { color, fuente, lapiz } from "@/app/ui/sistema";
 
-const PASOS = [
+const pasosDe = (cadena: string) => [
   "Anota lo que falta en casa, como te salga. También puedes pegar el WhatsApp de la familia.",
-  "Yo lo busco en tu Wong, con los precios de hoy de tu tienda.",
+  `Yo lo busco en tu ${cadena}, con los precios de hoy de tu tienda.`,
   "La primera vez eliges tú tus marcas. Después me acuerdo y ya no te pregunto.",
 ];
 
-export default function AsiFunciona({ tienda, onSeguir }: { tienda?: string; onSeguir: () => void }) {
+export default function AsiFunciona({
+  tienda,
+  cadena = "Wong",
+  onSeguir,
+}: {
+  tienda?: string;
+  cadena?: string; // «Wong», «Metro»
+  onSeguir: () => void;
+}) {
   return (
     <div className="sc-bienvenida" style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
       <div className="sc-bv-letrero" style={{ margin: "0 -22px" }}>
@@ -50,7 +58,7 @@ export default function AsiFunciona({ tienda, onSeguir }: { tienda?: string; onS
           <Papa px={92} momento="reposo" />
         </div>
         <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 14 }}>
-          {PASOS.map((p, i) => (
+          {pasosDe(cadena).map((p, i) => (
             <li key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
               <span
                 aria-hidden
@@ -76,7 +84,7 @@ export default function AsiFunciona({ tienda, onSeguir }: { tienda?: string; onS
         <div style={{ display: "flex", gap: 12, alignItems: "center", background: color.papel2, borderRadius: 16, padding: "12px 14px" }}>
           <DibujoPapaya pepas={4} px={48} />
           <span style={{ ...lapiz, fontSize: 14, color: color.tinta }}>
-            Cuando tu compra esté papaya, la dejo armada en tu carrito de Wong. Solo te falta pagar allá.
+            Cuando tu compra esté papaya, la dejo armada en tu carrito de {cadena}. Solo te falta pagar allá.
           </span>
         </div>
         <button

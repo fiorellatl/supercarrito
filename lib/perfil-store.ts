@@ -165,6 +165,9 @@ export const repositorioLibreta: RepositorioLibreta = new LibretaLocalStorage();
 export type CompraCerrada = {
   ts: number;
   total: number;
+  // En qué tienda se pidió («Metro Chorrillos»). Las anteriores al 2026-11-27
+  // no lo traen: todas eran de Wong.
+  tienda?: string;
   lineas: {
     nombre: string;
     cuenta: string;
