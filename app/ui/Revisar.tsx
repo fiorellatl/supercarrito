@@ -514,21 +514,14 @@ export function FilaPago({
 
 // La hoja donde se responde. Vive en la raíz de la página (como la de la
 // tienda): dentro de una pantalla animada quedaría debajo del botón de pedir.
-export function HojaPago({
-  pago,
-  cadena,
-  onPago,
-  onCerrar,
-}: {
-  pago?: { tarjetas: string[]; otra?: string };
-  cadena: string;
-  onPago: (tarjetas: string[], otra?: string) => void;
-  onCerrar: () => void;
-}) {
+// La elección de tarjetas, compartida por la hoja de «Revisar y pedir» y por el
+// paso «¿Pagas con alguna?» del inicio. «Wong Prime» solo se ofrece en Wong.
+export function usarTarjetas(pago: { tarjetas: string[]; otra?: string } | undefined, cadena: string) {
   const [marcadas, setMarcadas] = useState<string[]>(pago?.tarjetas ?? []);
   const [otra, setOtra] = useState(pago?.otra ?? "");
   const [conOtra, setConOtra] = useState(!!pago?.otra);
   const listo = marcadas.length > 0 || (conOtra && otra.trim().length > 0);
+  const opciones = [...TARJETAS.filter((t) => t !== "Wong Prime" || cadena === "Wong"), NINGUNA];
 
   const alternar = (t: string) => {
     if (t === NINGUNA) {
@@ -542,77 +535,98 @@ export function HojaPago({
     });
   };
 
-  return (
-        <Hoja
-          titulo="¿Pagas con alguna de estas?"
-          sub={`${cadena} aplica tu descuento al pagar. Aquí no lo restamos todavía: solo lo anotamos.`}
-          onCerrar={onCerrar}
-          pie={
-            <Boton
-              variante="lleno"
-              disabled={!listo}
-              style={{ width: "100%" }}
-              onClick={() => {
-                onPago(marcadas, conOtra ? otra : undefined);
-                onCerrar();
-              }}
-            >
-              {listo ? "Guardar" : "Elige al menos una"}
-            </Boton>
-          }
+  const chips = (
+    <>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {opciones.map((t) => (
+          <Boton
+            key={t}
+            variante={marcadas.includes(t) ? "lleno" : "fantasma"}
+            aria-pressed={marcadas.includes(t)}
+            onClick={() => alternar(t)}
+            style={{ minHeight: 44 }}
+          >
+            {marcadas.includes(t) ? "✓ " : ""}
+            {t}
+          </Boton>
+        ))}
+        <Boton
+          variante={conOtra ? "lleno" : "fantasma"}
+          aria-pressed={conOtra}
+          onClick={() => {
+            setConOtra((x) => !x);
+            setMarcadas((xs) => xs.filter((x) => x !== NINGUNA));
+          }}
+          style={{ minHeight: 44 }}
         >
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {[...TARJETAS, NINGUNA].map((t) => (
-              <Boton
-                key={t}
-                variante={marcadas.includes(t) ? "lleno" : "fantasma"}
-                aria-pressed={marcadas.includes(t)}
-                onClick={() => alternar(t)}
-                style={{ minHeight: 44 }}
-              >
-                {marcadas.includes(t) ? "✓ " : ""}
-                {t}
-              </Boton>
-            ))}
-            <Boton
-              variante={conOtra ? "lleno" : "fantasma"}
-              aria-pressed={conOtra}
-              onClick={() => {
-                setConOtra((x) => !x);
-                setMarcadas((xs) => xs.filter((x) => x !== NINGUNA));
-              }}
-              style={{ minHeight: 44 }}
-            >
-              {conOtra ? "✓ " : ""}Otra
-            </Boton>
-          </div>
-          {conOtra && (
-            <input
-              value={otra}
-              onChange={(e) => setOtra(e.target.value)}
-              placeholder="¿Cuál? Ej. BBVA, Oh!"
-              maxLength={40}
-              aria-label="Otra tarjeta"
-              autoFocus
-              className="sc-campo"
-              style={{
-                font: "inherit",
-                fontSize: 16,
-                width: "100%",
-                boxSizing: "border-box",
-                marginTop: 12,
-                padding: "12px 14px",
-                borderRadius: 14,
-                border: `1.5px solid ${color.renglon}`,
-                background: color.papel,
-                color: color.tinta,
-              }}
-            />
-          )}
-          {marcadas.includes("Wong Prime") && (
-            <p style={{ ...lapiz, margin: "12px 0 0" }}>Si tu Prime cubre el envío, también lo descuenta Wong al pagar.</p>
-          )}
-        </Hoja>
+          {conOtra ? "✓ " : ""}Otra
+        </Boton>
+      </div>
+      {conOtra && (
+        <input
+          value={otra}
+          onChange={(e) => setOtra(e.target.value)}
+          placeholder="¿Cuál? Ej. BBVA, Oh!"
+          maxLength={40}
+          aria-label="Otra tarjeta"
+          autoFocus
+          className="sc-campo"
+          style={{
+            font: "inherit",
+            fontSize: 16,
+            width: "100%",
+            boxSizing: "border-box",
+            marginTop: 12,
+            padding: "12px 14px",
+            borderRadius: 14,
+            border: `1.5px solid ${color.renglon}`,
+            background: color.papel,
+            color: color.tinta,
+          }}
+        />
+      )}
+      {marcadas.includes("Wong Prime") && (
+        <p style={{ ...lapiz, margin: "12px 0 0" }}>Si tu Prime cubre el envío, también lo descuenta Wong al pagar.</p>
+      )}
+    </>
+  );
+
+  return { chips, listo, guardar: () => [marcadas, conOtra ? otra : undefined] as const };
+}
+
+export function HojaPago({
+  pago,
+  cadena,
+  onPago,
+  onCerrar,
+}: {
+  pago?: { tarjetas: string[]; otra?: string };
+  cadena: string;
+  onPago: (tarjetas: string[], otra?: string) => void;
+  onCerrar: () => void;
+}) {
+  const { chips, listo, guardar } = usarTarjetas(pago, cadena);
+  return (
+    <Hoja
+      titulo="¿Pagas con alguna de estas?"
+      sub={`${cadena} aplica tu descuento al pagar. Aquí no lo restamos todavía: solo lo anotamos.`}
+      onCerrar={onCerrar}
+      pie={
+        <Boton
+          variante="lleno"
+          disabled={!listo}
+          style={{ width: "100%" }}
+          onClick={() => {
+            onPago(...guardar());
+            onCerrar();
+          }}
+        >
+          {listo ? "Guardar" : "Elige al menos una"}
+        </Boton>
+      }
+    >
+      {chips}
+    </Hoja>
   );
 }
 

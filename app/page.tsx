@@ -86,6 +86,7 @@ import Hoja from "@/app/ui/Hoja";
 import HojaCantidad from "@/app/ui/HojaCantidad";
 import HojaOpciones from "@/app/ui/HojaOpciones";
 import EligeTienda, { ListaTiendas } from "@/app/ui/EligeTienda";
+import EligePago from "@/app/ui/EligePago";
 import { Compositor } from "@/app/ui/Libreta";
 import LineaCarrito, { type EstadoLinea } from "@/app/ui/LineaCarrito";
 import { Pantalla, Seccion, Vacio } from "@/app/ui/Pantalla";
@@ -379,6 +380,7 @@ export default function App() {
   const [hojaTienda, setHojaTienda] = useState(false);
   // «Así funciona»: solo justo después de elegir la tienda por primera vez.
   const [verAsiFunciona, setVerAsiFunciona] = useState(false);
+  const [verPago, setVerPago] = useState(false);
   // «Una decisión a la vez»: al tocar Resolver, las hojas se suceden solas,
   // una por producto que espera algo de la familia, hasta que no queda nada.
   // `total` es cuántas había al empezar, para decir «2 de 3».
@@ -1392,7 +1394,7 @@ export default function App() {
           tiendas={tiendas}
           onElegir={(t) => {
             tomarTienda(t);
-            setVerAsiFunciona(true);
+            setVerPago(true);
           }}
           onReintentar={() => {
             setTiendas(null);
@@ -1406,6 +1408,25 @@ export default function App() {
             })();
           }}
           onSeguirSin={() => setSinTiendaPorAhora(true)}
+        />
+      </main>
+    );
+
+  if (verPago)
+    return (
+      <main className="sc-papel sc-marco" style={marco}>
+        <EligePago
+          cadena={tuCadena}
+          pago={perfil.pago}
+          onElegir={(t, otra) => {
+            actualizarPerfil((p) => responderPago(p, t, otra));
+            setVerPago(false);
+            setVerAsiFunciona(true);
+          }}
+          onSaltar={() => {
+            setVerPago(false);
+            setVerAsiFunciona(true);
+          }}
         />
       </main>
     );
@@ -1429,6 +1450,11 @@ export default function App() {
               titulo={vacia ? "Arma tu lista" : `Tu lista, ${saludo(casa)}`}
               cuenta={vivos.length || undefined}
               tienda={perfil.tienda?.nombre}
+              tarjeta={
+                [...(perfil.pago?.tarjetas ?? []).filter((t) => t !== "Ninguna"), ...(perfil.pago?.otra ? [perfil.pago.otra] : [])]
+                  .join(" · ") || undefined
+              }
+              cadena={tuCadena}
               onTienda={abrirTienda}
               onCasa={() => ir("casa")}
               onMarchaBlanca={() =>

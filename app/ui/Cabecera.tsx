@@ -15,6 +15,8 @@ export default function Cabecera({
   nombre,
   titulo,
   tienda,
+  tarjeta,
+  cadena = "Wong",
   onTienda,
   onCasa,
   onMarchaBlanca,
@@ -25,6 +27,10 @@ export default function Cabecera({
   nombre: string;
   titulo: string;
   tienda?: string;
+  // «Tarjeta Cencosud»: lo que la familia dijo que usa para pagar. Solo se
+  // nombra; el descuento lo aplica la tienda al pagar (no se puede comprobar).
+  tarjeta?: string;
+  cadena?: string;
   onTienda: () => void;
   onCasa: () => void;
   onMarchaBlanca?: () => void;
@@ -133,6 +139,11 @@ export default function Cabecera({
           </span>
           <span aria-hidden>▾</span>
         </button>
+        {tarjeta && (
+          <div style={{ marginTop: 6, fontSize: 12.5, fontWeight: 600, opacity: 0.95 }}>
+            💳 {tarjeta}: {cadena} te lo descuenta al pagar
+          </div>
+        )}
       </div>
       <div className="sc-toldo" aria-hidden />
     </header>
