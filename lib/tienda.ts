@@ -53,9 +53,23 @@ export type PreciosDeTienda = {
 
 export type LineaAValorar = { sku: string; unidades: number };
 
+// Lo que la tienda cobraría por llevar la compra a un lugar. Es SU tarifa, tal
+// cual la devuelve: no la calculamos ni la estimamos. `hay: false` también es
+// una respuesta: la tienda no hace despacho a esa zona.
+export type EnvioDeTienda = {
+  hay: boolean;
+  precio?: number; // soles, la franja más barata
+  precioMaximo?: number; // si otras franjas cuestan más
+  desde?: string; // ISO, inicio de la primera franja a ese precio
+  hasta?: string; // ISO
+};
+
+export type Lugar = { lon: number; lat: number };
+
 export interface CatalogoDeTienda {
   tiendas(): Promise<Tienda[]>;
   precios(lineas: LineaAValorar[], tienda: Tienda): Promise<PreciosDeTienda>;
+  envio(lineas: LineaAValorar[], lugar: Lugar): Promise<EnvioDeTienda>;
 }
 
 // --- Implementación Wong ------------------------------------------------------
@@ -191,6 +205,65 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
       total: sumarTotales(d),
     };
   },
+
+  // Medido el 2026-11-27 contra wong.pe: el precio del despacho NO viene en
+  // `sla.price` (sale 0) sino en cada franja horaria de
+  // `availableDeliveryWindows[].price`. Para Miraflores, «Despacho a domicilio»
+  // a S/ 9.90 y el retiro en tienda gratis. La dirección se da como
+  // coordenadas: el código postal no sirve en esta cuenta (ver `precios`).
+  async envio(lineas, lugar) {
+    if (lineas.length === 0) return { hay: false };
+    const res = await fetch(`${base}/api/checkout/pub/orderForms/simulation?sc=${canal}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        items: lineas.map((l) => ({ id: l.sku, quantity: l.unidades, seller })),
+        country: "PER",
+        geoCoordinates: [lugar.lon, lugar.lat],
+        shippingData: {
+          address: { addressType: "residential", country: "PER", geoCoordinates: [lugar.lon, lugar.lat] },
+        },
+      }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!res.ok) throw new Error(`simulation ${res.status}`);
+    return leerEnvio(await res.json());
+  },
+  };
+}
+
+type FranjaVtex = { startDateUtc?: string; endDateUtc?: string; price?: number };
+type SlaVtex = { deliveryChannel?: string; price?: number; availableDeliveryWindows?: FranjaVtex[] };
+
+function leerEnvio(d: unknown): EnvioDeTienda {
+  const info = (d as { logisticsInfo?: { slas?: SlaVtex[] }[] })?.logisticsInfo ?? [];
+  const franjas: { precio: number; desde?: string; hasta?: string }[] = [];
+  for (const li of info) {
+    for (const sla of li.slas ?? []) {
+      if (sla.deliveryChannel !== "delivery") continue;
+      const ventanas = sla.availableDeliveryWindows ?? [];
+      if (ventanas.length === 0 && typeof sla.price === "number") {
+        franjas.push({ precio: sla.price });
+      }
+      for (const v of ventanas) {
+        if (typeof v.price === "number") {
+          franjas.push({ precio: v.price, desde: v.startDateUtc, hasta: v.endDateUtc });
+        }
+      }
+    }
+  }
+  if (franjas.length === 0) return { hay: false };
+  const min = Math.min(...franjas.map((f) => f.precio));
+  const max = Math.max(...franjas.map((f) => f.precio));
+  const primera = franjas
+    .filter((f) => f.precio === min && f.desde)
+    .sort((a, b) => (a.desde! < b.desde! ? -1 : 1))[0];
+  return {
+    hay: true,
+    precio: min / 100,
+    precioMaximo: max > min ? max / 100 : undefined,
+    desde: primera?.desde,
+    hasta: primera?.hasta,
   };
 }
 

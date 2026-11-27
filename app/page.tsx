@@ -32,8 +32,10 @@ import {
   aprenderDeCorreccion,
   contarPreguntasEvitadas,
   elegir,
+  elegirDistrito,
   elegirTienda,
   perfilVacio,
+  responderPago,
   preferenciaDe,
   clave,
   type Perfil,
@@ -87,6 +89,7 @@ import EligeTienda, { ListaTiendas } from "@/app/ui/EligeTienda";
 import { Compositor } from "@/app/ui/Libreta";
 import LineaCarrito, { type EstadoLinea } from "@/app/ui/LineaCarrito";
 import { Pantalla, Seccion, Vacio } from "@/app/ui/Pantalla";
+import EnvioYPago, { OTRO_DISTRITO, type EstadoEnvio } from "@/app/ui/EnvioYPago";
 import PantallaCalma from "@/app/ui/PantallaCalma";
 import Papaya, { type Pepa } from "@/app/ui/Papaya";
 import AsiFunciona from "@/app/ui/AsiFunciona";
@@ -347,6 +350,7 @@ export default function App() {
   // total que se mueve solo enseña a desconfiar del total.
   const [valoradaPara, setValoradaPara] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [envio, setEnvio] = useState<EstadoEnvio>({ tipo: "sin-distrito" });
 
   const compRef = useRef<HTMLInputElement>(null);
   const archivoRef = useRef<HTMLInputElement>(null);
@@ -497,6 +501,48 @@ export default function App() {
   );
 
   const idTienda = perfil.tienda?.id;
+
+  // El envío, preguntado a la tienda solo en «Revisar y pedir» y solo con lo
+  // que de verdad va a viajar. Es SU tarifa para el distrito: no se calcula.
+  const distritoEnvio = perfil.envio?.distrito;
+  const firmaEnvio = aCobrar.map((l) => `${l.sku}:${l.unidades}`).join("|");
+  useEffect(() => {
+    if (ruta !== "pedir") return;
+    if (!distritoEnvio || distritoEnvio === OTRO_DISTRITO) {
+      setEnvio({ tipo: "sin-distrito" });
+      return;
+    }
+    if (aCobrar.length === 0) {
+      setEnvio({ tipo: "sin-respuesta" });
+      return;
+    }
+    let vivo = true;
+    setEnvio({ tipo: "cargando" });
+    fetch("/api/envio", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tienda: perfil.tienda, lineas: aCobrar, distrito: distritoEnvio }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!vivo) return;
+        if (!d.ok) setEnvio({ tipo: "sin-respuesta" });
+        else if (!d.hay || typeof d.precio !== "number") setEnvio({ tipo: "no-llega" });
+        else
+          setEnvio({
+            tipo: "listo",
+            precio: d.precio,
+            precioMaximo: d.precioMaximo,
+            desde: d.desde,
+            hasta: d.hasta,
+          });
+      })
+      .catch(() => vivo && setEnvio({ tipo: "sin-respuesta" }));
+    return () => {
+      vivo = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ruta, distritoEnvio, firmaEnvio, idTienda]);
 
   useEffect(() => {
     if (!perfil.tienda || firmaValorar === "") return;
@@ -1556,7 +1602,6 @@ export default function App() {
                 izquierda={`${entrega.viajan.length} ${entrega.viajan.length === 1 ? "producto" : "productos"}`}
                 derecha={montoEntrega > 0 ? soles(montoEntrega) : "S/ —"}
               />
-              <Renglon izquierda="Delivery" derecha="lo confirma Wong al pagar" suave />
               <div
                 style={{
                   display: "flex",
@@ -1576,6 +1621,16 @@ export default function App() {
                   {montoEntrega > 0 ? soles(montoEntrega) : "S/ —"}
                 </span>
               </div>
+
+              <EnvioYPago
+                cadena={cadenaDe(perfil.tienda?.cadena).nombre}
+                distrito={perfil.envio?.distrito}
+                onDistrito={(d) => actualizarPerfil((p) => elegirDistrito(p, d))}
+                envio={envio}
+                productos={montoEntrega}
+                pago={perfil.pago}
+                onPago={(t, otra) => actualizarPerfil((p) => responderPago(p, t, otra))}
+              />
 
               {/* Redondeos a la vista. Siempre hacia arriba y jamás en silencio. */}
               {ajustes.length > 0 && (
