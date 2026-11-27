@@ -38,10 +38,12 @@ export default function LineaCarrito({
   nota,
   personaje,
   decision,
+  faltaElegir,
 }: {
   // Lo que esta línea espera de la familia, si espera algo: un cartelito
   // amarillo a la derecha, en el sitio del monto. Una sola decisión por línea.
   decision?: { texto: string; onClick: () => void };
+  faltaElegir?: boolean; // escrito sin marca: falta elegir cuál, no cuánto
   nota?: string; // qué decir cuando no hay producto: «no lo encontré», «Wong no contestó»
   // Quién da la cara cuando no hay producto: la Yuca si no lo encontramos tal
   // cual, la Piña si Wong no contestó. Sin personaje, la foto apagada de siempre.
@@ -165,6 +167,8 @@ export default function LineaCarrito({
         >
           {agotado ? (
             "hoy no hay en Wong"
+          ) : subtotal === undefined && faltaElegir ? (
+            "falta elegir cuál"
           ) : subtotal === undefined ? (
             `${producto?.precio != null ? soles(producto.precio) : "—"}${etiquetaUnitaria(
               producto?.unidadVenta ?? "un"

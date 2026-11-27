@@ -138,6 +138,11 @@ function resolver(data: CarritoApi, perfil: Perfil) {
     const candidatos = [defecto as ProductoWong, ...(alternativas ?? [])];
     const pref = preferenciaDe(perfil, it.ingrediente);
     const { elegido, porPerfil } = elegir(candidatos, pref);
+    // «pan» no dice cuál; «pan bimbo integral» sí. Si la marca del propuesto ya
+    // está en lo que escribió, no hay nada que preguntar.
+    const encontrados = candidatos.filter((c) => c.encontrado);
+    const dijoLaMarca = !!elegido?.marca && clave(it.ingrediente).includes(clave(elegido.marca));
+    const porElegir = !porPerfil && encontrados.length > 1 && !dijoLaMarca;
 
     if (porPerfil && candidatos.length > 1) evitadas++;
 
@@ -150,6 +155,7 @@ function resolver(data: CarritoApi, perfil: Perfil) {
       candidatos,
       elegido,
       porPerfil,
+      porElegir,
       cantidadPedida: it.cantidadPedida,
       unidadPedida: it.unidadPedida,
     };
@@ -205,6 +211,7 @@ function cantidadDe(it: ItemResuelto, perfil: Perfil): number | undefined {
 function subtotalDe(it: ItemResuelto, perfil: Perfil): number | undefined {
   const p = it.elegido;
   if (!p?.encontrado || p.disponible === false) return 0;
+  if (it.porElegir) return undefined;
   const cantidad = cantidadDe(it, perfil);
   if (cantidad == null || p.precio == null) return undefined;
   return Math.round(p.precio * cantidad * 100) / 100;
@@ -262,6 +269,8 @@ function confianzaDe(
         ? `no hay en ${perfil.tienda.nombre} · lo dejé anotado`
         : "lo dejé anotado igual",
     };
+  if (estado === "pendiente" && it.porElegir)
+    return { tono: "pendiente", texto: "la primera vez eliges tú" };
   if (estado === "pendiente") return { tono: "pendiente", texto: "pendiente de confirmar" };
   if (estado === "sin-resultado") return undefined;
   if (it.cantidadElegida != null) return { tono: "confirmado", texto: "lo acabas de confirmar" };
@@ -870,7 +879,7 @@ export default function App() {
     const candidatos = items?.find((it) => it.ingrediente === ingrediente)?.candidatos ?? [];
     setItems((xs) =>
       (xs ?? []).map((it) =>
-        it.ingrediente === ingrediente ? { ...it, elegido: nuevo, porPerfil: true } : it
+        it.ingrediente === ingrediente ? { ...it, elegido: nuevo, porPerfil: true, porElegir: false } : it
       )
     );
     setHoja(null);
@@ -979,12 +988,18 @@ export default function App() {
   const sinEncontrar = activos.filter((i) => !i.elegido?.encontrado);
   const agotados = vivos.filter((i) => i.elegido?.disponible === false);
   const sinCantidad = vivos.filter((i) => estadoDe(i, subtotalDe(i, perfil)) === "pendiente");
+  const sinElegir = sinCantidad.filter((i) => i.porElegir);
   const preciosSuyos = preciosDeTienda === true && !esperandoTienda;
   const pepas: Pepa[] = [
     {
       ok: sinCantidad.length === 0,
-      texto: "Todo tiene cantidad",
-      falta: sinCantidad.length === 1 ? `cuánto ${sinCantidad[0].ingrediente}` : `la cantidad de ${sinCantidad.length} cosas`,
+      texto: "Todo elegido y con cantidad",
+      falta:
+        sinCantidad.length > 1
+          ? `decidir ${sinCantidad.length} cosas`
+          : sinElegir.length === 1
+            ? `cuál ${sinElegir[0].ingrediente}`
+            : `cuánto ${sinCantidad[0]?.ingrediente ?? ""}`,
     },
     {
       ok: sinEncontrar.length === 0,
@@ -1012,7 +1027,10 @@ export default function App() {
       return;
     }
     setHoja({
-      tipo: estadoDe(siguiente, subtotalDe(siguiente, perfil)) === "agotado" ? "opciones" : "cantidad",
+      tipo:
+        siguiente.porElegir || estadoDe(siguiente, subtotalDe(siguiente, perfil)) === "agotado"
+          ? "opciones"
+          : "cantidad",
       ingrediente: siguiente.ingrediente,
     });
   }, [cola, hoja, siguiente, perfil]);
@@ -1105,6 +1123,8 @@ export default function App() {
     const decision =
       it.fuera
         ? undefined
+        : estado === "pendiente" && it.porElegir
+          ? { texto: "Elegir", onClick: () => setHoja({ tipo: "opciones" as const, ingrediente: it.ingrediente }) }
         : estado === "pendiente"
           ? { texto: "¿Cuánto?", onClick: () => setHoja({ tipo: "cantidad" as const, ingrediente: it.ingrediente }) }
           : estado === "agotado"
@@ -1133,6 +1153,7 @@ export default function App() {
         ingrediente={deLaLinea > 1 ? it.ingrediente : l.texto}
         producto={it.elegido}
         estado={estado}
+        faltaElegir={!!it.porElegir}
         cantidad={cantidadDe(it, perfil)}
         subtotal={it.fuera ? undefined : subtotal}
         confianza={it.fuera ? undefined : confianzaDe(it, perfil, estado)}
@@ -1815,7 +1836,8 @@ export default function App() {
         <HojaOpciones
           ingrediente={itemHoja.ingrediente}
           opciones={itemHoja.candidatos.filter((c) => c.encontrado)}
-          elegidaSku={itemHoja.elegido?.sku}
+          elegidaSku={itemHoja.porElegir ? undefined : itemHoja.elegido?.sku}
+          primeraVez={!!itemHoja.porElegir}
           agotado={
             itemHoja.elegido?.disponible === false
               ? { nombre: itemHoja.elegido.nombre ?? itemHoja.ingrediente, tienda: perfil.tienda?.nombre }
