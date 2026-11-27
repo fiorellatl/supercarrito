@@ -89,8 +89,16 @@ import EligeTienda, { ListaTiendas } from "@/app/ui/EligeTienda";
 import { Compositor } from "@/app/ui/Libreta";
 import LineaCarrito, { type EstadoLinea } from "@/app/ui/LineaCarrito";
 import { Pantalla, Seccion, Vacio } from "@/app/ui/Pantalla";
-import EnvioYPago, { OTRO_DISTRITO, type EstadoEnvio } from "@/app/ui/EnvioYPago";
-import Comparar, { type EstadoComparar } from "@/app/ui/Comparar";
+import {
+  Desplegable,
+  FilaPago,
+  HojaPago,
+  OTRO_DISTRITO,
+  OtraTienda,
+  TuTienda,
+  type EstadoComparar,
+  type EstadoEnvio,
+} from "@/app/ui/Revisar";
 import type { LineaAComparar } from "@/lib/comparar";
 import PantallaCalma from "@/app/ui/PantallaCalma";
 import Papaya, { type Pepa } from "@/app/ui/Papaya";
@@ -353,6 +361,7 @@ export default function App() {
   const [valoradaPara, setValoradaPara] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [envio, setEnvio] = useState<EstadoEnvio>({ tipo: "sin-distrito" });
+  const [hojaPago, setHojaPago] = useState(false);
   const [comparacion, setComparacion] = useState<EstadoComparar>({ tipo: "nada" });
 
   const compRef = useRef<HTMLInputElement>(null);
@@ -1663,95 +1672,72 @@ export default function App() {
           cuerpo={
             <>
               <Pasos actual={3} cadena={tuCadena} />
-              <p style={{ lineHeight: 1.55, margin: "6px 0 4px", color: color.tinta, fontWeight: 500 }}>
-                {perfil.tienda ? `Tu compra en ${perfil.tienda.nombre}` : `Tu compra en ${tuCadena}`}
-              </p>
-              <p style={{ ...lapiz, margin: "0 0 14px" }}>
-                {perfil.tienda && montoDeTienda != null
-                  ? // El enlace no lleva la tienda: Wong cobra según la tienda o la
-                    // dirección elegida ALLÁ. Probado con Wong real (2026-11-26):
-                    // Aldabas S/ 17.10, el carrito sin tienda S/ 18.90. Se dice antes
-                    // de saltar, no se descubre después.
-                    `Precios de ${perfil.tienda.nombre}${horaPrecios ? `, hoy ${hora(horaPrecios)}` : ""}. En ${tuCadena} elige esa misma tienda al pagar: si eliges otra, el precio puede cambiar.`
-                  : "Precios referenciales: el total lo confirma tu tienda."}{" "}
-                {!perfil.tienda && (
-                  <button onClick={abrirTienda} style={enlaceTexto}>
-                    Elegir mi tienda
-                  </button>
-                )}
-              </p>
-
-              <Renglon
-                izquierda={`${entrega.viajan.length} ${entrega.viajan.length === 1 ? "producto" : "productos"}`}
-                derecha={montoEntrega > 0 ? soles(montoEntrega) : "S/ —"}
-              />
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-end",
-                  padding: "12px 0 14px",
-                  marginBottom: 6,
-                  borderBottom: `1px solid ${color.renglon}`,
-                }}
-              >
-                <span style={rotulo}>Lo que llevas</span>
-                <span
-                  key={montoEntrega}
-                  className="sc-monto"
-                  style={{ ...plata, fontSize: 25, letterSpacing: "-0.03em" }}
-                >
-                  {montoEntrega > 0 ? soles(montoEntrega) : "S/ —"}
-                </span>
+              <h2 style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.03em", margin: "10px 0 10px", color: color.tinta }}>
+                ¿Dónde lo pides?
+              </h2>
+              <div style={{ display: "grid", gap: 10 }}>
+                <TuTienda
+                  tienda={perfil.tienda}
+                  cadena={tuCadena}
+                  actualizado={horaPrecios ? hora(horaPrecios) : undefined}
+                  productos={entrega.viajan.length}
+                  monto={montoEntrega}
+                  precioDeTienda={!!perfil.tienda && montoDeTienda != null}
+                  distrito={perfil.envio?.distrito}
+                  onDistrito={(d) => actualizarPerfil((p) => elegirDistrito(p, d))}
+                  envio={envio}
+                  onCambiarTienda={abrirTienda}
+                />
+                <OtraTienda
+                  estado={comparacion}
+                  conDistrito={!!perfil.envio?.distrito && perfil.envio.distrito !== OTRO_DISTRITO}
+                  nombreCadena={(t) => cadenaDe(t.cadena).nombre}
+                  onPedirAlla={() => {
+                    if (comparacion.tipo === "listo")
+                      pedirAlla(comparacion.destino.tienda, comparacion.equivalentes);
+                  }}
+                />
               </div>
 
-              <EnvioYPago
-                cadena={cadenaDe(perfil.tienda?.cadena).nombre}
-                distrito={perfil.envio?.distrito}
-                onDistrito={(d) => actualizarPerfil((p) => elegirDistrito(p, d))}
-                envio={envio}
-                productos={montoEntrega}
-                pago={perfil.pago}
-                onPago={(t, otra) => actualizarPerfil((p) => responderPago(p, t, otra))}
-              />
-              <Comparar
-                estado={comparacion}
-                conDistrito={!!perfil.envio?.distrito && perfil.envio.distrito !== OTRO_DISTRITO}
-                nombreCadena={(t) => cadenaDe(t.cadena).nombre}
-                onPedirAlla={() => {
-                  if (comparacion.tipo === "listo")
-                    pedirAlla(comparacion.destino.tienda, comparacion.equivalentes);
-                }}
-              />
-
-              {/* Redondeos a la vista. Siempre hacia arriba y jamás en silencio. */}
-              {ajustes.length > 0 && (
-                <div style={{ marginBottom: 10 }}>
-                  <Seccion>Ajustado para que {tuCadena} pueda venderlo</Seccion>
-                  {ajustes.map((a) => (
-                    <p key={a.nombre} style={{ ...lapiz, margin: "4px 0" }}>
-                      {a.nombre}: pediste {a.pedida} · van {a.cruza}
+              <div style={{ display: "grid", gap: 10, marginTop: 18 }}>
+                <Desplegable
+                  titulo="Lo que va"
+                  resumen={[
+                    `${entrega.viajan.length}`,
+                    ajustes.length > 0 && `${ajustes.length} ajustado${ajustes.length === 1 ? "" : "s"}`,
+                    entrega.sequedan.length > 0 && `${entrega.sequedan.length} no va${entrega.sequedan.length === 1 ? "" : "n"}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                >
+                  {entrega.viajan.map((v) => (
+                    <div
+                      key={v.ingrediente + v.nombre}
+                      style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "5px 0", fontSize: 13.5, color: color.tinta, fontVariantNumeric: "tabular-nums" }}
+                    >
+                      <span style={{ minWidth: 0 }}>
+                        {v.nombre}
+                        <span style={{ ...lapiz, display: "block" }}>
+                          {formatearCantidad(v.cantidadQueCruza, v.unidad)}
+                          {v.precio != null ? ` × ${soles(v.precio)}` : ""}
+                          {v.cantidadQueCruza !== v.cantidad
+                            ? ` · pediste ${formatearCantidad(v.cantidad, v.unidad)}, ${tuCadena} lo vende así`
+                            : ""}
+                        </span>
+                      </span>
+                      <span style={{ whiteSpace: "nowrap" }}>
+                        {v.subtotalQueCruza != null ? soles(v.subtotalQueCruza) : ""}
+                      </span>
+                    </div>
+                  ))}
+                  {entrega.sequedan.map((q) => (
+                    <p key={q.nombre} style={{ ...lapiz, margin: "6px 0 0" }}>
+                      No va: {q.nombre} · {q.motivo}. Sigue en tu lista.
                     </p>
                   ))}
-                </div>
-              )}
-
-              {entrega.sequedan.length > 0 && (
-                <div>
-                  <Seccion>No va esta vez</Seccion>
-                  {entrega.sequedan.map((s) => (
-                    <p key={s.nombre} style={{ ...lapiz, margin: "4px 0" }}>
-                      {s.nombre} — {s.motivo}. Sigue en tu lista.
-                    </p>
-                  ))}
-                </div>
-              )}
-
-              <p style={{ ...lapiz, margin: "16px 0 0" }}>
-                Abro tu carrito en {tuCadena} con todo dentro. Pagas allá, con tu cuenta
-                de siempre; nosotros no tocamos tu tarjeta. Si {tuCadena} te pide
-                iniciar sesión, es normal.
-              </p>
+                </Desplegable>
+                <FilaPago pago={perfil.pago} onAbrir={() => setHojaPago(true)} />
+              </div>
             </>
           }
           pie={
@@ -1770,11 +1756,13 @@ export default function App() {
                 </a>
                 {/* En Android la app de Wong se come el enlace: la copia es el
                     único camino, y tiene que estar ANTES del salto. */}
-                <Boton style={{ width: "100%", marginTop: 8 }} onClick={copiarEnlace}>
-                  {copiado ? "✓ Copiado — pégalo en tu navegador" : "Copiar el enlace"}
-                </Boton>
-                <p style={{ ...lapiz, marginTop: 8, textAlign: "center" }}>
-                  Si se abre la app de {tuCadena} con el carrito vacío, usa el enlace.
+                <p style={{ ...lapiz, margin: "8px 0 0", textAlign: "center" }}>
+                  Pagas en {tuCadena} con tu cuenta
+                  {perfil.tienda ? `; elige ${perfil.tienda.nombre} para el mismo precio` : ""}.{" "}
+                  {/* En Android la app se come el enlace: la copia tiene que estar ANTES del salto. */}
+                  <button onClick={copiarEnlace} style={{ ...enlaceTexto, minHeight: 32 }}>
+                    {copiado ? "✓ Enlace copiado" : "¿Se abrió la app vacía? Copia el enlace"}
+                  </button>
                 </p>
               </>
             ) : (
@@ -2145,6 +2133,15 @@ export default function App() {
         </div>
       )}
 
+      {hojaPago && (
+        <HojaPago
+          pago={perfil.pago}
+          cadena={tuCadena}
+          onPago={(t, otra) => actualizarPerfil((p) => responderPago(p, t, otra))}
+          onCerrar={() => setHojaPago(false)}
+        />
+      )}
+
       {hojaTienda && (
         <Hoja
           titulo="¿Dónde compras?"
@@ -2419,26 +2416,6 @@ function Atajos({ atajos }: { atajos: { clave: string; texto: string; onClick: (
           {a.texto}
         </button>
       ))}
-    </div>
-  );
-}
-
-// Un renglón de la cuenta: concepto a la izquierda, monto a la derecha.
-function Renglon({ izquierda, derecha, suave }: { izquierda: string; derecha: string; suave?: boolean }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        gap: 12,
-        padding: "6px 0",
-        fontSize: 14,
-        color: suave ? color.lapiz : color.tinta,
-        fontVariantNumeric: "tabular-nums",
-      }}
-    >
-      <span>{izquierda}</span>
-      <span style={{ textAlign: "right" }}>{derecha}</span>
     </div>
   );
 }
