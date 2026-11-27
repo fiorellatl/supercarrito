@@ -211,6 +211,58 @@ export class ComprasLocalStorage implements RepositorioCompras {
 
 export const repositorioCompras: RepositorioCompras = new ComprasLocalStorage();
 
+// --- Las listas con nombre ---------------------------------------------------
+// Pedido de la PO (2026-11-27): «Compra del domingo», «Lonchera de los chicos».
+// Una compra cerrada es un HECHO y no se toca; una lista guardada es una
+// PLANTILLA que la familia edita (qué lleva esta vez, cómo se llama). Por eso
+// viven separadas: editar la lista nunca reescribe lo que de verdad se compró.
+
+export type ListaGuardada = {
+  id: string;
+  nombre: string;
+  creada: number;
+  desdeCompra?: number; // ts de la compra de la que nació
+  lineas: {
+    nombre: string;
+    cantidad?: number;
+    unidad?: "kg" | "un";
+    // Desmarcada: sigue en la lista, pero no se pone en la libreta. Así se
+    // «edita» sin perder lo que alguna vez se compró.
+    activa: boolean;
+  }[];
+};
+
+export interface RepositorioListas {
+  cargar(): Promise<ListaGuardada[]>;
+  guardar(listas: ListaGuardada[]): Promise<void>;
+}
+
+const CLAVE_LISTAS = "supercarrito.listas.v1";
+
+export class ListasLocalStorage implements RepositorioListas {
+  async cargar(): Promise<ListaGuardada[]> {
+    if (typeof window === "undefined") return [];
+    try {
+      const crudo = window.localStorage.getItem(CLAVE_LISTAS);
+      const l = crudo ? JSON.parse(crudo) : [];
+      return Array.isArray(l) ? l : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async guardar(listas: ListaGuardada[]): Promise<void> {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(CLAVE_LISTAS, JSON.stringify(listas.slice(0, 30)));
+    } catch {
+      // Igual que las compras: guardar un recuerdo nunca rompe la siguiente.
+    }
+  }
+}
+
+export const repositorioListas: RepositorioListas = new ListasLocalStorage();
+
 // --- El carrito en curso -----------------------------------------------------
 // Mismo puerto, misma disciplina. Existe por la misma razón que la libreta —"el
 // trabajo del usuario no se pierde jamás"— y por una más: un carrito que no se

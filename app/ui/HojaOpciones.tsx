@@ -22,6 +22,7 @@ export default function HojaOpciones({
   ingrediente,
   opciones,
   elegidaSku,
+  primeraVez,
   agotado,
   onElegir,
   onCerrar,
@@ -30,6 +31,9 @@ export default function HojaOpciones({
   ingrediente: string;
   opciones: ProductoWong[];
   elegidaSku?: string;
+  // Lo escribió sin marca y no sabemos cuál compra: eligen ellos, y se dice
+  // que la próxima vez ya no se pregunta. Sin «la que tienes puesta».
+  primeraVez?: boolean;
   // Si se llega aquí porque lo que tenía puesto se acabó, la Piña lo dice una
   // vez, con la tienda que lo dijo, y deja paso a las opciones.
   agotado?: { nombre: string; tienda?: string };
@@ -39,8 +43,12 @@ export default function HojaOpciones({
 }) {
   return (
     <Hoja
-      titulo={`Para “${ingrediente}”`}
-      sub="Estas son las que encontré. Toca la que compras tú."
+      titulo={primeraVez ? `¿Cuál “${ingrediente}”?` : `Para “${ingrediente}”`}
+      sub={
+        primeraVez
+          ? "Eliges tú esta vez; la próxima me acuerdo."
+          : "Estas son las que encontré. Toca la que compras tú."
+      }
       onCerrar={onCerrar}
       paso={paso}
       pie={

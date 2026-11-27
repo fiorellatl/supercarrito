@@ -114,7 +114,7 @@ export default function EligeTienda({
       <div className="sc-bv-letrero" style={{ margin: "0 -22px" }}>
         <div style={{ background: color.papaya, color: "#fff", padding: "calc(22px + env(safe-area-inset-top, 0px)) 22px 20px" }}>
           <Logo tamano="chico" claro />
-          <div style={{ marginTop: 18, fontSize: 13, fontWeight: 800, opacity: 0.9 }}>2 de 2</div>
+          <div style={{ marginTop: 18, fontSize: 13, fontWeight: 800, opacity: 0.9 }}>2 de 3</div>
           <h1
             style={{
               fontFamily: fuente,

@@ -45,8 +45,10 @@ import {
   repositorioCompras,
   repositorioHistorial,
   repositorioLibreta,
+  repositorioListas,
   repositorioPerfil,
   type CompraCerrada,
+  type ListaGuardada,
 } from "@/lib/perfil-store";
 import type { ItemResuelto } from "@/lib/carrito";
 import { ahora } from "@/lib/historial";
@@ -87,12 +89,13 @@ import LineaCarrito, { type EstadoLinea } from "@/app/ui/LineaCarrito";
 import { Pantalla, Seccion, Vacio } from "@/app/ui/Pantalla";
 import PantallaCalma from "@/app/ui/PantallaCalma";
 import Papaya, { type Pepa } from "@/app/ui/Papaya";
+import AsiFunciona from "@/app/ui/AsiFunciona";
 
 // Rediseño del flujo (2026-11-26, PO): dos pasos y no cinco. La lista ES el
 // carrito —cada línea se convierte en su producto al anotarla— y «pedir» es el
 // único paso aparte. Desaparecen la revisión, la pantalla de tienda (ahora una
 // hoja) y el carrito como lugar propio.
-type Ruta = "lista" | "pedir" | "entregado" | "casa" | "boleta";
+type Ruta = "lista" | "pedir" | "entregado" | "casa" | "boleta" | "milista";
 
 type Item = ProductoWong & {
   alternativa: boolean;
@@ -118,6 +121,7 @@ const profundidad: Record<Ruta, number> = {
   lista: 0,
   casa: 0,
   boleta: 1,
+  milista: 1,
   pedir: 1,
   entregado: 2,
 };
@@ -139,6 +143,11 @@ function resolver(data: CarritoApi, perfil: Perfil) {
     const candidatos = [defecto as ProductoWong, ...(alternativas ?? [])];
     const pref = preferenciaDe(perfil, it.ingrediente);
     const { elegido, porPerfil } = elegir(candidatos, pref);
+    // «pan» no dice cuál; «pan bimbo integral» sí. Si la marca del propuesto ya
+    // está en lo que escribió, no hay nada que preguntar.
+    const encontrados = candidatos.filter((c) => c.encontrado);
+    const dijoLaMarca = !!elegido?.marca && clave(it.ingrediente).includes(clave(elegido.marca));
+    const porElegir = !porPerfil && encontrados.length > 1 && !dijoLaMarca;
 
     if (porPerfil && candidatos.length > 1) evitadas++;
 
@@ -151,6 +160,7 @@ function resolver(data: CarritoApi, perfil: Perfil) {
       candidatos,
       elegido,
       porPerfil,
+      porElegir,
       cantidadPedida: it.cantidadPedida,
       unidadPedida: it.unidadPedida,
     };
@@ -206,6 +216,7 @@ function cantidadDe(it: ItemResuelto, perfil: Perfil): number | undefined {
 function subtotalDe(it: ItemResuelto, perfil: Perfil): number | undefined {
   const p = it.elegido;
   if (!p?.encontrado || p.disponible === false) return 0;
+  if (it.porElegir) return undefined;
   const cantidad = cantidadDe(it, perfil);
   if (cantidad == null || p.precio == null) return undefined;
   return Math.round(p.precio * cantidad * 100) / 100;
@@ -263,6 +274,8 @@ function confianzaDe(
         ? `no hay en ${perfil.tienda.nombre} · lo dejé anotado`
         : "lo dejé anotado igual",
     };
+  if (estado === "pendiente" && it.porElegir)
+    return { tono: "pendiente", texto: "la primera vez eliges tú" };
   if (estado === "pendiente") return { tono: "pendiente", texto: "pendiente de confirmar" };
   if (estado === "sin-resultado") return undefined;
   if (it.cantidadElegida != null) return { tono: "confirmado", texto: "lo acabas de confirmar" };
@@ -304,10 +317,18 @@ export default function App() {
   const [perfil, setPerfil] = useState<Perfil>(perfilVacio());
   const [compras, setCompras] = useState<CompraCerrada[]>([]);
   const [verCompra, setVerCompra] = useState<CompraCerrada | null>(null);
+  // Listas con nombre (pedido de la PO, 2026-11-27). El nombre se pregunta
+  // DESPUÉS del salto a Wong, sobre la compra que acaba de cruzar.
+  const [listas, setListas] = useState<ListaGuardada[]>([]);
+  const [verListaId, setVerListaId] = useState<string | null>(null);
+  const [compraRecien, setCompraRecien] = useState<CompraCerrada | null>(null);
+  const [nombreLista, setNombreLista] = useState("");
+  const [renombrando, setRenombrando] = useState(false);
+  const verLista = listas.find((l) => l.id === verListaId) ?? null;
 
   const [items, setItems] = useState<ItemResuelto[] | null>(null);
   const [leyendo, setLeyendo] = useState(false);
-  const [aviso, setAviso] = useState<{ texto: string; deshacer?: number } | null>(null);
+  const [aviso, setAviso] = useState<{ texto: string; deshacer?: number; recuperar?: () => void } | null>(null);
   const [menus, setMenus] = useState<MenuResumen[]>([]);
   const [hojaMenus, setHojaMenus] = useState(false);
   const [hoja, setHoja] = useState<{ tipo: "cantidad" | "opciones"; ingrediente: string } | null>(null);
@@ -340,6 +361,8 @@ export default function App() {
   // línea que ya tenía su producto se volvería a emparejar al abrir.
   const [arrancado, setArrancado] = useState(false);
   const [hojaTienda, setHojaTienda] = useState(false);
+  // «Así funciona»: solo justo después de elegir la tienda por primera vez.
+  const [verAsiFunciona, setVerAsiFunciona] = useState(false);
   // «Una decisión a la vez»: al tocar Resolver, las hojas se suceden solas,
   // una por producto que espera algo de la familia, hasta que no queda nada.
   // `total` es cuántas había al empezar, para decir «2 de 3».
@@ -369,6 +392,7 @@ export default function App() {
       setPerfilListo(true);
     });
     void repositorioCompras.cargar().then(setCompras);
+    void repositorioListas.cargar().then(setListas);
     // El carrito vuelve tal y como se dejó: los mismos productos, los mismos
     // SKU, las mismas cantidades. Los precios y el stock los volverá a preguntar
     // el efecto de la tienda —eso sí caduca—, pero nadie vuelve a decidir CUÁL
@@ -819,7 +843,7 @@ export default function App() {
   // «Repetir esta compra»: lo que cruzó la última vez vuelve a la lista con su
   // cantidad, como líneas nuevas. Se busca por el nombre exacto del producto,
   // que es la búsqueda que mejor acierta en Wong.
-  function repetir(c: CompraCerrada) {
+  function repetir(c: { lineas: { nombre: string; cantidad?: number; unidad?: "kg" | "un" }[] }) {
     const ya = new Set(libreta.lineas.map((l) => clave(l.texto)));
     const nuevas = c.lineas.filter((x) => !ya.has(clave(x.nombre)));
     if (nuevas.length === 0) {
@@ -843,6 +867,27 @@ export default function App() {
       texto: `Puse ${nuevas.length} ${nuevas.length === 1 ? "producto" : "productos"} de tu compra anterior.`,
     });
     ir("lista");
+  }
+
+  function cambiarListas(f: (ls: ListaGuardada[]) => ListaGuardada[]) {
+    setListas((ls) => {
+      const nuevas = f(ls);
+      void repositorioListas.guardar(nuevas);
+      return nuevas;
+    });
+  }
+
+  function guardarLista(c: CompraCerrada, nombre: string) {
+    const lista: ListaGuardada = {
+      id: `l${c.ts}`,
+      nombre: nombre.trim(),
+      creada: Date.now(),
+      desdeCompra: c.ts,
+      lineas: c.lineas.map((x) => ({ nombre: x.nombre, cantidad: x.cantidad, unidad: x.unidad, activa: true })),
+    };
+    cambiarListas((ls) => [lista, ...ls.filter((l) => l.id !== lista.id)]);
+    setCompraRecien(null);
+    setAviso({ texto: `Guardé «${lista.nombre}». La encuentras en Mis compras.` });
   }
 
   function responderCantidad(ingrediente: string, cantidad: number) {
@@ -874,7 +919,7 @@ export default function App() {
     const candidatos = items?.find((it) => it.ingrediente === ingrediente)?.candidatos ?? [];
     setItems((xs) =>
       (xs ?? []).map((it) =>
-        it.ingrediente === ingrediente ? { ...it, elegido: nuevo, porPerfil: true } : it
+        it.ingrediente === ingrediente ? { ...it, elegido: nuevo, porPerfil: true, porElegir: false } : it
       )
     );
     setHoja(null);
@@ -921,6 +966,8 @@ export default function App() {
     };
     void repositorioCompras.agregar(compra);
     setCompras((cs) => [compra, ...cs]);
+    setCompraRecien(compra);
+    setNombreLista("");
 
     // La lista no se vacía: se resuelve. Se va la línea cuyos productos
     // cruzaron todos; sobrevive lo demás, marcado «quedó de la vez pasada». La
@@ -983,12 +1030,18 @@ export default function App() {
   const sinEncontrar = activos.filter((i) => !i.elegido?.encontrado);
   const agotados = vivos.filter((i) => i.elegido?.disponible === false);
   const sinCantidad = vivos.filter((i) => estadoDe(i, subtotalDe(i, perfil)) === "pendiente");
+  const sinElegir = sinCantidad.filter((i) => i.porElegir);
   const preciosSuyos = preciosDeTienda === true && !esperandoTienda;
   const pepas: Pepa[] = [
     {
       ok: sinCantidad.length === 0,
-      texto: "Todo tiene cantidad",
-      falta: sinCantidad.length === 1 ? `cuánto ${sinCantidad[0].ingrediente}` : `la cantidad de ${sinCantidad.length} cosas`,
+      texto: "Todo elegido y con cantidad",
+      falta:
+        sinCantidad.length > 1
+          ? `decidir ${sinCantidad.length} cosas`
+          : sinElegir.length === 1
+            ? `cuál ${sinElegir[0].ingrediente}`
+            : `cuánto ${sinCantidad[0]?.ingrediente ?? ""}`,
     },
     {
       ok: sinEncontrar.length === 0,
@@ -1016,7 +1069,10 @@ export default function App() {
       return;
     }
     setHoja({
-      tipo: estadoDe(siguiente, subtotalDe(siguiente, perfil)) === "agotado" ? "opciones" : "cantidad",
+      tipo:
+        siguiente.porElegir || estadoDe(siguiente, subtotalDe(siguiente, perfil)) === "agotado"
+          ? "opciones"
+          : "cantidad",
       ingrediente: siguiente.ingrediente,
     });
   }, [cola, hoja, siguiente, perfil]);
@@ -1109,6 +1165,8 @@ export default function App() {
     const decision =
       it.fuera
         ? undefined
+        : estado === "pendiente" && it.porElegir
+          ? { texto: "Elegir", onClick: () => setHoja({ tipo: "opciones" as const, ingrediente: it.ingrediente }) }
         : estado === "pendiente"
           ? { texto: "¿Cuánto?", onClick: () => setHoja({ tipo: "cantidad" as const, ingrediente: it.ingrediente }) }
           : estado === "agotado"
@@ -1137,6 +1195,7 @@ export default function App() {
         ingrediente={deLaLinea > 1 ? it.ingrediente : l.texto}
         producto={it.elegido}
         estado={estado}
+        faltaElegir={!!it.porElegir}
         cantidad={cantidadDe(it, perfil)}
         subtotal={it.fuera ? undefined : subtotal}
         confianza={it.fuera ? undefined : confianzaDe(it, perfil, estado)}
@@ -1193,7 +1252,10 @@ export default function App() {
       <main className="sc-papel sc-marco" style={marco}>
         <EligeTienda
           tiendas={tiendas}
-          onElegir={tomarTienda}
+          onElegir={(t) => {
+            tomarTienda(t);
+            setVerAsiFunciona(true);
+          }}
           onReintentar={() => {
             setTiendas(null);
             void (async () => {
@@ -1207,6 +1269,13 @@ export default function App() {
           }}
           onSeguirSin={() => setSinTiendaPorAhora(true)}
         />
+      </main>
+    );
+
+  if (verAsiFunciona)
+    return (
+      <main className="sc-papel sc-marco" style={marco}>
+        <AsiFunciona tienda={perfil.tienda?.nombre} onSeguir={() => setVerAsiFunciona(false)} />
       </main>
     );
 
@@ -1586,7 +1655,49 @@ export default function App() {
               : "Solo te falta pagar allá. Tu lista quedó limpia."
           }
           accion={{ texto: "Volver a mi lista", onClick: () => ir("lista") }}
-        />
+        >
+          {compraRecien && compraRecien.lineas.length > 0 && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (nombreLista.trim()) guardarLista(compraRecien, nombreLista);
+              }}
+              style={{ width: "100%", maxWidth: 340, display: "grid", gap: 8, marginTop: 6, textAlign: "left" }}
+            >
+              <label htmlFor="nombre-lista" style={{ fontSize: 15, fontWeight: 600, color: color.tinta }}>
+                ¿Le pones nombre para repetirla?
+              </label>
+              <input
+                id="nombre-lista"
+                value={nombreLista}
+                onChange={(e) => setNombreLista(e.target.value)}
+                placeholder="Compra del domingo"
+                maxLength={40}
+                style={{
+                  font: "inherit",
+                  fontSize: 16,
+                  padding: "12px 14px",
+                  borderRadius: 14,
+                  border: `1.5px solid ${color.renglon}`,
+                  background: color.papel,
+                  color: color.tinta,
+                }}
+              />
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <Boton variante="lleno" chico disabled={!nombreLista.trim()}>
+                  Guardar
+                </Boton>
+                <button
+                  type="button"
+                  onClick={() => setCompraRecien(null)}
+                  style={{ ...enlaceTexto, fontSize: 13.5, minHeight: 40 }}
+                >
+                  Ahora no
+                </button>
+              </div>
+            </form>
+          )}
+        </PantallaCalma>
       )}
 
       {ruta === "casa" && (
@@ -1628,6 +1739,30 @@ export default function App() {
                     {Object.entries(perfil.preferencias).map(([clave, pref]) => (
                       <Fila key={clave} titulo={fraseDe(clave, pref)} nota={motivoDe(pref)} />
                     ))}
+                  </>
+                )}
+
+                {listas.length > 0 && (
+                  <>
+                    <Seccion>Sus listas</Seccion>
+                    {listas.map((l) => {
+                      const activas = l.lineas.filter((x) => x.activa).length;
+                      return (
+                        <Fila
+                          key={l.id}
+                          titulo={l.nombre}
+                          nota={`${activas} ${activas === 1 ? "cosa" : "cosas"}${
+                            activas < l.lineas.length ? ` de ${l.lineas.length}` : ""
+                          }`}
+                          derecha={<span style={{ ...lapiz, fontSize: 18 }}>›</span>}
+                          onTocar={() => {
+                            setVerListaId(l.id);
+                            setRenombrando(false);
+                            ir("milista");
+                          }}
+                        />
+                      );
+                    })}
                   </>
                 )}
 
@@ -1673,6 +1808,128 @@ export default function App() {
               </>
             )
           }
+        />
+      )}
+
+      {ruta === "milista" && verLista && (
+        <Pantalla
+          sentido={sentido}
+          titulo={verLista.nombre}
+          onVolver={() => ir("casa")}
+          cuerpo={
+            <>
+              {renombrando ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const n = nombreLista.trim();
+                    if (!n) return;
+                    cambiarListas((ls) => ls.map((l) => (l.id === verLista.id ? { ...l, nombre: n } : l)));
+                    setRenombrando(false);
+                  }}
+                  style={{ display: "flex", gap: 8, margin: "4px 0 12px" }}
+                >
+                  <input
+                    id="renombrar-lista"
+                    aria-label="Nombre de la lista"
+                    value={nombreLista}
+                    onChange={(e) => setNombreLista(e.target.value)}
+                    maxLength={40}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      font: "inherit",
+                      fontSize: 16,
+                      padding: "10px 12px",
+                      borderRadius: 12,
+                      border: `1.5px solid ${color.renglon}`,
+                      background: color.papel,
+                      color: color.tinta,
+                    }}
+                  />
+                  <Boton variante="lleno" chico disabled={!nombreLista.trim()}>
+                    Listo
+                  </Boton>
+                </form>
+              ) : (
+                <p style={{ ...lapiz, margin: "0 0 10px" }}>
+                  Marca lo que llevas esta vez. Lo que desmarques queda así para la próxima.{" "}
+                  <button
+                    onClick={() => {
+                      setNombreLista(verLista.nombre);
+                      setRenombrando(true);
+                    }}
+                    style={{ ...enlaceTexto, fontSize: 12.5 }}
+                  >
+                    Renombrar
+                  </button>
+                </p>
+              )}
+              {verLista.lineas.map((x, i) => (
+                <label
+                  key={i}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "11px 2px",
+                    borderBottom: `1px solid ${color.renglon}`,
+                    cursor: "pointer",
+                    opacity: x.activa ? 1 : 0.5,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={x.activa}
+                    onChange={() =>
+                      cambiarListas((ls) =>
+                        ls.map((l) =>
+                          l.id === verLista.id
+                            ? { ...l, lineas: l.lineas.map((y, j) => (j === i ? { ...y, activa: !y.activa } : y)) }
+                            : l
+                        )
+                      )
+                    }
+                    style={{ width: 20, height: 20, accentColor: color.pino, flex: "0 0 auto" }}
+                  />
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 15, color: color.tinta }}>{x.nombre}</span>
+                  <span style={{ ...lapiz, fontSize: 13, fontVariantNumeric: "tabular-nums" }}>
+                    {x.cantidad != null ? `× ${formatearCantidad(x.cantidad, x.unidad ?? "un")}` : "sin cantidad"}
+                  </span>
+                </label>
+              ))}
+              <p style={{ ...lapiz, marginTop: 16 }}>Comparar con Metro · pronto</p>
+              <button
+                onClick={() => {
+                  const borrada = verLista;
+                  cambiarListas((ls) => ls.filter((l) => l.id !== borrada.id));
+                  setAviso({
+                    texto: `Borré «${borrada.nombre}». Tus compras siguen guardadas.`,
+                    recuperar: () => cambiarListas((ls) => [borrada, ...ls]),
+                  });
+                  ir("casa");
+                }}
+                style={{ ...enlaceTexto, fontSize: 12.5, color: color.ladrillo, marginTop: 4 }}
+              >
+                Borrar esta lista
+              </button>
+            </>
+          }
+          pie={(() => {
+            const activas = verLista.lineas.filter((x) => x.activa);
+            return (
+              <Boton
+                variante="lleno"
+                disabled={activas.length === 0}
+                onClick={() => repetir({ lineas: activas })}
+                style={{ width: "100%" }}
+              >
+                {activas.length === 0
+                  ? "Marca algo para llevar"
+                  : `Poner ${activas.length} en mi lista`}
+              </Boton>
+            );
+          })()}
         />
       )}
 
@@ -1819,7 +2076,8 @@ export default function App() {
         <HojaOpciones
           ingrediente={itemHoja.ingrediente}
           opciones={itemHoja.candidatos.filter((c) => c.encontrado)}
-          elegidaSku={itemHoja.elegido?.sku}
+          elegidaSku={itemHoja.porElegir ? undefined : itemHoja.elegido?.sku}
+          primeraVez={!!itemHoja.porElegir}
           agotado={
             itemHoja.elegido?.disponible === false
               ? { nombre: itemHoja.elegido.nombre ?? itemHoja.ingrediente, tienda: perfil.tienda?.nombre }
@@ -1835,7 +2093,12 @@ export default function App() {
         <Aviso
           texto={aviso.texto}
           onDeshacer={
-            aviso.deshacer
+            aviso.recuperar
+              ? () => {
+                  aviso.recuperar!();
+                  setAviso(null);
+                }
+              : aviso.deshacer
               ? () => {
                   setLibreta((l) => deshacerUltimoBloque(l, aviso.deshacer!));
                   setAviso(null);

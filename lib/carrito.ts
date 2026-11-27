@@ -36,6 +36,10 @@ export type ItemResuelto = {
   candidatos: ProductoWong[];
   elegido: ProductoWong;
   porPerfil: boolean;
+  // Lo escribió sin marca, no sabemos cuál compra esta casa y Wong tiene varios:
+  // elige ella (decisión de la PO, 2026-11-27). Mientras tanto no suma, igual que
+  // un producto sin cantidad. Al elegir, el perfil lo recuerda para la próxima.
+  porElegir?: boolean;
   cantidadPedida?: number;
   unidadPedida?: "kg" | "un";
   cantidadElegida?: number;
