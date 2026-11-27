@@ -330,6 +330,11 @@ nav,
 /* La marca: «SUPER / CARRITO» apilado, con el mismo trazo que hierve. */
 .sc-marca { animation: sp-hierve .375s steps(1) infinite; }
 
+/* La Papaya del indicador: el mismo trazo que hierve; la pepa que se llena da un saltito. */
+.sc-papaya svg { animation: sp-hierve .375s steps(1) infinite; }
+.sc-papaya .sc-pepa { transform-box: fill-box; transform-origin: center; animation: sp-pepa .45s steps(4) both; }
+@keyframes sp-pepa { 0% { transform: scale(.2); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
 /* Quien pidió que nada se mueva, no ve nada moverse. */
 
 @media (prefers-reduced-motion: reduce) {

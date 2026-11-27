@@ -85,6 +85,7 @@ import { Compositor } from "@/app/ui/Libreta";
 import LineaCarrito, { type EstadoLinea } from "@/app/ui/LineaCarrito";
 import { Pantalla, Seccion, Vacio } from "@/app/ui/Pantalla";
 import PantallaCalma from "@/app/ui/PantallaCalma";
+import Papaya, { type Pepa } from "@/app/ui/Papaya";
 
 // Rediseño del flujo (2026-11-26, PO): dos pasos y no cinco. La lista ES el
 // carrito —cada línea se convierte en su producto al anotarla— y «pedir» es el
@@ -969,6 +970,40 @@ export default function App() {
   });
   const siguiente = porDecidir[0];
 
+  // «¿Qué tan papaya está tu compra?» Cuatro condiciones que se pueden comprobar
+  // con lo que ya sabemos; ninguna promete ahorro. Mientras Wong esté contestando
+  // no se opina: un veredicto que cambia solo un segundo después enseña a no creerle.
+  const nombrar = (lista: ItemResuelto[]) =>
+    lista.length === 1 ? lista[0].ingrediente : `${lista.length} cosas`;
+  const activos = (items ?? []).filter((i) => !i.fuera);
+  const sinEncontrar = activos.filter((i) => !i.elegido?.encontrado);
+  const agotados = vivos.filter((i) => i.elegido?.disponible === false);
+  const sinCantidad = vivos.filter((i) => estadoDe(i, subtotalDe(i, perfil)) === "pendiente");
+  const preciosSuyos = preciosDeTienda === true && !esperandoTienda;
+  const pepas: Pepa[] = [
+    {
+      ok: sinCantidad.length === 0,
+      texto: "Todo tiene cantidad",
+      falta: sinCantidad.length === 1 ? `cuánto ${sinCantidad[0].ingrediente}` : `la cantidad de ${sinCantidad.length} cosas`,
+    },
+    {
+      ok: sinEncontrar.length === 0,
+      texto: "Todo encontrado en Wong",
+      falta: `no encontré ${nombrar(sinEncontrar)}`,
+    },
+    {
+      ok: agotados.length === 0,
+      texto: "Nada agotado en tu tienda",
+      falta: agotados.length === 1 ? `${agotados[0].ingrediente} está agotado` : `${agotados.length} cosas agotadas`,
+    },
+    {
+      ok: preciosSuyos,
+      texto: `Precios de hoy de ${perfil.tienda?.nombre ?? "tu Wong"}`,
+      falta: "tu Wong no contestó: son precios referenciales",
+    },
+  ];
+  const opinaPapaya = vivos.length > 0 && buscandoIds.size === 0 && !esperandoTienda && preciosDeTienda !== null;
+
   useEffect(() => {
     if (!cola || hoja) return;
     if (!siguiente) {
@@ -1352,6 +1387,7 @@ export default function App() {
           pie={
             vivos.length > 0 ? (
               <>
+                {opinaPapaya && <Papaya pepas={pepas} nadaSuma={cuentan === 0} />}
                 {perfil.tienda && preciosDeTienda === false && (
                   <div style={{ ...lapiz, marginBottom: 8 }}>
                     {perfil.tienda.nombre} no me contestó: estos son precios
