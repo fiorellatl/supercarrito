@@ -235,7 +235,10 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
     if (!res.ok) throw new Error(`simulation ${res.status}`);
     const d = await res.json();
 
-    const porSku = new Map<string, { price?: number; listPrice?: number; sellingPrice?: number; availability?: string }>();
+    const porSku = new Map<
+      string,
+      { price?: number; listPrice?: number; sellingPrice?: number; tax?: number; availability?: string }
+    >();
     for (const it of d?.items ?? []) porSku.set(String(it.id), it);
     const teasers = await promos;
 
@@ -252,7 +255,9 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
           it?.sellingPrice != null && it.sellingPrice > 0 && it.price != null && it.sellingPrice < it.price
             ? it.sellingPrice
             : it?.price;
-        const precio = cobra != null ? cobra / 100 : undefined;
+        // Flora y Fauna publica sin IGV y lo suma en `tax` (por unidad): se
+        // enseña lo que se paga. En Wong/Metro/Plaza Vea `tax` es 0.
+        const precio = cobra != null ? (cobra + (it?.tax ?? 0)) / 100 : undefined;
         return {
           sku: l.sku,
           precio,
@@ -354,7 +359,7 @@ function sumarTotales(d: unknown): number | undefined {
   const totals = (d as { totals?: { id?: string; value?: number }[] })?.totals;
   if (!Array.isArray(totals)) return undefined;
   const suma = totals
-    .filter((t) => t.id === "Items" || t.id === "Discounts")
+    .filter((t) => t.id === "Items" || t.id === "Discounts" || t.id === "Tax")
     .reduce((s, t) => s + (t.value ?? 0), 0);
   return Number.isFinite(suma) ? Math.round(suma) / 100 : undefined;
 }

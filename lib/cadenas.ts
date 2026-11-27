@@ -11,7 +11,7 @@
 // Hasta entonces existe aquí, pero ni se ofrece ni se consulta: un carrito que
 // no se puede comprar es peor que no tener carrito.
 
-export type CadenaId = "wong" | "metro" | "plazavea" | "makro";
+export type CadenaId = "wong" | "metro" | "plazavea" | "makro" | "florayfauna";
 
 export type Cadena = {
   id: CadenaId;
@@ -91,6 +91,22 @@ export const CADENAS: Record<CadenaId, Cadena> = {
     puntoDeRetiro: /^(makro\b.*)$/i,
     zona: "codigoPostal",
     tarjetas: ["Tarjeta Sip", "Interbank"],
+    verificada: true,
+  },
+  florayfauna: {
+    id: "florayfauna",
+    nombre: "Flora y Fauna",
+    base: "https://www.florayfauna.pe",
+    // Medido el 2026-11-27: /api/segments -> {"channel":"1"}, seller "1", y el
+    // enlace /checkout/cart/add?…&sc=1 llenó un carrito real (leche ×2 + huevos
+    // → S/ 33.69 leído en el orderForm). OJO: publica sus precios SIN IGV
+    // (leche 6.86 + 1.23 de impuesto = 8.09 en el carrito); ver lib/tienda.ts.
+    canal: "1",
+    seller: "1",
+    puntoDeRetiro: /^F&F\s+(.+)$/i,
+    prefijo: "Flora y Fauna",
+    zona: "coordenadas",
+    tarjetas: [],
     verificada: true,
   },
 };

@@ -58,8 +58,10 @@ export function ListaTiendas({
           // Con cuatro cadenas no caben en una fila de celular: dos y dos.
           style={{ display: "grid", gridTemplateColumns: `repeat(${cadenas.length > 3 ? 2 : cadenas.length}, 1fr)`, gap: 8 }}
         >
-          {cadenas.map((c) => {
+          {cadenas.map((c, i) => {
             const on = c === cadena;
+            // En dos columnas, la última sola ocupa la fila entera.
+            const sola = cadenas.length > 3 && cadenas.length % 2 === 1 && i === cadenas.length - 1;
             return (
               <button
                 key={c}
@@ -69,6 +71,7 @@ export function ListaTiendas({
                 onClick={() => setCadena(c)}
                 className="sc-boton"
                 style={{
+                  gridColumn: sola ? "1 / -1" : undefined,
                   minHeight: 48,
                   padding: "0 12px",
                   whiteSpace: "nowrap",

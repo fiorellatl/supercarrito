@@ -23,6 +23,7 @@ const TIMEOUT_MS = 8000;
 type VtexOffer = {
   Price?: number;
   ListPrice?: number;
+  Tax?: number; // Flora y Fauna: el IGV aparte, por unidad
   IsAvailable?: boolean;
   AvailableQuantity?: number;
   teasers?: Parameters<typeof teasersDeIS>[0];
@@ -135,7 +136,9 @@ async function seguirRedireccion(destino: string, cadena: Cadena): Promise<VtexP
 export function mapear(ingrediente: string, p: VtexProduct, cadena: Cadena): ProductoWong {
   const item = p.items?.[0];
   const oferta = item?.sellers?.[0]?.commertialOffer;
-  const precio = oferta?.Price;
+  // Lo que se paga: Flora y Fauna publica sin IGV y lo da en `Tax`.
+  const precio =
+    typeof oferta?.Price === "number" ? Math.round((oferta.Price + (oferta.Tax ?? 0)) * 100) / 100 : undefined;
 
   if (typeof precio !== "number" || precio <= 0) {
     return { ingrediente, encontrado: false, motivo: "sin precio", proveedor: cadena.id };

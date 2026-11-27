@@ -4,6 +4,18 @@
 > hay que leer para retomar**; el resto es la historia de ciclos y decisiones,
 > que se consulta cuando hace falta. Estrategia y competencia: `PRODUCT_CONTEXT.md`.
 
+## ▶️ Flora y Fauna, quinta cadena (2026-11-27, aprobado por la PO)
+
+- Candidatos medidos: **Flora y Fauna** pasa (VTEX, sc=1, 13 tiendas «F&F» en
+  Lima, carrito real por enlace S/ 33.69). **Vivanda**: web propia (Next.js
+  sobre otra plataforma), sin buscador público ni enlace de carrito. **Mass**:
+  web solo informativa. **Economax**: registro mayorista de Makro.
+- Flora y Fauna publica precios **sin IGV** y lo da aparte (`Tax` en el
+  catálogo, `tax` por ítem y `Tax` en los totales de la simulación): se suma
+  siempre, porque es lo que se paga (leche Danlac 6.86 → 8.09).
+- Comparte pocos productos con las demás (es saludable/orgánica): la
+  comparación tendrá pocos «iguales».
+
 ## ⏭ Makro y Tottus (pedido por la PO el 2026-11-27, medido el mismo día)
 
 - **Makro: HECHO (cuarta cadena).** `www.makro.plazavea.com.pe`, canal `sc=9`,
