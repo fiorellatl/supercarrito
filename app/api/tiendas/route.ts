@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
-import { wongTienda } from "@/lib/tienda";
+import { catalogoDeTienda } from "@/lib/tienda";
+import { cadenaDe } from "@/lib/cadenas";
 
 // El directorio de tiendas para que la familia elija la suya. Va por el servidor
 // como todo lo que habla con Wong: el navegador nunca llama a la tienda.
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const tiendas = await wongTienda.tiendas();
+    // ?cadena=metro. Sin ella, o sin verificar, Wong.
+    const cadena = cadenaDe(new URL(req.url).searchParams.get("cadena"));
+    const tiendas = await catalogoDeTienda(cadena).tiendas();
     return NextResponse.json({ ok: true, tiendas });
   } catch {
     // Sin directorio no hay pregunta que hacer, y el producto sigue funcionando

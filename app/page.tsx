@@ -64,7 +64,8 @@ import {
 } from "@/lib/libreta";
 import type { LineaExtraida } from "@/lib/evidencia";
 import type { ProductoWong } from "@/lib/catalog";
-import { wongDeepLink, unidadesDeVenta } from "@/lib/entrega";
+import { entregaPorEnlace, unidadesDeVenta } from "@/lib/entrega";
+import { cadenaDe } from "@/lib/cadenas";
 import type { LineaAValorar, Tienda } from "@/lib/tienda";
 
 import { casaVacia, crearCasa, monograma, saludo, tieneCasa, type Casa } from "@/lib/casa";
@@ -554,7 +555,7 @@ export default function App() {
     );
     const listos = new Set(decididos.map((it) => it.ingrediente));
 
-    const preparada = wongDeepLink.preparar(
+    const preparada = entregaPorEnlace(cadenaDe(perfil.tienda?.cadena)).preparar(
       decididos.map((it) => ({
         ingrediente: it.ingrediente,
         producto: it.elegido!,
@@ -717,7 +718,10 @@ export default function App() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lineas: aPedidos({ version: 1, lineas: [l] }) }),
+        body: JSON.stringify({
+          lineas: aPedidos({ version: 1, lineas: [l] }),
+          cadena: perfil.tienda?.cadena,
+        }),
       });
       const data = await res.json();
       let nuevos: ItemResuelto[];

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { wongTienda, type LineaAValorar, type Tienda } from "@/lib/tienda";
+import { catalogoDeLaTienda, type LineaAValorar, type Tienda } from "@/lib/tienda";
 
 // Precio y disponibilidad reales de la tienda de la familia, para la compra
 // entera y en UNA sola llamada (~1 s con 35 productos, medido).
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, motivo: "faltan la tienda o las líneas" });
     }
 
-    const precios = await wongTienda.precios(
+    const precios = await catalogoDeLaTienda(tienda).precios(
       lineas.filter((l) => l?.sku && l.unidades > 0),
       tienda
     );

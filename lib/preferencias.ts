@@ -65,6 +65,8 @@ export type TiendaPreferida = {
   distrito?: string;
   lon: number;
   lat: number;
+  // "wong" | "metro". Ausente en las tiendas guardadas antes de 2026-11-27: Wong.
+  cadena?: string;
   elegida: string; // ISO
 };
 

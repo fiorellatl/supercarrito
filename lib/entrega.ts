@@ -27,8 +27,10 @@
 // carrito y cuenta los productos.
 
 import type { ProductoWong, UnidadVenta } from "@/lib/catalog";
+import { CADENA_POR_DEFECTO, type Cadena } from "@/lib/cadenas";
 
-const BASE = "https://www.wong.pe";
+// Dirección, canal y seller vienen de la cadena (lib/cadenas.ts). Lo de abajo
+// es la historia de cómo se averiguaron los de Wong; vale igual para Metro.
 
 // El canal de venta de la tienda. NO es un número mágico: Wong lo publica en
 // `GET https://www.wong.pe/api/segments` -> `{"channel":"70", …}`. Si algún día
@@ -38,11 +40,11 @@ const BASE = "https://www.wong.pe";
 // Coherencia que conviene no romper: `lib/wongvtex.ts` busca SIN `sc`, y el
 // valor por defecto de la tienda es justamente 70. Los SKUs que guardamos son,
 // por tanto, los del mismo canal en el que escribimos.
-const CANAL = "70";
+// (Wong: CANAL = "70", en lib/cadenas.ts.)
 
 // `seller=1` es correcto: la API de catálogo devuelve `sellerId: "1"`,
 // `sellerName: "WongIO"`. Nunca fue el problema.
-const SELLER = "1";
+// (Wong: SELLER = "1", en lib/cadenas.ts.)
 
 // Lo que el producto le pide a la entrega: una línea ya decidida.
 export type LineaAEntregar = {
@@ -103,8 +105,10 @@ function pasoDe(producto: ProductoWong): number {
     : 1;
 }
 
-export const wongDeepLink: EntregaEnTienda = {
-  tienda: "Wong",
+export function entregaPorEnlace(cadena: Cadena): EntregaEnTienda {
+  const { base, canal, seller } = cadena;
+  return {
+  tienda: cadena.nombre,
 
   preparar(lineas) {
     const viajan: LineaViajera[] = [];
@@ -130,7 +134,7 @@ export const wongDeepLink: EntregaEnTienda = {
       const qty = unidadesDeVenta(cantidad, producto);
       const cruza = Math.round(qty * pasoDe(producto) * 1000) / 1000;
 
-      partes.push(`sku=${producto.sku}&qty=${qty}&seller=${SELLER}`);
+      partes.push(`sku=${producto.sku}&qty=${qty}&seller=${seller}`);
 
       viajan.push({
         ingrediente,
@@ -148,7 +152,7 @@ export const wongDeepLink: EntregaEnTienda = {
     }
 
     return {
-      tienda: "Wong",
+      tienda: cadena.nombre,
       // Sin nada que entregar no hay enlace: mandar a la familia a un carrito
       // vacío sería peor que no mandarla.
       //
@@ -173,10 +177,13 @@ export const wongDeepLink: EntregaEnTienda = {
       // medido, mismo 302 y los mismos ítems dentro. Cuesta nueve caracteres.
       url:
         partes.length > 0
-          ? `${BASE}/checkout/cart/add?${partes.join("&")}&sc=${CANAL}&qcart=1`
+          ? `${base}/checkout/cart/add?${partes.join("&")}&sc=${canal}&qcart=1`
           : null,
       viajan,
       sequedan,
     };
   },
 };
+}
+
+export const wongDeepLink: EntregaEnTienda = entregaPorEnlace(CADENA_POR_DEFECTO);

@@ -22,28 +22,32 @@
 import { buscarEnFakeWong } from "@/lib/fakewong";
 import { buscarEnWongVtex } from "@/lib/wongvtex";
 import type { ProductoWong } from "@/lib/catalog";
+import { CADENA_POR_DEFECTO, type Cadena } from "@/lib/cadenas";
 
 export type { ProductoWong } from "@/lib/catalog";
 
 const PROVIDER = (process.env.CATALOG_PROVIDER ?? "wong").toLowerCase();
 
-export async function buscarEnWong(ingrediente: string): Promise<ProductoWong> {
+export async function buscarEnWong(
+  ingrediente: string,
+  cadena: Cadena = CADENA_POR_DEFECTO
+): Promise<ProductoWong> {
   if (PROVIDER !== "wong") {
     return buscarEnFakeWong(ingrediente);
   }
 
   // Proveedor real. Ante cualquier fallo, se dice; no se inventa.
   try {
-    return await buscarEnWongVtex(ingrediente);
+    return await buscarEnWongVtex(ingrediente, cadena);
   } catch (e) {
     console.warn(
-      `[WongVTEX] "${ingrediente}" falló (${e instanceof Error ? e.message : "error"}).`
+      `[${cadena.nombre}] "${ingrediente}" falló (${e instanceof Error ? e.message : "error"}).`
     );
     return {
       ingrediente,
       encontrado: false,
-      motivo: "Wong no respondió",
-      proveedor: "wong",
+      motivo: `${cadena.nombre} no respondió`,
+      proveedor: cadena.id,
       degradado: true,
     };
   }

@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { buscarEnWong, type ProductoWong } from "@/lib/wong";
+import { CADENA_POR_DEFECTO, type Cadena } from "@/lib/cadenas";
 import { sinEncabezado } from "@/lib/libreta";
 
 type Menus = Record<string, { nombre: string; platos: string[] }>;
@@ -353,13 +354,14 @@ function anotar(
 // Busca con y sin sufijo cuando lo hay, y devuelve el mejor de los dos.
 async function buscarMejor(
   termino: string,
+  cadena: Cadena,
   traza?: TrazaMatching
 ): Promise<ProductoWong> {
   const limpio = terminoDeBusqueda(termino);
 
   // Toda respuesta del proveedor pasa por la reordenación por clase antes de
   // que nadie la mire: es una sola puerta, igual que el normalizador.
-  const buscar = async (q: string) => reordenarPorClase(q, await buscarEnWong(q));
+  const buscar = async (q: string) => reordenarPorClase(q, await buscarEnWong(q, cadena));
 
   // Sin sufijo de venta solo cambia la cantidad del principio («2 kg de pollo»),
   // y esa nunca se busca: con ella, Wong contestaba con comida de gato de 2 kg.
@@ -396,12 +398,13 @@ async function buscarMejor(
 // que se está observando.
 async function buscarConAlternativa(
   pedido: Pedido,
+  cadena: Cadena,
   traza?: TrazaMatching
 ): Promise<ItemCarrito> {
   const ingrediente = pedido.producto;
   // Se prueba con y sin sufijo de venta; el ingrediente que se le muestra al
   // usuario sigue siendo el suyo: no le cambiamos las palabras.
-  const exacto = await buscarMejor(ingrediente, traza);
+  const exacto = await buscarMejor(ingrediente, cadena, traza);
   if (exacto.encontrado) {
     if (traza) traza.elegido = exacto.nombre;
     return {
@@ -417,7 +420,7 @@ async function buscarConAlternativa(
   const limpio = terminoDeBusqueda(ingrediente);
   const generico = limpio.split(" ")[0];
   if (generico.toLowerCase() !== limpio.toLowerCase()) {
-    const alt = reordenarPorClase(generico, await buscarEnWong(generico));
+    const alt = reordenarPorClase(generico, await buscarEnWong(generico, cadena));
     if (traza) {
       traza.intentos.push(anotar("alternativa genérica", generico, alt));
     }
@@ -469,7 +472,11 @@ export function subtotalDe(it: ItemCarrito): number | undefined {
 }
 
 // Corazón compartido: de una intención ya normalizada al carrito con productos.
-async function armarCarrito(base: Intencion, pedidos: Pedido[]): Promise<Carrito> {
+async function armarCarrito(
+  base: Intencion,
+  pedidos: Pedido[],
+  cadena: Cadena
+): Promise<Carrito> {
   // Las trazas solo se crean si DEBUG_MATCHING está activo: en producción esto
   // es exactamente el mismo trabajo que ya se hacía, sin coste extra.
   const trazas = DEBUG_MATCHING
@@ -483,7 +490,7 @@ async function armarCarrito(base: Intencion, pedidos: Pedido[]): Promise<Carrito
 
   // En paralelo: no hacemos esperar al usuario ingrediente por ingrediente.
   const items = await Promise.all(
-    pedidos.map((p, i) => buscarConAlternativa(p, trazas?.[i]))
+    pedidos.map((p, i) => buscarConAlternativa(p, cadena, trazas?.[i]))
   );
 
   const total = items.reduce((s, it) => s + (subtotalDe(it) ?? 0), 0);
@@ -508,12 +515,16 @@ async function armarCarrito(base: Intencion, pedidos: Pedido[]): Promise<Carrito
 
 // Cualquier intención (menú, receta o lista) -> carrito con productos reales.
 // El texto libre nunca trae cantidades: los pesables quedarán pendientes.
-export async function comprarIntencion(mensaje: string): Promise<Carrito | null> {
+export async function comprarIntencion(
+  mensaje: string,
+  cadena: Cadena = CADENA_POR_DEFECTO
+): Promise<Carrito | null> {
   const base = await normalizarIntencion(mensaje);
   if (!base) return null;
   return armarCarrito(
     base,
-    base.ingredientes.map((producto) => ({ producto }))
+    base.ingredientes.map((producto) => ({ producto })),
+    cadena
   );
 }
 
@@ -524,7 +535,8 @@ export async function comprarIntencion(mensaje: string): Promise<Carrito | null>
 // por la que un carrito importado puede explicarse solo.
 export async function comprarLista(
   titulo: string,
-  pedidos: Pedido[]
+  pedidos: Pedido[],
+  cadena: Cadena = CADENA_POR_DEFECTO
 ): Promise<Carrito | null> {
   const vistos = new Set<string>();
   const limpios: Pedido[] = [];
@@ -538,7 +550,8 @@ export async function comprarLista(
 
   return armarCarrito(
     { menu: titulo, titulo, platos: [], ingredientes: limpios.map((p) => p.producto) },
-    limpios
+    limpios,
+    cadena
   );
 }
 
@@ -556,7 +569,10 @@ export async function comprarLista(
 
 export type LineaPedida = { texto: string; cantidad?: number; unidad?: "kg" | "un" };
 
-export async function comprarLibreta(lineas: LineaPedida[]): Promise<Carrito | null> {
+export async function comprarLibreta(
+  lineas: LineaPedida[],
+  cadena: Cadena = CADENA_POR_DEFECTO
+): Promise<Carrito | null> {
   const vivas = (lineas ?? []).filter((l) => (l?.texto ?? "").trim());
   if (vivas.length === 0) return null;
 
@@ -587,6 +603,7 @@ export async function comprarLibreta(lineas: LineaPedida[]): Promise<Carrito | n
 
   return armarCarrito(
     { menu: "Tu compra", titulo: "Tu compra", platos: [], ingredientes: pedidos.map((p) => p.producto) },
-    pedidos
+    pedidos,
+    cadena
   );
 }

@@ -15,8 +15,7 @@
 // Una respuesta válida pero vacía NO es un fallo: se devuelve "no encontrado".
 
 import type { ProductoWong } from "@/lib/catalog";
-
-const BASE = "https://www.wong.pe";
+import { CADENA_POR_DEFECTO, type Cadena } from "@/lib/cadenas";
 const TIMEOUT_MS = 8000;
 
 // Forma parcial de la respuesta VTEX (solo lo que usamos).
@@ -41,12 +40,15 @@ type VtexProduct = {
   items?: VtexItem[];
 };
 
-export async function buscarEnWongVtex(ingrediente: string): Promise<ProductoWong> {
+export async function buscarEnWongVtex(
+  ingrediente: string,
+  cadena: Cadena = CADENA_POR_DEFECTO
+): Promise<ProductoWong> {
   // Ciclo 5: pedimos el Top-6, no el primero. Las alternativas son la materia
   // prima de la corrección y, por tanto, de todo el aprendizaje del perfil.
   // Pedimos 10: la reordenación por clase (lib/cart.ts) necesita margen para
   // pasar por delante el producto suelto cuando la tienda pone primero los packs.
-  const url = `${BASE}/api/io/_v/api/intelligent-search/product_search/?query=${encodeURIComponent(
+  const url = `${cadena.base}/api/io/_v/api/intelligent-search/product_search/?query=${encodeURIComponent(
     ingrediente
   )}&count=10&page=1&locale=es-PE`;
 
@@ -61,27 +63,27 @@ export async function buscarEnWongVtex(ingrediente: string): Promise<ProductoWon
 
   const data = ((await res.json()) as { products?: VtexProduct[] })?.products;
   if (!Array.isArray(data) || data.length === 0) {
-    return { ingrediente, encontrado: false, motivo: "sin resultados", proveedor: "wong" };
+    return { ingrediente, encontrado: false, motivo: "sin resultados", proveedor: cadena.id };
   }
 
   // Mapeamos todos y nos quedamos con los que tienen precio. El primero es el
   // elegido por defecto (orden de relevancia de Wong); el resto, alternativas.
-  const candidatos = data.map((p) => mapear(ingrediente, p)).filter((c) => c.encontrado);
+  const candidatos = data.map((p) => mapear(ingrediente, p, cadena)).filter((c) => c.encontrado);
   if (candidatos.length === 0) {
-    return { ingrediente, encontrado: false, motivo: "sin precio", proveedor: "wong" };
+    return { ingrediente, encontrado: false, motivo: "sin precio", proveedor: cadena.id };
   }
 
   const [mejor, ...resto] = candidatos;
   return { ...mejor, alternativas: resto };
 }
 
-function mapear(ingrediente: string, p: VtexProduct): ProductoWong {
+function mapear(ingrediente: string, p: VtexProduct, cadena: Cadena): ProductoWong {
   const item = p.items?.[0];
   const oferta = item?.sellers?.[0]?.commertialOffer;
   const precio = oferta?.Price;
 
   if (typeof precio !== "number" || precio <= 0) {
-    return { ingrediente, encontrado: false, motivo: "sin precio", proveedor: "wong" };
+    return { ingrediente, encontrado: false, motivo: "sin precio", proveedor: cadena.id };
   }
 
   // categoría: VTEX la da como "/Abarrotes/Arroz/Arroz Extra y Superior/".
@@ -125,7 +127,7 @@ function mapear(ingrediente: string, p: VtexProduct): ProductoWong {
     categoria,
     categoriaRuta,
     disponible,
-    url: p.linkText ? `${BASE}/${p.linkText}/p` : p.link,
-    proveedor: "wong",
+    url: p.linkText ? `${cadena.base}/${p.linkText}/p` : p.link,
+    proveedor: cadena.id,
   };
 }

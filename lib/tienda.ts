@@ -18,16 +18,18 @@
 // pasamos a PREGUNTARLO. Un total que calculamos nosotros puede desviarse de lo
 // que cobra la tienda; uno que nos da la tienda, no.
 
-const BASE = "https://www.wong.pe";
+import { cadenaDe, type Cadena, type CadenaId } from "@/lib/cadenas";
+
 const TIMEOUT_MS = 9000;
 
-// El canal de venta de la tienda, el mismo que usa la entrega. Ver lib/entrega.ts.
-const CANAL = "70";
-const SELLER = "1";
+// Dirección, canal de venta y seller salen de la cadena (lib/cadenas.ts): son
+// los mismos que usa la entrega. Ver lib/entrega.ts.
 
 export type Tienda = {
   id: string;
   nombre: string; // "Wong Óvalo Gutiérrez"
+  // Opcional: una tienda guardada antes de que hubiera cadenas es de Wong.
+  cadena?: CadenaId;
   distrito?: string;
   lon: number;
   lat: number;
@@ -86,21 +88,24 @@ type PuntoVtex = {
 
 // El directorio cambia como mucho cuando abre una tienda: no tiene sentido
 // pedirlo en cada compra. Doce llamadas cacheadas seis horas.
-let cache: { ts: number; tiendas: Tienda[] } | null = null;
+const cache = new Map<CadenaId, { ts: number; tiendas: Tienda[] }>();
 const VIDA_CACHE_MS = 6 * 60 * 60 * 1000;
 
 const limpiar = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 
-export const wongTienda: CatalogoDeTienda = {
+export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
+  const { base, canal, seller } = cadena;
+  return {
   async tiendas() {
-    if (cache && Date.now() - cache.ts < VIDA_CACHE_MS) return cache.tiendas;
+    const guardado = cache.get(cadena.id);
+    if (guardado && Date.now() - guardado.ts < VIDA_CACHE_MS) return guardado.tiendas;
 
     const respuestas = await Promise.all(
       ANCLAS.map(async ([lon, lat]) => {
         try {
           const res = await fetch(
-            `${BASE}/api/checkout/pub/pickup-points?geoCoordinates=${lon};${lat}&sc=${CANAL}`,
+            `${base}/api/checkout/pub/pickup-points?geoCoordinates=${lon};${lat}&sc=${canal}`,
             { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) }
           );
           if (!res.ok) return [];
@@ -123,17 +128,17 @@ export const wongTienda: CatalogoDeTienda = {
       if (!/^retiro en tienda/i.test(bruto) || !coords || coords.length < 2) continue;
 
       const nombre = bruto.replace(/^retiro en tienda\s+/i, "").trim();
-      // Hoy el producto es de Wong. El directorio trae también los Metro de
-      // Cencosud —comparten cuenta de VTEX—, y ese es exactamente el camino por
-      // el que esta preferencia crecerá a otras cadenas. Pero no se enseña una
-      // tienda que el producto todavía no sabe atender.
-      if (!/^wong/i.test(nombre)) continue;
+      // El directorio de Wong trae también los Metro de Cencosud. Cada cadena
+      // enseña solo las suyas: una tienda se atiende con el catálogo, los
+      // precios y el carrito de SU cadena, nunca con los de otra.
+      if (!cadena.prefijoTienda.test(nombre)) continue;
 
       const clave = limpiar(nombre);
       if (porNombre.has(clave)) continue;
       porNombre.set(clave, {
         id: p?.id ?? clave,
         nombre,
+        cadena: cadena.id,
         distrito: p?.address?.neighborhood ?? undefined,
         lon: coords[0],
         lat: coords[1],
@@ -143,18 +148,18 @@ export const wongTienda: CatalogoDeTienda = {
     const tiendas = [...porNombre.values()].sort((a, b) =>
       a.nombre.localeCompare(b.nombre, "es")
     );
-    if (tiendas.length > 0) cache = { ts: Date.now(), tiendas };
+    if (tiendas.length > 0) cache.set(cadena.id, { ts: Date.now(), tiendas });
     return tiendas;
   },
 
   async precios(lineas, tienda) {
     if (lineas.length === 0) return { tienda: tienda.nombre, lineas: [] };
 
-    const res = await fetch(`${BASE}/api/checkout/pub/orderForms/simulation?sc=${CANAL}`, {
+    const res = await fetch(`${base}/api/checkout/pub/orderForms/simulation?sc=${canal}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        items: lineas.map((l) => ({ id: l.sku, quantity: l.unidades, seller: SELLER })),
+        items: lineas.map((l) => ({ id: l.sku, quantity: l.unidades, seller })),
         country: "PER",
         // Las coordenadas son el único dato que resuelve la zona. Medido: el
         // código postal NO sirve en esta cuenta —devuelve todo sin stock—, que
@@ -186,7 +191,13 @@ export const wongTienda: CatalogoDeTienda = {
       total: sumarTotales(d),
     };
   },
-};
+  };
+}
+
+// La tienda de una cadena, por su id. Lo que no se reconoce es Wong.
+export function catalogoDeLaTienda(tienda?: Pick<Tienda, "cadena">): CatalogoDeTienda {
+  return catalogoDeTienda(cadenaDe(tienda?.cadena));
+}
 
 // VTEX devuelve el total desglosado ("Items", "Discounts", "Shipping"…). Nos
 // quedamos con los conceptos de producto: el envío no es parte de la compra que
