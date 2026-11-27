@@ -15,9 +15,9 @@
   producto (Wong lo pone en la franja).
 - Comparación con las otras dos, una tarjeta por cadena. Wong→Plaza Vea: 5 de 6
   iguales por EAN; Plaza Vea→Metro: 3 de 6 (EAN distintos).
-- Tarjeta Oh!: se ofrece en Plaza Vea. Su precio con tarjeta NO se enseña aún:
-  el teaser («TARJETA OH - PVEA», `PromotionalPriceTableItemsDiscount`) no está
-  verificado contra la web.
+- Tarjeta Sip (antes Oh!), verificada con dos capturas de la PO: teaser «TARJETA
+  OH - PVEA», `PromotionalPriceTableItemsDiscount` = soles que se restan al precio
+  REGULAR. Bola DECO HOME 3.90 − 2.03 = 1.87; Cusqueña Trigo 26.90 − 5.40 = 21.50.
 
 ## ▶️ Novedad 2026-11-27 — Metro, envío y mejor emparejamiento (PR #3)
 

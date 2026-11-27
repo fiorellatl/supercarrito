@@ -540,7 +540,7 @@ export function FilaPago({
 // tienda): dentro de una pantalla animada quedaría debajo del botón de pedir.
 // La elección de tarjetas, compartida por la hoja de «Revisar y pedir» y por el
 // paso «¿Pagas con alguna?» del inicio. Cada cadena ofrece las suyas
-// (lib/cadenas.ts): Tarjeta Cencosud y Wong Prime en Wong, Tarjeta Oh! en
+// (lib/cadenas.ts): Tarjeta Cencosud y Wong Prime en Wong, Tarjeta Sip en
 // Plaza Vea. Lo marcado en otra cadena se conserva aunque aquí no se vea.
 export function usarTarjetas(pago: { tarjetas: string[]; otra?: string } | undefined, cadena: string) {
   const [marcadas, setMarcadas] = useState<string[]>(pago?.tarjetas ?? []);
@@ -593,7 +593,7 @@ export function usarTarjetas(pago: { tarjetas: string[]; otra?: string } | undef
         <input
           value={otra}
           onChange={(e) => setOtra(e.target.value)}
-          placeholder="¿Cuál? Ej. BBVA, Oh!"
+          placeholder="¿Cuál? Ej. BBVA, Ripley"
           maxLength={40}
           aria-label="Otra tarjeta"
           autoFocus

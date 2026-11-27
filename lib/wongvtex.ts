@@ -22,6 +22,7 @@ const TIMEOUT_MS = 8000;
 // Forma parcial de la respuesta VTEX (solo lo que usamos).
 type VtexOffer = {
   Price?: number;
+  ListPrice?: number;
   IsAvailable?: boolean;
   AvailableQuantity?: number;
   teasers?: Parameters<typeof teasersDeIS>[0];
@@ -156,7 +157,7 @@ export function mapear(ingrediente: string, p: VtexProduct, cadena: Cadena): Pro
   const disponible =
     oferta?.IsAvailable ?? ((oferta?.AvailableQuantity ?? 0) > 0);
 
-  const conTarjeta = preciosConTarjeta(teasersDeIS(oferta?.teasers), precio);
+  const conTarjeta = preciosConTarjeta(teasersDeIS(oferta?.teasers), precio, oferta?.ListPrice);
 
   return {
     ingrediente,

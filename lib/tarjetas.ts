@@ -30,8 +30,15 @@ export type Teaser = {
 
 const CONDICIONES_DE_PAGO = new Set(["PaymentMethodId", "RestrictionsBins"]);
 
+// Plaza Vea (medido el 2026-11-27 con la captura de la PO de la «Bola Lazo DECO
+// HOME»: Regular S/ 3.90 · Online S/ 2.34 · Tarjeta Sip S/ 1.87): la promoción se
+// llama «TARJETA OH - PVEA» (la Oh! pasó a ser Sip), su condición es solo el
+// medio de pago (sin BIN), y el efecto `PromotionalPriceTableItemsDiscount` son
+// SOLES que se restan al precio REGULAR: 3.90 − 2.03 = 1.87. Las variantes
+// «Oh-Pay» (billetera) y «…-Oculto» (de una sola tienda) no cuentan.
 function tarjetaDe(nombre: string): string | undefined {
   if (/\[TCENCO\]|tarjeta cencosud|\bTC (?:wong|metro)\b/i.test(nombre)) return "Tarjeta Cencosud";
+  if (/^tarjeta (?:oh|sip)\b/i.test(nombre) && !/oculto|pay/i.test(nombre)) return "Tarjeta Sip";
   if (/interbank|\bibk\b/i.test(nombre)) return "Interbank";
   return undefined;
 }
@@ -39,10 +46,12 @@ function tarjetaDe(nombre: string): string | undefined {
 const redondo = (n: number) => Math.round(n * 100) / 100;
 
 // El mejor precio con cada tarjeta que conocemos para un producto de `precio`.
-export function preciosConTarjeta(teasers: Teaser[], precio: number): ConTarjeta[] {
+// `lista` es el precio regular: sobre él resta Plaza Vea su monto con tarjeta.
+export function preciosConTarjeta(teasers: Teaser[], precio: number, lista?: number): ConTarjeta[] {
   const mejor = new Map<string, ConTarjeta>();
   for (const t of teasers) {
-    if (!t.condiciones.RestrictionsBins || t.minimo > 0) continue;
+    if (t.minimo > 0) continue;
+    if (!t.condiciones.RestrictionsBins && !t.condiciones.PaymentMethodId) continue;
     if (Object.keys(t.condiciones).some((c) => !CONDICIONES_DE_PAGO.has(c))) continue;
     const tarjeta = tarjetaDe(t.nombre);
     if (!tarjeta) continue;
@@ -50,9 +59,15 @@ export function preciosConTarjeta(teasers: Teaser[], precio: number): ConTarjeta
     let oferta: ConTarjeta | undefined;
     const pct = Number(t.efectos.PercentualDiscount);
     const tope = Number(t.efectos.MaximumUnitPriceDiscount);
-    if (Object.keys(t.efectos).length !== 1) continue;
+    const menos = Number(t.efectos.PromotionalPriceTableItemsDiscount);
+    const efectos = Object.keys(t.efectos).filter((e) => e !== "PromotionalPriceTableItemsIds");
+    if (efectos.length !== 1) continue;
     if (pct > 0 && pct < 100) oferta = { tarjeta, precio: redondo(precio * (1 - pct / 100)), porcentaje: pct };
     else if (tope > 0 && tope / 100 < precio) oferta = { tarjeta, precio: redondo(tope / 100) };
+    else if (menos > 0 && lista && lista - menos > 0 && lista - menos < precio)
+      // Sin porcentaje: la web dice «−20%» contra el precio regular, y al lado
+      // de «× S/ 22.50» ese número no se explicaría solo.
+      oferta = { tarjeta, precio: redondo(lista - menos) };
     if (!oferta) continue;
     const ya = mejor.get(tarjeta);
     if (!ya || oferta.precio < ya.precio) mejor.set(tarjeta, oferta);

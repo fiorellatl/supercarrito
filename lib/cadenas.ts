@@ -75,7 +75,7 @@ export const CADENAS: Record<CadenaId, Cadena> = {
     puntoDeRetiro: /^plaza\s?vea\s*-?\s*(.+)$/i,
     prefijo: "Plaza Vea",
     zona: "codigoPostal",
-    tarjetas: ["Tarjeta Oh!", "Interbank"],
+    tarjetas: ["Tarjeta Sip", "Interbank"],
     verificada: true,
   },
 };

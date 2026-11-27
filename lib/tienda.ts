@@ -235,7 +235,7 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
     if (!res.ok) throw new Error(`simulation ${res.status}`);
     const d = await res.json();
 
-    const porSku = new Map<string, { price?: number; sellingPrice?: number; availability?: string }>();
+    const porSku = new Map<string, { price?: number; listPrice?: number; sellingPrice?: number; availability?: string }>();
     for (const it of d?.items ?? []) porSku.set(String(it.id), it);
     const teasers = await promos;
 
@@ -258,7 +258,11 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
           precio,
           disponible: it?.availability === "available",
           conTarjeta:
-            teasers && precio ? preciosConTarjeta(teasers.get(l.sku) ?? [], precio) : teasers ? [] : undefined,
+            teasers && precio
+              ? preciosConTarjeta(teasers.get(l.sku) ?? [], precio, it?.listPrice ? it.listPrice / 100 : undefined)
+              : teasers
+                ? []
+                : undefined,
         };
       }),
       total: sumarTotales(d),
