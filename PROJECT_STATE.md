@@ -13,9 +13,13 @@
   Sobre 30 productos típicos, de ~16 bien elegidos a 28.
 - **Envío real por distrito** en «Revisar y pedir», aparte y sumado a la vista.
 - **Tarjetas/Prime:** se pregunta (con «Otra» y «Ninguna»), se guarda, no resta.
-- **Siguiente (bloque B, aprobado si hay diferencia):** comparar la canasta.
-  Pista: el mismo SKU vale distinto (aceite Primor 1.8 L: Wong S/ 17.10, Metro
-  S/ 16.10), así que comparar es simular el mismo carrito en las dos.
+- **Comparar (bloque B):** «La misma compra en Metro/Wong» en «Revisar y pedir».
+  Solo el MISMO producto (mismo SKU + EAN o nombre, o mismo EAN, o mismo nombre
+  exacto; `lib/comparar.ts`), totales y envío de cada tienda, y lo que no entra
+  se cuenta. Canasta de 30: 22 comparables; Metro ~S/ 9 más barato + envío.
+  «Pedir en Metro» se lleva los mismos productos comparados.
+- **Por probar con familias:** ¿cambian de cadena por S/ 8–20? ¿Entienden
+  «productos que no entran»? ¿Qué tarjetas dicen tener?
 
 ## ▶️ Estado actual — 2026-11-26 (retomada tras pausa desde el 2026-08-03)
 

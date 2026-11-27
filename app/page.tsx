@@ -69,7 +69,7 @@ import {
 import type { LineaExtraida } from "@/lib/evidencia";
 import type { ProductoWong } from "@/lib/catalog";
 import { entregaPorEnlace, unidadesDeVenta } from "@/lib/entrega";
-import { cadenaDe } from "@/lib/cadenas";
+import { cadenaDe, cadenasDisponibles } from "@/lib/cadenas";
 import type { LineaAValorar, Tienda } from "@/lib/tienda";
 
 import { casaVacia, crearCasa, monograma, saludo, tieneCasa, type Casa } from "@/lib/casa";
@@ -90,6 +90,8 @@ import { Compositor } from "@/app/ui/Libreta";
 import LineaCarrito, { type EstadoLinea } from "@/app/ui/LineaCarrito";
 import { Pantalla, Seccion, Vacio } from "@/app/ui/Pantalla";
 import EnvioYPago, { OTRO_DISTRITO, type EstadoEnvio } from "@/app/ui/EnvioYPago";
+import Comparar, { type EstadoComparar } from "@/app/ui/Comparar";
+import type { LineaAComparar } from "@/lib/comparar";
 import PantallaCalma from "@/app/ui/PantallaCalma";
 import Papaya, { type Pepa } from "@/app/ui/Papaya";
 import AsiFunciona from "@/app/ui/AsiFunciona";
@@ -351,6 +353,7 @@ export default function App() {
   const [valoradaPara, setValoradaPara] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [envio, setEnvio] = useState<EstadoEnvio>({ tipo: "sin-distrito" });
+  const [comparacion, setComparacion] = useState<EstadoComparar>({ tipo: "nada" });
 
   const compRef = useRef<HTMLInputElement>(null);
   const archivoRef = useRef<HTMLInputElement>(null);
@@ -504,6 +507,51 @@ export default function App() {
   );
 
   const idTienda = perfil.tienda?.id;
+
+  // La misma compra en la otra cadena (bloque B). Solo con tienda elegida, solo
+  // en «Revisar y pedir» y solo con lo que tiene cantidad: lo mismo que viajaría.
+  const aComparar = useMemo(() => {
+    const ls: LineaAComparar[] = [];
+    for (const it of items ?? []) {
+      const p = it.elegido;
+      if (it.fuera || !p?.encontrado || !p.sku) continue;
+      const c = cantidadDe(it, perfil);
+      if (c == null) continue;
+      ls.push({
+        sku: p.sku,
+        ean: p.ean,
+        unidades: unidadesDeVenta(c, p),
+        nombre: p.nombre ?? it.ingrediente,
+        cantidadMinima: p.cantidadMinima,
+      });
+    }
+    return ls;
+  }, [items, perfil]);
+  const firmaComparar = aComparar.map((l) => `${l.sku}:${l.unidades}`).join("|");
+  const hayOtraCadena = cadenasDisponibles().length > 1;
+  useEffect(() => {
+    if (ruta !== "pedir" || !perfil.tienda || !hayOtraCadena || aComparar.length === 0) {
+      setComparacion({ tipo: "nada" });
+      return;
+    }
+    let vivo = true;
+    setComparacion({ tipo: "cargando" });
+    fetch("/api/comparar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tienda: perfil.tienda, lineas: aComparar, distrito: perfil.envio?.distrito }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!vivo) return;
+        setComparacion(d.ok ? { tipo: "listo", ...d } : { tipo: "sin-respuesta" });
+      })
+      .catch(() => vivo && setComparacion({ tipo: "sin-respuesta" }));
+    return () => {
+      vivo = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ruta, firmaComparar, idTienda, perfil.envio?.distrito, hayOtraCadena]);
 
   // El envío, preguntado a la tienda solo en «Revisar y pedir» y solo con lo
   // que de verdad va a viajar. Es SU tarifa para el distrito: no se calcula.
@@ -777,6 +825,31 @@ export default function App() {
     actualizarPerfil((p) => elegirTienda(p, t));
     if (otraCadena) setItems(null);
     setHojaTienda(false);
+  }
+
+  // «Pedir en Metro» desde la comparación: cambia la tienda y se lleva los
+  // MISMOS productos que se compararon (no los vuelve a buscar: lo comparado es
+  // lo que se pide). Las líneas con algo que no entró en la comparación se
+  // vuelven a buscar enteras en la nueva cadena. Cantidades y lo aprendido, igual.
+  function pedirAlla(destino: Tienda, equivalentes: Record<string, ProductoWong>) {
+    perfilRef.current = elegirTienda(perfilRef.current, destino);
+    actualizarPerfil((p) => elegirTienda(p, destino));
+    setItems((xs) => {
+      const lista = xs ?? [];
+      const incompletas = new Set(
+        lista
+          .filter((it) => !it.elegido?.sku || !equivalentes[it.elegido.sku])
+          .map((it) => it.lineaId)
+      );
+      const quedan = lista
+        .filter((it) => !incompletas.has(it.lineaId))
+        .map((it) => {
+          const eq = equivalentes[it.elegido.sku!];
+          const elegido = { ...eq, ingrediente: it.elegido.ingrediente };
+          return { ...it, elegido, candidatos: [elegido] };
+        });
+      return quedan.length > 0 ? quedan : null;
+    });
   }
 
   // Una línea, una pregunta a Wong. Cada línea sabe qué productos salieron de
@@ -1640,6 +1713,15 @@ export default function App() {
                 productos={montoEntrega}
                 pago={perfil.pago}
                 onPago={(t, otra) => actualizarPerfil((p) => responderPago(p, t, otra))}
+              />
+              <Comparar
+                estado={comparacion}
+                conDistrito={!!perfil.envio?.distrito && perfil.envio.distrito !== OTRO_DISTRITO}
+                nombreCadena={(t) => cadenaDe(t.cadena).nombre}
+                onPedirAlla={() => {
+                  if (comparacion.tipo === "listo")
+                    pedirAlla(comparacion.destino.tienda, comparacion.equivalentes);
+                }}
               />
 
               {/* Redondeos a la vista. Siempre hacia arriba y jamás en silencio. */}

@@ -29,7 +29,7 @@ type VtexItem = {
   images?: { imageUrl?: string }[];
   sellers?: { commertialOffer?: VtexOffer }[];
 };
-type VtexProduct = {
+export type VtexProduct = {
   productId?: string;
   productName?: string;
   brand?: string;
@@ -77,7 +77,7 @@ export async function buscarEnWongVtex(
   return { ...mejor, alternativas: resto };
 }
 
-function mapear(ingrediente: string, p: VtexProduct, cadena: Cadena): ProductoWong {
+export function mapear(ingrediente: string, p: VtexProduct, cadena: Cadena): ProductoWong {
   const item = p.items?.[0];
   const oferta = item?.sellers?.[0]?.commertialOffer;
   const precio = oferta?.Price;
