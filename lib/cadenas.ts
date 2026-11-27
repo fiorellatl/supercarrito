@@ -11,7 +11,7 @@
 // Hasta entonces existe aquí, pero ni se ofrece ni se consulta: un carrito que
 // no se puede comprar es peor que no tener carrito.
 
-export type CadenaId = "wong" | "metro" | "plazavea";
+export type CadenaId = "wong" | "metro" | "plazavea" | "makro";
 
 export type Cadena = {
   id: CadenaId;
@@ -74,6 +74,21 @@ export const CADENAS: Record<CadenaId, Cadena> = {
     seller: "1",
     puntoDeRetiro: /^plaza\s?vea\s*-?\s*(.+)$/i,
     prefijo: "Plaza Vea",
+    zona: "codigoPostal",
+    tarjetas: ["Tarjeta Sip", "Interbank"],
+    verificada: true,
+  },
+  makro: {
+    id: "makro",
+    nombre: "Makro",
+    base: "https://www.makro.plazavea.com.pe",
+    // Medido el 2026-11-27: /api/segments -> {"channel":"9"}, seller "1", y el
+    // enlace /checkout/cart/add?…&sc=9 llenó un carrito real (arroz ×2 +
+    // arroz Faraón → S/ 64.30 leído en el orderForm). Misma empresa que Plaza
+    // Vea (SPSA): mismo directorio de tiendas, mismas reglas, otro canal.
+    canal: "9",
+    seller: "1",
+    puntoDeRetiro: /^(makro\b.*)$/i,
     zona: "codigoPostal",
     tarjetas: ["Tarjeta Sip", "Interbank"],
     verificada: true,

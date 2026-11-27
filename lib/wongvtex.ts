@@ -111,12 +111,22 @@ async function seguirRedireccion(destino: string, cadena: Cadena): Promise<VtexP
       const res = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
       return res.ok ? ((await res.json()) as VtexProduct[]) : undefined;
     }
-    const partes = u.pathname.split("/").filter(Boolean).slice(0, 3);
+    // Makro (2026-11-27) redirige casi todo, y el último tramo a veces es la
+    // MARCA: «leche gloria» → /lacteos-y-huevos/leche/gloria. Primero todo como
+    // categorías; si no hay nada, el último tramo como marca.
+    const partes = u.pathname.split("/").filter(Boolean).slice(0, 4).map((p) => encodeURIComponent(decodeURIComponent(p)));
     if (partes.length === 0) return undefined;
-    const facetas = partes.map((p, i) => `category-${i + 1}/${encodeURIComponent(decodeURIComponent(p))}`).join("/");
-    url = `${cadena.base}/api/io/_v/api/intelligent-search/product_search/${facetas}?count=10&page=1&locale=es-PE`;
-    const res = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
-    return res.ok ? ((await res.json()) as { products?: VtexProduct[] })?.products : undefined;
+    const comoCategorias = (ps: string[]) => ps.map((p, i) => `category-${i + 1}/${p}`).join("/");
+    const intentos = [comoCategorias(partes)];
+    if (partes.length > 1) intentos.push(`${comoCategorias(partes.slice(0, -1))}/brand/${partes[partes.length - 1]}`);
+    for (const facetas of intentos) {
+      url = `${cadena.base}/api/io/_v/api/intelligent-search/product_search/${facetas}?count=10&page=1&locale=es-PE`;
+      const res = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+      if (!res.ok) continue;
+      const productos = ((await res.json()) as { products?: VtexProduct[] })?.products;
+      if (productos?.length) return productos;
+    }
+    return undefined;
   } catch {
     return undefined;
   }

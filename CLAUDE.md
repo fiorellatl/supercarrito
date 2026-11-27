@@ -119,9 +119,10 @@ Reglas permanentes:
   `orderForms/simulation?sc=70`; el carrito se entrega por deep link con
   `sc=70&qcart=1` (`qcart` evita la app en iPhone; en Android la app se come el
   enlace → «Copiar el enlace»).
-- **Tres cadenas: Wong, Metro y Plaza Vea** (2026-11-27), como configuración en
+- **Cuatro cadenas: Wong, Metro, Plaza Vea y Makro** (2026-11-27), como configuración en
   `lib/cadenas.ts` (dirección, canal, seller, cómo ubica la tienda, tarjetas).
-  Metro: `sc=1`; Plaza Vea: `sc=1`, verificados leyendo el carrito. Wong y Metro
+  Metro: `sc=1`; Plaza Vea: `sc=1`; Makro: `sc=9` (mismo dueño y reglas que
+  Plaza Vea), verificados leyendo el carrito. Wong y Metro
   comparten los IDs de SKU; Plaza Vea (Intercorp) no: se compara por EAN.
   Plaza Vea ubica por **código postal** (con coordenadas solas dice
   «cannotBeDelivered»), redirige búsquedas comunes a su categoría (se sigue la

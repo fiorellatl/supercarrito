@@ -4,11 +4,14 @@
 > hay que leer para retomar**; el resto es la historia de ciclos y decisiones,
 > que se consulta cuando hace falta. Estrategia y competencia: `PRODUCT_CONTEXT.md`.
 
-## ⏭ Siguiente: Makro y Tottus (pedido por la PO el 2026-11-27, medido el mismo día)
+## ⏭ Makro y Tottus (pedido por la PO el 2026-11-27, medido el mismo día)
 
-- **Makro:** su tienda online es `www.makro.plazavea.com.pe` (makro.pe solo
-  enlaza ahí). Es de Supermercados Peruanos como Plaza Vea, así que casi seguro
-  es VTEX y entra como configuración. Bloqueado en el entorno: hay que permitirlo.
+- **Makro: HECHO (cuarta cadena).** `www.makro.plazavea.com.pe`, canal `sc=9`,
+  seller 1, carrito real por enlace verificado (S/ 64.30 leído en el orderForm).
+  Mismo directorio que Plaza Vea (4 tiendas en Lima) y mismas reglas (código
+  postal, sellingPrice). Redirige casi toda búsqueda; el último tramo puede ser
+  la marca (`/lacteos-y-huevos/leche/gloria` → categoría + `brand/gloria`).
+  Su envío en Lima es S/ 19.90: en compras chicas pierde contra las demás.
 - **Tottus (Falabella):** otra plataforma. El buscador es público y en JSON:
   `www.tottus.com.pe/s/browse/v1/search/pe?Ntt=<texto>` (48 por página), con
   `prices[]` de tipo `internetPrice`, `normalPrice` y **`cmrPrice`** (tarjeta CMR,

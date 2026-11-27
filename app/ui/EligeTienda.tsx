@@ -52,7 +52,12 @@ export function ListaTiendas({
   return (
     <div style={{ display: "grid", gap: 10 }}>
       {cadenas.length > 1 && (
-        <div role="radiogroup" aria-label="Supermercado" style={{ display: "flex", gap: 8 }}>
+        <div
+          role="radiogroup"
+          aria-label="Supermercado"
+          // Con cuatro cadenas no caben en una fila de celular: dos y dos.
+          style={{ display: "grid", gridTemplateColumns: `repeat(${cadenas.length > 3 ? 2 : cadenas.length}, 1fr)`, gap: 8 }}
+        >
           {cadenas.map((c) => {
             const on = c === cadena;
             return (
@@ -64,8 +69,9 @@ export function ListaTiendas({
                 onClick={() => setCadena(c)}
                 className="sc-boton"
                 style={{
-                  flex: 1,
                   minHeight: 48,
+                  padding: "0 12px",
+                  whiteSpace: "nowrap",
                   borderRadius: 999,
                   border: `2px solid ${color.tinta}`,
                   background: on ? color.tinta : color.blanco,
