@@ -252,6 +252,9 @@ function puntuarResultado(
 const UTENSILIO =
   /\b(cortador(?:a|es)?|rallador(?:a|es)?|molde(?:s)?|exprimidor(?:a|es)?|batidor(?:a|es)?|licuadora(?:s)?|pelador(?:a|es)?|mandolina(?:s)?|colador(?:es)?|escurridor(?:es)?|cocedor(?:a|es)?|hervidor(?:a|es)?|separador(?:a|es)?|sartenes?|sarten|olla(?:s)?|cuchillo(?:s)?|espatula(?:s)?|cucharon(?:es)?|batidora(?:s)?|tostadora(?:s)?|waflera(?:s)?|freidora(?:s)?)\b/i;
 
+const MASCOTA = /\b(?:mascotas?|perros?|perritos?|gatos?|gatitos?|cachorros?|ricocan|ricocat)\b/;
+const PACK = /\b(?:twopack|tripack|sixpack|pack)\b/;
+
 // ¿Qué tan buen candidato es, más allá del orden que trajo el proveedor?
 function puntuarCandidato(consulta: string, p: ProductoWong): number {
   if (!p.encontrado) return -99;
@@ -275,6 +278,17 @@ function puntuarCandidato(consulta: string, p: ProductoWong): number {
   // 3. Desempate: en español el sustantivo principal del producto va primero.
   if (claves.length > 0 && nombre.startsWith(claves[0])) punto += 0.3;
 
+  // 4. Un pack no es la apuesta por defecto si nadie pidió un pack. La tienda
+  //    pone primero «Twopack Aceite Primor» y «Sixpack Leche Gloria»: es su
+  //    forma de vender más, no lo que escribió la familia. Medido el 2026-11-27.
+  //    Sigue ahí como alternativa, y la memoria de compra lo sube si es su formato.
+  if (PACK.test(nombre) && !PACK.test(limpiar(consulta))) punto -= 0.5;
+
+  // 5. La comida de mascota no es la apuesta por defecto si nadie habló de una
+  //    mascota: «atún» traía un Ricocat y «pollo», un Purina. Mismo trato que
+  //    el utensilio: al fondo, nunca fuera.
+  if (/^mascotas\b/.test(ruta) && !MASCOTA.test(limpiar(consulta))) punto -= 1;
+
   return punto;
 }
 
@@ -291,8 +305,10 @@ function reordenarPorClase(consulta: string, p: ProductoWong): ProductoWong {
     .sort((a, b) => b.punto - a.punto || a.i - b.i)
     .map((x) => x.c);
 
+  // Top-6, como siempre: el proveedor puede traer más para que haya margen al
+  // reordenar, pero la familia no tiene por qué ver diez opciones.
   const [mejor, ...resto] = ordenados;
-  return { ...mejor, alternativas: resto };
+  return { ...mejor, alternativas: resto.slice(0, 5) };
 }
 
 // --- Instrumentación de matching (solo investigación) ------------------------
@@ -345,16 +361,18 @@ async function buscarMejor(
   // que nadie la mire: es una sola puerta, igual que el normalizador.
   const buscar = async (q: string) => reordenarPorClase(q, await buscarEnWong(q));
 
-  if (limpio === termino.trim()) {
-    const r = await buscar(termino);
+  // Sin sufijo de venta solo cambia la cantidad del principio («2 kg de pollo»),
+  // y esa nunca se busca: con ella, Wong contestaba con comida de gato de 2 kg.
+  const unidad = unidadDelSufijo(termino);
+  if (limpio === termino.trim() || !unidad) {
+    const r = await buscar(limpio);
     if (traza) {
-      traza.intentos.push(anotar("directa", termino, r));
+      traza.intentos.push(anotar("directa", limpio, r));
       traza.motivo = "sin sufijo de venta: una sola consulta";
     }
     return r;
   }
 
-  const unidad = unidadDelSufijo(termino);
   const [conSufijo, sinSufijo] = await Promise.all([buscar(termino), buscar(limpio)]);
   const pCon = puntuarResultado(termino, conSufijo, unidad);
   const pSin = puntuarResultado(termino, sinSufijo, unidad);

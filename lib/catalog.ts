@@ -11,6 +11,9 @@ export type ProductoWong = {
   encontrado: boolean;
 
   sku?: string;
+  // Código de barras. Es lo único que dice que el producto de una cadena es el
+  // MISMO que el de otra: sin él no hay comparación honesta entre tiendas.
+  ean?: string;
   nombre?: string;
   marca?: string;
   imagen?: string;

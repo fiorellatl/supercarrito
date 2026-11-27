@@ -1,6 +1,14 @@
 // WongVTEX: conector real a Wong usando su API pública de VTEX.
-// GET /api/catalog_system/pub/products/search?ft=<texto>
+// GET /api/io/_v/api/intelligent-search/product_search/?query=<texto>
 // Devuelve el MISMO ProductoWong que FakeWong. Nada de scraping.
+//
+// Por qué Intelligent Search y no `catalog_system/pub/products/search` (cambio
+// del 2026-11-27, medido contra wong.pe): el buscador viejo solo cruza texto y
+// contestaba «leche» con un chocolate, «azúcar» con un azucarero de Snoopy y
+// «atún» con un mueble. Intelligent Search es el buscador que usa la propia
+// web de la tienda, es igual de público y devuelve los productos con la MISMA
+// forma (items, sellers, commertialOffer, measurementUnit, unitMultiplier).
+// Con él: leche → Leche Entera Danlac, azúcar → Azúcar Rubia, atún → Atún Primor.
 //
 // Degradación: ante un fallo de transporte (timeout, 429, 403, 5xx, endpoint
 // caído) LANZA un error; el dispatcher (lib/wong.ts) lo captura y usa FakeWong.
@@ -17,6 +25,7 @@ type VtexItem = {
   itemId?: string;
   name?: string;
   measurementUnit?: string;
+  ean?: string;
   unitMultiplier?: number;
   images?: { imageUrl?: string }[];
   sellers?: { commertialOffer?: VtexOffer }[];
@@ -35,9 +44,11 @@ type VtexProduct = {
 export async function buscarEnWongVtex(ingrediente: string): Promise<ProductoWong> {
   // Ciclo 5: pedimos el Top-6, no el primero. Las alternativas son la materia
   // prima de la corrección y, por tanto, de todo el aprendizaje del perfil.
-  const url = `${BASE}/api/catalog_system/pub/products/search?ft=${encodeURIComponent(
+  // Pedimos 10: la reordenación por clase (lib/cart.ts) necesita margen para
+  // pasar por delante el producto suelto cuando la tienda pone primero los packs.
+  const url = `${BASE}/api/io/_v/api/intelligent-search/product_search/?query=${encodeURIComponent(
     ingrediente
-  )}&_from=0&_to=5`;
+  )}&count=10&page=1&locale=es-PE`;
 
   // fetch lanza en timeout/red; !ok lo convertimos en throw -> el dispatcher degrada.
   const res = await fetch(url, {
@@ -48,7 +59,7 @@ export async function buscarEnWongVtex(ingrediente: string): Promise<ProductoWon
     throw new Error(`VTEX HTTP ${res.status}`); // 403/429/5xx/endpoint caído
   }
 
-  const data = (await res.json()) as VtexProduct[];
+  const data = ((await res.json()) as { products?: VtexProduct[] })?.products;
   if (!Array.isArray(data) || data.length === 0) {
     return { ingrediente, encontrado: false, motivo: "sin resultados", proveedor: "wong" };
   }
@@ -103,6 +114,7 @@ function mapear(ingrediente: string, p: VtexProduct): ProductoWong {
     ingrediente,
     encontrado: true,
     sku: item?.itemId ?? p.productReference ?? p.productId,
+    ean: item?.ean || undefined,
     nombre: p.productName,
     marca: p.brand,
     imagen: item?.images?.[0]?.imageUrl,
