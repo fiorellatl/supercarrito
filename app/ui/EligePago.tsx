@@ -4,9 +4,9 @@
 // (decisión de la PO, 2026-11-27): en Wong, con Tarjeta Cencosud, los precios
 // cambian, y conviene saberlo desde el principio.
 //
-// Lo que hoy NO hace: restar el descuento. No se puede comprobar desde fuera
-// (ver PROJECT_STATE, 2026-11-27), así que se guarda la respuesta y la lista
-// dice que la tienda lo descuenta al pagar. Salidas abiertas: «Otra» escrita,
+// Con la respuesta, cada producto con promoción de esa tarjeta enseña su precio
+// con ella, tal como lo publica la tienda (lib/tarjetas.ts). No se resta del
+// total: la tienda lo descuenta al pagar. Salidas abiertas: «Otra» escrita,
 // «Ninguna» y «Prefiero no decirlo», que no guarda nada.
 
 import Boton from "@/app/ui/Boton";

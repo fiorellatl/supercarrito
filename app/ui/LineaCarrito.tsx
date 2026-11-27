@@ -2,6 +2,7 @@
 
 import { color, lapiz, plata, soles } from "@/app/ui/sistema";
 import type { ProductoWong } from "@/lib/catalog";
+import type { ConTarjeta } from "@/lib/tarjetas";
 import { etiquetaUnitaria, formatearCantidad } from "@/lib/cantidades";
 import Papa from "@/app/ui/Papa";
 import Foto from "@/app/ui/Foto";
@@ -39,7 +40,10 @@ export default function LineaCarrito({
   personaje,
   decision,
   faltaElegir,
+  conTarjeta,
 }: {
+  // El precio con la tarjeta de la familia, tal como lo publica la tienda.
+  conTarjeta?: ConTarjeta;
   // Lo que esta línea espera de la familia, si espera algo: un cartelito
   // amarillo a la derecha, en el sitio del monto. Una sola decisión por línea.
   decision?: { texto: string; onClick: () => void };
@@ -198,6 +202,26 @@ export default function LineaCarrito({
             </>
           )}
         </div>
+
+        {conTarjeta && !agotado && (
+          <div
+            style={{
+              ...lapiz,
+              fontSize: 11.5,
+              marginTop: 3,
+              fontVariantNumeric: "tabular-nums",
+              color: color.tinta,
+              fontWeight: 700,
+            }}
+          >
+            💳 con tu {conTarjeta.tarjeta}:{" "}
+            <span style={{ whiteSpace: "nowrap" }}>
+              {soles(conTarjeta.precio)}
+              {etiquetaUnitaria(producto?.unidadVenta ?? "un")}
+              {conTarjeta.porcentaje ? ` (−${conTarjeta.porcentaje}%)` : ""}
+            </span>
+          </div>
+        )}
 
         {(producto?.marca || producto?.presentacion) && (
           <div style={{ ...lapiz, fontSize: 11, color: color.lapiz2, marginTop: 2 }}>

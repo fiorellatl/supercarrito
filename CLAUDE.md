@@ -126,7 +126,10 @@ Reglas permanentes:
   (`/api/io/_v/api/intelligent-search/product_search/`), no catalog_system.
 - Envío: la simulación con `shippingData.address.geoCoordinates` lo trae en
   `availableDeliveryWindows[].price` (hora de Lima aunque diga `+00:00`).
-  Descuentos con tarjeta: no se pueden leer desde fuera; no se restan.
+  Precio con tarjeta: VTEX lo publica como «teaser» por producto (con
+  `RestrictionsBins`; `[TCENCO]` = Tarjeta Cencosud), en `PromotionTeasers` del
+  catálogo. Se enseña por producto a quien tiene la tarjeta; no se resta del total
+  (`lib/tarjetas.ts`).
 - Menús/recetas: JSON estático en `data/`; `/editar` solo persiste en local.
 - Extracción desde imagen: modelo multimodal, no OCR (`claude-sonnet-5`, estrategia
   `completar`; override `EXTRACTOR_MODELO` / `EXTRACTOR_ESTRATEGIA`). La IA solo

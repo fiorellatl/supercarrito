@@ -68,6 +68,7 @@ import {
 } from "@/lib/libreta";
 import type { LineaExtraida } from "@/lib/evidencia";
 import type { ProductoWong } from "@/lib/catalog";
+import type { ConTarjeta } from "@/lib/tarjetas";
 import { entregaPorEnlace, unidadesDeVenta } from "@/lib/entrega";
 import { cadenaDe, cadenasDisponibles } from "@/lib/cadenas";
 import type { LineaAValorar, Tienda } from "@/lib/tienda";
@@ -191,6 +192,12 @@ function resolver(data: CarritoApi, perfil: Perfil) {
 // lo que no fuera peso, y esa línea convertía "cuánto llevo" en una decisión que
 // el producto tomaba por la familia: nadie compra un solo yogur. Ahora 1 es solo
 // el último recurso —el valor por defecto más honesto— y se puede cambiar.
+// El precio con tarjeta solo se enseña a quien dijo que la tiene.
+function tarjetaDeLaFamilia(p: ProductoWong | undefined, perfil: Perfil): ConTarjeta | undefined {
+  const suyas = perfil.pago?.tarjetas ?? [];
+  return p?.conTarjeta?.filter((c) => suyas.includes(c.tarjeta)).sort((a, b) => a.precio - b.precio)[0];
+}
+
 function cantidadDe(it: ItemResuelto, perfil: Perfil): number | undefined {
   const unidad = it.elegido?.unidadVenta ?? "un";
   if (it.cantidadElegida != null) return it.cantidadElegida;
@@ -639,12 +646,8 @@ export default function App() {
         // catálogo sobre el mismo producto. Se aplican aquí, una sola vez, para
         // que el resto de la pantalla —subtotales, estados, entrega— siga
         // funcionando igual sin saber que existe una tienda.
-        const porSku = new Map<string, { precio?: number; disponible: boolean }>(
-          (data.lineas ?? []).map((l: { sku: string; precio?: number; disponible: boolean }) => [
-            l.sku,
-            l,
-          ])
-        );
+        type Dato = { sku: string; precio?: number; disponible: boolean; conTarjeta?: ConTarjeta[] };
+        const porSku = new Map<string, Dato>((data.lineas ?? []).map((l: Dato) => [l.sku, l]));
         setItems((xs) =>
           (xs ?? []).map((it) => {
             const p = it.elegido;
@@ -660,6 +663,13 @@ export default function App() {
                 // dice lo que pasa es `disponible`.
                 precio: dato.precio != null && dato.precio > 0 ? dato.precio : p.precio,
                 disponible: dato.disponible,
+                // Sin dato de tarjeta (el catálogo no contestó) se conserva el
+                // que ya había; una lista vacía es «hoy no hay».
+                conTarjeta: dato.conTarjeta
+                  ? dato.conTarjeta.length
+                    ? dato.conTarjeta
+                    : undefined
+                  : p.conTarjeta,
               },
             };
           })
@@ -732,6 +742,25 @@ export default function App() {
       ) / 100,
     [entrega]
   );
+
+  // Lo que la tienda descontaría con la tarjeta de la familia, producto a
+  // producto (cantidad × diferencia por unidad). No se resta del total: la
+  // tienda lo descuenta al pagar con ella. Se enseña aparte y con su cuenta.
+  const conTuTarjeta = useMemo(() => {
+    const porIngrediente = new Map((items ?? []).map((it) => [it.ingrediente, it.elegido]));
+    const porTarjeta = new Map<string, { tarjeta: string; ahorro: number; productos: number }>();
+    for (const v of entrega.viajan) {
+      const p = porIngrediente.get(v.ingrediente);
+      const tc = tarjetaDeLaFamilia(p, perfil);
+      if (!tc || p?.precio == null) continue;
+      const t = porTarjeta.get(tc.tarjeta) ?? { tarjeta: tc.tarjeta, ahorro: 0, productos: 0 };
+      t.ahorro += (p.precio - tc.precio) * v.cantidadQueCruza;
+      t.productos += 1;
+      porTarjeta.set(tc.tarjeta, t);
+    }
+    const mejor = [...porTarjeta.values()].sort((a, b) => b.ahorro - a.ahorro)[0];
+    return mejor && mejor.ahorro >= 0.01 ? { ...mejor, ahorro: Math.round(mejor.ahorro * 100) / 100 } : undefined;
+  }, [entrega, items, perfil]);
 
   // El de la tienda manda, pero un cero no es un total: la simulación devuelve
   // `Items: 0` cuando todo lo que le preguntamos está sin stock, y repetirlo
@@ -1344,6 +1373,7 @@ export default function App() {
         decision={decision}
         orden={i}
         mostrarPara={!nombreDice(it.elegido?.nombre, deLaLinea > 1 ? it.ingrediente : l.texto)}
+        conTarjeta={it.fuera ? undefined : tarjetaDeLaFamilia(it.elegido, perfil)}
         onCantidad={
           estado === "confirmado" && !it.fuera
             ? {
@@ -1712,6 +1742,7 @@ export default function App() {
                   distrito={perfil.envio?.distrito}
                   onDistrito={(d) => actualizarPerfil((p) => elegirDistrito(p, d))}
                   envio={envio}
+                  conTarjeta={conTuTarjeta}
                   onCambiarTienda={abrirTienda}
                 />
                 <OtraTienda

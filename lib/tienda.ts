@@ -19,6 +19,7 @@
 // que cobra la tienda; uno que nos da la tienda, no.
 
 import { cadenaDe, type Cadena, type CadenaId } from "@/lib/cadenas";
+import { preciosConTarjeta, teasersDeCatalogo, type ConTarjeta, type Teaser } from "@/lib/tarjetas";
 
 const TIMEOUT_MS = 9000;
 
@@ -41,6 +42,9 @@ export type PrecioEnTienda = {
   sku: string;
   precio?: number; // soles por unidad de venta (kg o pieza)
   disponible: boolean;
+  // Precio con tarjeta sobre el precio de ESTA tienda. Ausente = no se pudo
+  // preguntar (se conserva lo que ya sabíamos); [] = hoy no hay.
+  conTarjeta?: ConTarjeta[];
 };
 
 export type PreciosDeTienda = {
@@ -108,6 +112,28 @@ const VIDA_CACHE_MS = 6 * 60 * 60 * 1000;
 const limpiar = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 
+// Las promociones de cada SKU, del catálogo público (de 50 en 50).
+async function teasersPorSku(base: string, skus: string[]) {
+  const porSku = new Map<string, Teaser[]>();
+  type Oferta = { PromotionTeasers?: Parameters<typeof teasersDeCatalogo>[0] };
+  for (let i = 0; i < skus.length; i += 50) {
+    const fq = skus.slice(i, i + 50).map((s) => `fq=skuId:${encodeURIComponent(s)}`).join("&");
+    const res = await fetch(`${base}/api/catalog_system/pub/products/search?${fq}&_from=0&_to=49`, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!res.ok) throw new Error(`catálogo ${res.status}`);
+    const productos = (await res.json()) as {
+      items?: { itemId?: string; sellers?: { commertialOffer?: Oferta }[] }[];
+    }[];
+    for (const p of productos)
+      for (const it of p.items ?? [])
+        if (it.itemId)
+          porSku.set(it.itemId, teasersDeCatalogo(it.sellers?.[0]?.commertialOffer?.PromotionTeasers));
+  }
+  return porSku;
+}
+
 export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
   const { base, canal, seller } = cadena;
   return {
@@ -166,6 +192,10 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
 
   async precios(lineas, tienda) {
     if (lineas.length === 0) return { tienda: tienda.nombre, lineas: [] };
+    // La simulación trae las promociones de tarjeta, pero sin decir de qué
+    // producto son. El catálogo sí las da por producto: se le pregunta a la vez,
+    // y si no contesta, el precio de siempre sigue valiendo.
+    const promos = teasersPorSku(base, lineas.map((l) => l.sku)).catch(() => undefined);
 
     const res = await fetch(`${base}/api/checkout/pub/orderForms/simulation?sc=${canal}`, {
       method: "POST",
@@ -187,6 +217,7 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
 
     const porSku = new Map<string, { price?: number; availability?: string }>();
     for (const it of d?.items ?? []) porSku.set(String(it.id), it);
+    const teasers = await promos;
 
     return {
       tienda: tienda.nombre,
@@ -194,10 +225,13 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
       // es respuesta: se marca como no disponible, no como desconocido.
       lineas: lineas.map((l) => {
         const it = porSku.get(l.sku);
+        const precio = it?.price != null ? it.price / 100 : undefined;
         return {
           sku: l.sku,
-          precio: it?.price != null ? it.price / 100 : undefined,
+          precio,
           disponible: it?.availability === "available",
+          conTarjeta:
+            teasers && precio ? preciosConTarjeta(teasers.get(l.sku) ?? [], precio) : teasers ? [] : undefined,
         };
       }),
       total: sumarTotales(d),

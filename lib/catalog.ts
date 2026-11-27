@@ -1,4 +1,5 @@
 import type { CadenaId } from "@/lib/cadenas";
+import type { ConTarjeta } from "@/lib/tarjetas";
 
 // Contrato del catálogo. Es lo ÚNICO que conoce el resto del sistema.
 // FakeWong y WongVTEX devuelven exactamente esta forma. Cambiar de proveedor
@@ -36,6 +37,9 @@ export type ProductoWong = {
   // Opcional a propósito: un proveedor que no clasifique sigue siendo válido.
   categoriaRuta?: string;
   disponible?: boolean;
+  // El precio pagando con una tarjeta, si la tienda lo publica (lib/tarjetas.ts).
+  // Es estado, como el precio: se vuelve a preguntar con la tienda.
+  conTarjeta?: ConTarjeta[];
   url?: string; // enlace al producto
 
   motivo?: string; // por qué no se encontró (debug / QA)

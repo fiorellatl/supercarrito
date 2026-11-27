@@ -12,7 +12,13 @@
 - **Emparejamiento:** Intelligent Search + packs y comida de mascota al fondo.
   Sobre 30 productos típicos, de ~16 bien elegidos a 28.
 - **Envío real por distrito** en «Revisar y pedir», aparte y sumado a la vista.
-- **Tarjetas/Prime:** se pregunta (con «Otra» y «Ninguna»), se guarda, no resta.
+- **Tarjetas/Prime:** se pregunta al empezar (paso 3 de 4, con «Otra» y «Ninguna»).
+  **Precio con Tarjeta Cencosud, real:** Wong y Metro lo publican por producto
+  como teaser con BIN (`[TCENCO]…`, −20%/−30% o «a S/ 999»); verificado con la
+  captura de la PO (Rummikub XP: S/ 91.00 → S/ 72.80). Se enseña en la línea y
+  como «−S/ X con tu tarjeta» en «Revisar y pedir»; no se resta del total. Hoy
+  casi todo es juguetes/electro: en abarrotes no se vio ninguna. Interbank: aún
+  sin promociones a la vista.
 - **Comparar (bloque B):** «La misma compra en Metro/Wong» en «Revisar y pedir».
   Solo el MISMO producto (mismo SKU + EAN o nombre, o mismo EAN, o mismo nombre
   exacto; `lib/comparar.ts`), totales y envío de cada tienda, y lo que no entra

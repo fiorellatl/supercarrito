@@ -174,9 +174,13 @@ export function TuTienda({
   distrito,
   onDistrito,
   envio,
+  conTarjeta,
   onCambiarTienda,
 }: {
   tienda?: { nombre: string };
+  // Cuánto descontaría la tienda con la tarjeta de la familia. Va aparte: la
+  // tienda lo resta al pagar, no en el carrito.
+  conTarjeta?: { tarjeta: string; ahorro: number; productos: number };
   cadena: string;
   actualizado?: string; // «4:05 p. m.»: cuándo dio la tienda estos precios
   productos: number;
@@ -286,6 +290,26 @@ export function TuTienda({
             : "Sin envío: elige tu distrito"}
         {!precioDeTienda && " · lo confirma la tienda"}
       </p>
+      {conTarjeta && (
+        <div
+          style={{
+            marginTop: 10,
+            padding: "10px 12px",
+            borderRadius: 12,
+            background: "#FFF7D6",
+            border: `1.5px dashed ${color.aji}`,
+          }}
+        >
+          <Fila
+            izquierda={<span style={{ fontWeight: 700 }}>💳 Con tu {conTarjeta.tarjeta}</span>}
+            derecha={<span style={{ ...plata, fontWeight: 800 }}>−{soles(conTarjeta.ahorro)}</span>}
+          />
+          <p style={{ ...lapiz, margin: 0 }}>
+            En {conTarjeta.productos} {conTarjeta.productos === 1 ? "producto" : "productos"} con precio especial.{" "}
+            {cadena} te lo descuenta al pagar con ella.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

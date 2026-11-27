@@ -16,10 +16,16 @@
 
 import type { ProductoWong } from "@/lib/catalog";
 import { CADENA_POR_DEFECTO, type Cadena } from "@/lib/cadenas";
+import { preciosConTarjeta, teasersDeIS } from "@/lib/tarjetas";
 const TIMEOUT_MS = 8000;
 
 // Forma parcial de la respuesta VTEX (solo lo que usamos).
-type VtexOffer = { Price?: number; IsAvailable?: boolean; AvailableQuantity?: number };
+type VtexOffer = {
+  Price?: number;
+  IsAvailable?: boolean;
+  AvailableQuantity?: number;
+  teasers?: Parameters<typeof teasersDeIS>[0];
+};
 type VtexItem = {
   itemId?: string;
   name?: string;
@@ -112,6 +118,8 @@ export function mapear(ingrediente: string, p: VtexProduct, cadena: Cadena): Pro
   const disponible =
     oferta?.IsAvailable ?? ((oferta?.AvailableQuantity ?? 0) > 0);
 
+  const conTarjeta = preciosConTarjeta(teasersDeIS(oferta?.teasers), precio);
+
   return {
     ingrediente,
     encontrado: true,
@@ -127,6 +135,7 @@ export function mapear(ingrediente: string, p: VtexProduct, cadena: Cadena): Pro
     categoria,
     categoriaRuta,
     disponible,
+    conTarjeta: conTarjeta.length ? conTarjeta : undefined,
     url: p.linkText ? `${cadena.base}/${p.linkText}/p` : p.link,
     proveedor: cadena.id,
   };
