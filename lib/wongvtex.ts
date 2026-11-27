@@ -67,7 +67,11 @@ export async function buscarEnWongVtex(
     throw new Error(`VTEX HTTP ${res.status}`); // 403/429/5xx/endpoint caído
   }
 
-  const data = ((await res.json()) as { products?: VtexProduct[] })?.products;
+  const json = (await res.json()) as { products?: VtexProduct[]; redirect?: string };
+  let data = json?.products;
+  if ((!Array.isArray(data) || data.length === 0) && json?.redirect) {
+    data = await seguirRedireccion(json.redirect, cadena);
+  }
   if (!Array.isArray(data) || data.length === 0) {
     return { ingrediente, encontrado: false, motivo: "sin resultados", proveedor: cadena.id };
   }
@@ -81,6 +85,40 @@ export async function buscarEnWongVtex(
 
   const [mejor, ...resto] = candidatos;
   return { ...mejor, alternativas: resto };
+}
+
+// Plaza Vea contesta las palabras más buscadas («arroz», «azúcar», «huevos»)
+// sin productos y con una redirección a su categoría, que es lo que haría su web.
+// Medido el 2026-11-27. Dos formas:
+//   /abarrotes/arroz                → la misma categoría en Intelligent Search
+//   /busca/?fq=C:431/434&ft=azucar  → el catálogo con esa categoría y ese texto
+// Solo se siguen rutas de la propia tienda; si falla, es «sin resultados».
+async function seguirRedireccion(destino: string, cadena: Cadena): Promise<VtexProduct[] | undefined> {
+  if (!destino.startsWith("/") || destino.startsWith("//")) return undefined;
+  try {
+    const u = new URL(destino, cadena.base);
+    let url: string;
+    if (u.pathname.startsWith("/busca")) {
+      const fq = u.searchParams.get("fq") ?? "";
+      const ft = u.searchParams.get("ft") ?? "";
+      const cat = fq.match(/^C:([\d/]+)$/)?.[1];
+      const filtros = [cat ? `fq=${encodeURIComponent(`C:/${cat.replace(/^\/|\/$/g, "")}/`)}` : "", ft ? `ft=${encodeURIComponent(ft)}` : ""]
+        .filter(Boolean)
+        .join("&");
+      if (!filtros) return undefined;
+      url = `${cadena.base}/api/catalog_system/pub/products/search?${filtros}&_from=0&_to=9`;
+      const res = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+      return res.ok ? ((await res.json()) as VtexProduct[]) : undefined;
+    }
+    const partes = u.pathname.split("/").filter(Boolean).slice(0, 3);
+    if (partes.length === 0) return undefined;
+    const facetas = partes.map((p, i) => `category-${i + 1}/${encodeURIComponent(decodeURIComponent(p))}`).join("/");
+    url = `${cadena.base}/api/io/_v/api/intelligent-search/product_search/${facetas}?count=10&page=1&locale=es-PE`;
+    const res = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    return res.ok ? ((await res.json()) as { products?: VtexProduct[] })?.products : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function mapear(ingrediente: string, p: VtexProduct, cadena: Cadena): ProductoWong {

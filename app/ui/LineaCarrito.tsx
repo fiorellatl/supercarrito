@@ -170,7 +170,7 @@ export default function LineaCarrito({
           }}
         >
           {agotado ? (
-            "hoy no hay en Wong"
+            "hoy no hay en tu tienda"
           ) : subtotal === undefined && faltaElegir ? (
             "falta elegir cuál"
           ) : subtotal === undefined ? (

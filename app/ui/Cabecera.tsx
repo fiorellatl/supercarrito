@@ -135,7 +135,7 @@ export default function Cabecera({
           }}
         >
           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {tienda ? `Precios de ${tienda}` : "Elige tu Wong para ver tus precios"}
+            {tienda ? `Precios de ${tienda}` : "Elige tu tienda para ver tus precios"}
           </span>
           <span aria-hidden>▾</span>
         </button>

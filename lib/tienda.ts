@@ -32,6 +32,7 @@ export type Tienda = {
   // Opcional: una tienda guardada antes de que hubiera cadenas es de Wong.
   cadena?: CadenaId;
   distrito?: string;
+  codigoPostal?: string; // lo necesitan las cadenas que ubican por código postal
   lon: number;
   lat: number;
 };
@@ -68,7 +69,7 @@ export type EnvioDeTienda = {
   hasta?: string; // ISO
 };
 
-export type Lugar = { lon: number; lat: number };
+export type Lugar = { lon: number; lat: number; codigoPostal?: string };
 
 export interface CatalogoDeTienda {
   tiendas(): Promise<Tienda[]>;
@@ -100,7 +101,7 @@ type PuntoVtex = {
   pickupPoint?: {
     id?: string;
     friendlyName?: string;
-    address?: { neighborhood?: string; city?: string; geoCoordinates?: number[] };
+    address?: { neighborhood?: string; city?: string; postalCode?: string; geoCoordinates?: number[] };
   };
 };
 
@@ -135,7 +136,27 @@ async function teasersPorSku(base: string, skus: string[]) {
 }
 
 export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
-  const { base, canal, seller } = cadena;
+  const { base, canal, seller, zona } = cadena;
+
+  // Dónde está la tienda, en el idioma que entiende la simulación de su cadena.
+  //   · Wong/Metro: coordenadas. Medido: el código postal NO sirve en esas
+  //     cuentas —devuelve todo sin stock—, que es justo lo único que daría una
+  //     geolocalización por IP.
+  //   · Plaza Vea: con coordenadas solas contesta «cannotBeDelivered»; con la
+  //     dirección (código postal + coordenadas) en shippingData, sí (2026-11-27).
+  const zonaDe = (t: Tienda) =>
+    zona === "coordenadas" || !t.codigoPostal
+      ? { geoCoordinates: [t.lon, t.lat] }
+      : {
+          shippingData: {
+            address: {
+              addressType: "search",
+              country: "PER",
+              postalCode: t.codigoPostal,
+              geoCoordinates: [t.lon, t.lat],
+            },
+          },
+        };
   return {
   async tiendas() {
     const guardado = cache.get(cadena.id);
@@ -166,7 +187,8 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
       // llaman (lib/cadenas.ts). El directorio de Wong trae también los Metro,
       // y una tienda se atiende con el catálogo, los precios y el carrito de SU
       // cadena, nunca con los de otra.
-      const nombre = bruto.match(cadena.puntoDeRetiro)?.[1]?.trim();
+      const capturado = bruto.match(cadena.puntoDeRetiro)?.[1]?.trim();
+      const nombre = capturado && cadena.prefijo ? `${cadena.prefijo} ${capturado}` : capturado;
       if (!nombre || !coords || coords.length < 2) continue;
       // La misma tienda llega también en MAYÚSCULAS por otra vía: fuera.
       if (nombre === nombre.toUpperCase()) continue;
@@ -178,6 +200,7 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
         nombre,
         cadena: cadena.id,
         distrito: p?.address?.neighborhood ?? undefined,
+        codigoPostal: p?.address?.postalCode ?? undefined,
         lon: coords[0],
         lat: coords[1],
       });
@@ -203,10 +226,7 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
       body: JSON.stringify({
         items: lineas.map((l) => ({ id: l.sku, quantity: l.unidades, seller })),
         country: "PER",
-        // Las coordenadas son el único dato que resuelve la zona. Medido: el
-        // código postal NO sirve en esta cuenta —devuelve todo sin stock—, que
-        // es justo lo único que daría una geolocalización por IP.
-        geoCoordinates: [tienda.lon, tienda.lat],
+        ...zonaDe(tienda),
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
@@ -215,7 +235,7 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
     if (!res.ok) throw new Error(`simulation ${res.status}`);
     const d = await res.json();
 
-    const porSku = new Map<string, { price?: number; availability?: string }>();
+    const porSku = new Map<string, { price?: number; sellingPrice?: number; availability?: string }>();
     for (const it of d?.items ?? []) porSku.set(String(it.id), it);
     const teasers = await promos;
 
@@ -225,7 +245,14 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
       // es respuesta: se marca como no disponible, no como desconocido.
       lineas: lineas.map((l) => {
         const it = porSku.get(l.sku);
-        const precio = it?.price != null ? it.price / 100 : undefined;
+        // `price` es el de lista; `sellingPrice`, el que se cobra tras las
+        // rebajas de la tienda (Plaza Vea: leche Gloria 24.60 → 19.90, y el
+        // total ya lo resta en «Discounts»). Se enseña el que se cobra.
+        const cobra =
+          it?.sellingPrice != null && it.sellingPrice > 0 && it.price != null && it.sellingPrice < it.price
+            ? it.sellingPrice
+            : it?.price;
+        const precio = cobra != null ? cobra / 100 : undefined;
         return {
           sku: l.sku,
           precio,
@@ -251,9 +278,15 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
       body: JSON.stringify({
         items: lineas.map((l) => ({ id: l.sku, quantity: l.unidades, seller })),
         country: "PER",
-        geoCoordinates: [lugar.lon, lugar.lat],
+        // Plaza Vea solo da tarifas con el código postal también arriba.
+        ...(zona === "coordenadas" ? { geoCoordinates: [lugar.lon, lugar.lat] } : { postalCode: lugar.codigoPostal }),
         shippingData: {
-          address: { addressType: "residential", country: "PER", geoCoordinates: [lugar.lon, lugar.lat] },
+          address: {
+            addressType: "residential",
+            country: "PER",
+            geoCoordinates: [lugar.lon, lugar.lat],
+            ...(zona === "codigoPostal" ? { postalCode: lugar.codigoPostal } : {}),
+          },
         },
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -265,24 +298,30 @@ export function catalogoDeTienda(cadena: Cadena): CatalogoDeTienda {
 }
 
 type FranjaVtex = { startDateUtc?: string; endDateUtc?: string; price?: number };
-type SlaVtex = { deliveryChannel?: string; price?: number; availableDeliveryWindows?: FranjaVtex[] };
+type SlaVtex = { id?: string; deliveryChannel?: string; price?: number; availableDeliveryWindows?: FranjaVtex[] };
 
 function leerEnvio(d: unknown): EnvioDeTienda {
   const info = (d as { logisticsInfo?: { slas?: SlaVtex[] }[] })?.logisticsInfo ?? [];
-  const franjas: { precio: number; desde?: string; hasta?: string }[] = [];
+  // Cada modalidad de despacho llega repetida por producto. Lo que cobra es la
+  // suma de su `price` en todos los productos (Plaza Vea reparte ahí sus S/ 8.90:
+  // 1.78 + 5.34 + 1.78) más el precio de la franja (Wong pone ahí sus S/ 9.90 y
+  // deja `price` en 0). La franja es de toda la compra: se cuenta una vez.
+  const porSla = new Map<string, { base: number; ventanas: FranjaVtex[] }>();
   for (const li of info) {
     for (const sla of li.slas ?? []) {
       if (sla.deliveryChannel !== "delivery") continue;
-      const ventanas = sla.availableDeliveryWindows ?? [];
-      if (ventanas.length === 0 && typeof sla.price === "number") {
-        franjas.push({ precio: sla.price });
-      }
-      for (const v of ventanas) {
-        if (typeof v.price === "number") {
-          franjas.push({ precio: v.price, desde: v.startDateUtc, hasta: v.endDateUtc });
-        }
-      }
+      const clave = sla.id ?? "";
+      const ya = porSla.get(clave) ?? { base: 0, ventanas: sla.availableDeliveryWindows ?? [] };
+      ya.base += typeof sla.price === "number" ? sla.price : 0;
+      porSla.set(clave, ya);
     }
+  }
+  const franjas: { precio: number; desde?: string; hasta?: string }[] = [];
+  for (const { base, ventanas } of porSla.values()) {
+    if (ventanas.length === 0) franjas.push({ precio: base });
+    for (const v of ventanas)
+      if (typeof v.price === "number")
+        franjas.push({ precio: base + v.price, desde: v.startDateUtc, hasta: v.endDateUtc });
   }
   if (franjas.length === 0) return { hay: false };
   const min = Math.min(...franjas.map((f) => f.precio));
@@ -292,8 +331,8 @@ function leerEnvio(d: unknown): EnvioDeTienda {
     .sort((a, b) => (a.desde! < b.desde! ? -1 : 1))[0];
   return {
     hay: true,
-    precio: min / 100,
-    precioMaximo: max > min ? max / 100 : undefined,
+    precio: Math.round(min) / 100,
+    precioMaximo: max > min ? Math.round(max) / 100 : undefined,
     desde: primera?.desde,
     hasta: primera?.hasta,
   };

@@ -26,6 +26,7 @@ import { color, fuente, lapiz, plata, radio, soles } from "@/app/ui/sistema";
 import type { ProductoWong } from "@/lib/catalog";
 import type { Tienda } from "@/lib/tienda";
 import distritos from "@/data/distritos.json";
+import { CADENA_POR_DEFECTO, cadenasDisponibles } from "@/lib/cadenas";
 
 export const OTRO_DISTRITO = "Otro distrito";
 
@@ -498,7 +499,6 @@ export function Desplegable({
   );
 }
 
-const TARJETAS = ["Tarjeta Cencosud", "Interbank", "Wong Prime"];
 const NINGUNA = "Ninguna";
 
 // La fila de la tarjeta, y la hoja donde se responde. Se guarda en el perfil y
@@ -539,13 +539,16 @@ export function FilaPago({
 // La hoja donde se responde. Vive en la raíz de la página (como la de la
 // tienda): dentro de una pantalla animada quedaría debajo del botón de pedir.
 // La elección de tarjetas, compartida por la hoja de «Revisar y pedir» y por el
-// paso «¿Pagas con alguna?» del inicio. «Wong Prime» solo se ofrece en Wong.
+// paso «¿Pagas con alguna?» del inicio. Cada cadena ofrece las suyas
+// (lib/cadenas.ts): Tarjeta Cencosud y Wong Prime en Wong, Tarjeta Oh! en
+// Plaza Vea. Lo marcado en otra cadena se conserva aunque aquí no se vea.
 export function usarTarjetas(pago: { tarjetas: string[]; otra?: string } | undefined, cadena: string) {
   const [marcadas, setMarcadas] = useState<string[]>(pago?.tarjetas ?? []);
   const [otra, setOtra] = useState(pago?.otra ?? "");
   const [conOtra, setConOtra] = useState(!!pago?.otra);
   const listo = marcadas.length > 0 || (conOtra && otra.trim().length > 0);
-  const opciones = [...TARJETAS.filter((t) => t !== "Wong Prime" || cadena === "Wong"), NINGUNA];
+  const propias = cadenasDisponibles().find((c) => c.nombre === cadena)?.tarjetas ?? CADENA_POR_DEFECTO.tarjetas;
+  const opciones = [...propias, NINGUNA];
 
   const alternar = (t: string) => {
     if (t === NINGUNA) {

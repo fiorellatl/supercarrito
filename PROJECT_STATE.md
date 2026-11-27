@@ -4,6 +4,21 @@
 > hay que leer para retomar**; el resto es la historia de ciclos y decisiones,
 > que se consulta cuando hace falta. Estrategia y competencia: `PRODUCT_CONTEXT.md`.
 
+## ▶️ Novedad 2026-11-27 (tarde) — Plaza Vea, tercera cadena (PR #3)
+
+- Aprobado por la PO («Sí, como en el plan»). Medido antes de activar: búsqueda,
+  precio real y carrito real por enlace (leche Gloria ×2 + aceite → S/ 45.50 leído
+  en el orderForm). 44 tiendas en el directorio.
+- Lo distinto de Plaza Vea: ubica por código postal (data/distritos.json lo
+  tiene), redirige «arroz/azúcar/huevos» a su categoría, `price` = lista y
+  `sellingPrice` = lo que cobra, y el envío viene repartido en `sla.price` por
+  producto (Wong lo pone en la franja).
+- Comparación con las otras dos, una tarjeta por cadena. Wong→Plaza Vea: 5 de 6
+  iguales por EAN; Plaza Vea→Metro: 3 de 6 (EAN distintos).
+- Tarjeta Oh!: se ofrece en Plaza Vea. Su precio con tarjeta NO se enseña aún:
+  el teaser («TARJETA OH - PVEA», `PromotionalPriceTableItemsDiscount`) no está
+  verificado contra la web.
+
 ## ▶️ Novedad 2026-11-27 — Metro, envío y mejor emparejamiento (PR #3)
 
 - **Metro** es la segunda cadena: se elige en «¿Dónde compras?» (Wong | Metro).

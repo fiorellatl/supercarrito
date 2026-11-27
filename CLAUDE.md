@@ -119,10 +119,13 @@ Reglas permanentes:
   `orderForms/simulation?sc=70`; el carrito se entrega por deep link con
   `sc=70&qcart=1` (`qcart` evita la app en iPhone; en Android la app se come el
   enlace → «Copiar el enlace»).
-- **Dos cadenas: Wong y Metro** (2026-11-27), como configuración en
-  `lib/cadenas.ts` (dirección, canal, seller). Metro: `sc=1`, verificado leyendo
-  el carrito. Comparten los IDs de SKU: el mismo producto tiene el mismo SKU en
-  las dos, con precio propio. Buscador: **Intelligent Search**
+- **Tres cadenas: Wong, Metro y Plaza Vea** (2026-11-27), como configuración en
+  `lib/cadenas.ts` (dirección, canal, seller, cómo ubica la tienda, tarjetas).
+  Metro: `sc=1`; Plaza Vea: `sc=1`, verificados leyendo el carrito. Wong y Metro
+  comparten los IDs de SKU; Plaza Vea (Intercorp) no: se compara por EAN.
+  Plaza Vea ubica por **código postal** (con coordenadas solas dice
+  «cannotBeDelivered»), redirige búsquedas comunes a su categoría (se sigue la
+  redirección) y su `price` es de lista: el que se cobra es `sellingPrice`. Buscador: **Intelligent Search**
   (`/api/io/_v/api/intelligent-search/product_search/`), no catalog_system.
 - Envío: la simulación con `shippingData.address.geoCoordinates` lo trae en
   `availableDeliveryWindows[].price` (hora de Lima aunque diga `+00:00`).

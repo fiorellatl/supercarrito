@@ -61,7 +61,7 @@ export default function HojaOpciones({
     >
       {agotado && (
         <Dice quien="pina">
-          Qué piña: {agotado.nombre} se acabó en {agotado.tienda ?? "tu Wong"}. Mira estas otras.
+          Qué piña: {agotado.nombre} se acabó en {agotado.tienda ?? "tu tienda"}. Mira estas otras.
         </Dice>
       )}
       {opciones.map((o) => {

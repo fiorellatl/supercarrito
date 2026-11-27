@@ -11,7 +11,7 @@
 // Hasta entonces existe aquí, pero ni se ofrece ni se consulta: un carrito que
 // no se puede comprar es peor que no tener carrito.
 
-export type CadenaId = "wong" | "metro";
+export type CadenaId = "wong" | "metro" | "plazavea";
 
 export type Cadena = {
   id: CadenaId;
@@ -25,6 +25,15 @@ export type Cadena = {
   //   Wong:  "Retiro en tienda Wong Aldabas" (y la misma en MAYÚSCULAS, que no)
   //   Metro: "Metro Chorrillos", "Retiro en Metro Breña - Martinto"
   puntoDeRetiro: RegExp;
+  // Lo que se antepone al nombre capturado, si la cadena no lo escribe igual:
+  // Plaza Vea dice «plazaVea Miraflores», «Plazavea - Miraflores»…
+  prefijo?: string;
+  // Cómo entiende la simulación dónde está la tienda. Wong y Metro, con
+  // coordenadas (el código postal les deja todo sin stock). Plaza Vea, al
+  // revés: con coordenadas solas responde «no se puede entregar».
+  zona: "coordenadas" | "codigoPostal";
+  // Tarjetas propias que la familia puede marcar en esta cadena.
+  tarjetas: string[];
   verificada: boolean;
 };
 
@@ -36,6 +45,8 @@ export const CADENAS: Record<CadenaId, Cadena> = {
     canal: "70", // verificado el 2026-08-03 leyendo el carrito
     seller: "1",
     puntoDeRetiro: /^retiro en tienda\s+(wong\b.*)$/i,
+    zona: "coordenadas",
+    tarjetas: ["Tarjeta Cencosud", "Interbank", "Wong Prime"],
     verificada: true,
   },
   metro: {
@@ -47,6 +58,24 @@ export const CADENAS: Record<CadenaId, Cadena> = {
     canal: "1",
     seller: "1",
     puntoDeRetiro: /^(?:retiro en\s+)?(metro\b.*)$/i,
+    zona: "coordenadas",
+    tarjetas: ["Tarjeta Cencosud", "Interbank"],
+    verificada: true,
+  },
+  plazavea: {
+    id: "plazavea",
+    nombre: "Plaza Vea",
+    base: "https://www.plazavea.com.pe",
+    // Medido el 2026-11-27: /api/segments -> {"channel":"1"}, seller "1", y el
+    // enlace /checkout/cart/add?…&sc=1 llenó un carrito real (leído en
+    // /api/checkout/pub/orderForm). Es de otro grupo (Intercorp): NO comparte
+    // SKU con Wong/Metro; solo se compara por código de barras.
+    canal: "1",
+    seller: "1",
+    puntoDeRetiro: /^plaza\s?vea\s*-?\s*(.+)$/i,
+    prefijo: "Plaza Vea",
+    zona: "codigoPostal",
+    tarjetas: ["Tarjeta Oh!", "Interbank"],
     verificada: true,
   },
 };

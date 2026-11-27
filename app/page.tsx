@@ -192,6 +192,12 @@ function resolver(data: CarritoApi, perfil: Perfil) {
 // lo que no fuera peso, y esa línea convertía "cuánto llevo" en una decisión que
 // el producto tomaba por la familia: nadie compra un solo yogur. Ahora 1 es solo
 // el último recurso —el valor por defecto más honesto— y se puede cambiar.
+// Cuánto se ahorra pidiendo en la otra cadena, para ordenar las tarjetas.
+function ahorroDe(e: EstadoComparar): number {
+  if (e.tipo !== "listo" || e.origen.total == null || e.destino.total == null) return -Infinity;
+  return e.origen.total - e.destino.total;
+}
+
 // El precio con tarjeta solo se enseña a quien dijo que la tiene.
 function tarjetaDeLaFamilia(p: ProductoWong | undefined, perfil: Perfil): ConTarjeta | undefined {
   const suyas = perfil.pago?.tarjetas ?? [];
@@ -370,7 +376,8 @@ export default function App() {
   const [copiado, setCopiado] = useState(false);
   const [envio, setEnvio] = useState<EstadoEnvio>({ tipo: "sin-distrito" });
   const [hojaPago, setHojaPago] = useState(false);
-  const [comparacion, setComparacion] = useState<EstadoComparar>({ tipo: "nada" });
+  // Una comparación por cada otra cadena, en el orden de lib/cadenas.ts.
+  const [comparaciones, setComparaciones] = useState<{ id: string; estado: EstadoComparar }[]>([]);
 
   const compRef = useRef<HTMLInputElement>(null);
   const archivoRef = useRef<HTMLInputElement>(null);
@@ -549,22 +556,24 @@ export default function App() {
   const hayOtraCadena = cadenasDisponibles().length > 1;
   useEffect(() => {
     if (ruta !== "pedir" || !perfil.tienda || !hayOtraCadena || aComparar.length === 0) {
-      setComparacion({ tipo: "nada" });
+      setComparaciones([]);
       return;
     }
     let vivo = true;
-    setComparacion({ tipo: "cargando" });
-    fetch("/api/comparar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tienda: perfil.tienda, lineas: aComparar, distrito: perfil.envio?.distrito }),
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        if (!vivo) return;
-        setComparacion(d.ok ? { tipo: "listo", ...d } : { tipo: "sin-respuesta" });
+    const otras = cadenasDisponibles().filter((c) => c.id !== cadenaDe(perfil.tienda?.cadena).id);
+    setComparaciones(otras.map((c) => ({ id: c.id, estado: { tipo: "cargando" } })));
+    const poner = (id: string, estado: EstadoComparar) =>
+      vivo && setComparaciones((xs) => xs.map((x) => (x.id === id ? { id, estado } : x)));
+    for (const c of otras) {
+      fetch("/api/comparar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tienda: perfil.tienda, lineas: aComparar, distrito: perfil.envio?.distrito, destino: c.id }),
       })
-      .catch(() => vivo && setComparacion({ tipo: "sin-respuesta" }));
+        .then((r) => r.json())
+        .then((d) => poner(c.id, d.ok ? { tipo: "listo", ...d } : { tipo: "sin-respuesta" }))
+        .catch(() => poner(c.id, { tipo: "sin-respuesta" }));
+    }
     return () => {
       vivo = false;
     };
@@ -1745,15 +1754,20 @@ export default function App() {
                   conTarjeta={conTuTarjeta}
                   onCambiarTienda={abrirTienda}
                 />
-                <OtraTienda
-                  estado={comparacion}
-                  conDistrito={!!perfil.envio?.distrito && perfil.envio.distrito !== OTRO_DISTRITO}
-                  nombreCadena={(t) => cadenaDe(t.cadena).nombre}
-                  onPedirAlla={() => {
-                    if (comparacion.tipo === "listo")
-                      pedirAlla(comparacion.destino.tienda, comparacion.equivalentes);
-                  }}
-                />
+                {/* La que más ahorra, primero. Cada una con SU lista de iguales. */}
+                {[...comparaciones]
+                  .sort((a, b) => ahorroDe(b.estado) - ahorroDe(a.estado))
+                  .map(({ id, estado }) => (
+                    <OtraTienda
+                      key={id}
+                      estado={estado}
+                      conDistrito={!!perfil.envio?.distrito && perfil.envio.distrito !== OTRO_DISTRITO}
+                      nombreCadena={(t) => cadenaDe(t.cadena).nombre}
+                      onPedirAlla={() => {
+                        if (estado.tipo === "listo") pedirAlla(estado.destino.tienda, estado.equivalentes);
+                      }}
+                    />
+                  ))}
               </div>
 
               <div style={{ display: "grid", gap: 10, marginTop: 18 }}>
