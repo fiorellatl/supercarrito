@@ -4,6 +4,18 @@
 > hay que leer para retomar**; el resto es la historia de ciclos y decisiones,
 > que se consulta cuando hace falta. Estrategia y competencia: `PRODUCT_CONTEXT.md`.
 
+## ⏭ Siguiente: Makro y Tottus (pedido por la PO el 2026-11-27, medido el mismo día)
+
+- **Makro:** su tienda online es `www.makro.plazavea.com.pe` (makro.pe solo
+  enlaza ahí). Es de Supermercados Peruanos como Plaza Vea, así que casi seguro
+  es VTEX y entra como configuración. Bloqueado en el entorno: hay que permitirlo.
+- **Tottus (Falabella):** otra plataforma. El buscador es público y en JSON:
+  `www.tottus.com.pe/s/browse/v1/search/pe?Ntt=<texto>` (48 por página), con
+  `prices[]` de tipo `internetPrice`, `normalPrice` y **`cmrPrice`** (tarjeta CMR,
+  explícito: Pilsen twelve pack ×3 S/ 121.90 → CMR S/ 118.90). Sin medir aún:
+  precio/stock por tienda, directorio de tiendas, envío y, sobre todo, si un
+  enlace puede llenar un carrito real. Sin eso no se activa.
+
 ## ▶️ Novedad 2026-11-27 (tarde) — Plaza Vea, tercera cadena (PR #3)
 
 - Aprobado por la PO («Sí, como en el plan»). Medido antes de activar: búsqueda,
