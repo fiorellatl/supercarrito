@@ -666,3 +666,217 @@ const enlace: React.CSSProperties = {
   textDecoration: "underline",
   cursor: "pointer",
 };
+
+// --- Tottus: solo para comparar ---------------------------------------------
+//
+// Decisión de la PO (2026-11-27): Tottus no deja llenar su carrito desde fuera
+// (lib/tottus.ts), así que se compara y no se pide. Si conviene, «paso a paso»:
+// la lista con el enlace de cada producto, su cantidad y una casilla para
+// marcar lo ya agregado, que se recuerda en este celular. Se avisa ANTES de que
+// el carrito no se llena solo.
+
+export type EstadoTottus =
+  | { tipo: "nada" }
+  | { tipo: "cargando" }
+  | { tipo: "sin-respuesta" }
+  | {
+      tipo: "listo";
+      comparados: number;
+      origen: { tienda: Tienda; total?: number };
+      total: number;
+      totalCmr?: number;
+      lineas: { sku: string; nombre: string; url: string; unidades: number; precio: number; cmr?: number }[];
+      fuera: { nombre: string; motivo: string }[];
+    };
+
+export function TottusCard({
+  estado,
+  nombreOrigen,
+  conCmr,
+  onPasoAPaso,
+}: {
+  estado: EstadoTottus;
+  nombreOrigen: string;
+  conCmr: boolean; // la familia dijo tener CMR
+  onPasoAPaso: () => void;
+}) {
+  const [verFuera, setVerFuera] = useState(false);
+  if (estado.tipo === "nada") return null;
+  if (estado.tipo !== "listo")
+    return (
+      <div style={{ ...tarjeta(false), display: "flex", gap: 10, alignItems: "center" }}>
+        <Punto on={false} />
+        <span className={estado.tipo === "cargando" ? "sc-pulso" : undefined} style={lapiz}>
+          {estado.tipo === "cargando" ? "Comparando con Tottus…" : "Ahora no pude comparar con Tottus: no contestó."}
+        </span>
+      </div>
+    );
+
+  const { origen, comparados, total, totalCmr, fuera } = estado;
+  if (comparados === 0 || origen.total == null)
+    return (
+      <div style={{ ...tarjeta(false), display: "flex", gap: 10, alignItems: "center" }}>
+        <Punto on={false} />
+        <span style={lapiz}>Nada de tu lista está igual en Tottus: no hay qué comparar.</span>
+      </div>
+    );
+
+  const suyo = conCmr && totalCmr != null ? totalCmr : total;
+  const diferencia = redondo(origen.total - suyo);
+
+  return (
+    <>
+      <div style={tarjeta(false)}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Punto on={false} />
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", fontSize: 16, fontWeight: 800 }}>Tottus</span>
+            <span style={{ ...lapiz, display: "block" }}>Solo para comparar · precios online de Lima</span>
+          </span>
+          {/* Sin envío no hay «Ahorras»: el ahorro realista lo cuenta. */}
+          <Sello tono={diferencia > 0 ? "pino" : "aji"}>
+            {diferencia === 0 ? "Igual" : `${soles(Math.abs(diferencia))} ${diferencia > 0 ? "menos" : "más"}`}
+          </Sello>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr auto auto",
+            columnGap: 12,
+            rowGap: 2,
+            marginTop: 10,
+            fontSize: 13,
+            color: color.lapiz,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          <span>{comparados} iguales</span>
+          <span style={{ textAlign: "right" }}>{nombreOrigen}</span>
+          <span style={{ textAlign: "right" }}>Tottus</span>
+          <span style={{ fontWeight: 700, color: color.tinta }}>Productos</span>
+          <span style={{ textAlign: "right", fontWeight: 700, color: color.tinta }}>{soles(origen.total)}</span>
+          <span style={{ textAlign: "right", fontWeight: 700, color: color.tinta }}>{soles(total)}</span>
+          {totalCmr != null && totalCmr < total && (
+            <>
+              <span>💳 con CMR</span>
+              <span />
+              <span style={{ textAlign: "right", color: color.tinta }}>{soles(totalCmr)}</span>
+            </>
+          )}
+        </div>
+        <p style={{ ...lapiz, margin: "8px 0 0" }}>
+          Solo productos: Tottus no publica su envío. {conCmr && totalCmr != null ? "El ahorro ya cuenta tu CMR. " : ""}
+          Su carrito no se llena solo: si te conviene, lo agregas allá producto por producto.
+        </p>
+        <button
+          type="button"
+          onClick={onPasoAPaso}
+          style={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: 8,
+            minHeight: 40,
+            padding: 0,
+            background: "none",
+            border: "none",
+            font: "inherit",
+            fontSize: 14,
+            fontWeight: 700,
+            color: color.tinta,
+            cursor: "pointer",
+          }}
+        >
+          Agregar en Tottus paso a paso
+          <span aria-hidden>›</span>
+        </button>
+      </div>
+      {fuera.length > 0 && (
+        <div style={{ padding: "2px 4px 0" }}>
+          <button onClick={() => setVerFuera((x) => !x)} aria-expanded={verFuera} style={{ ...enlace, ...lapiz, minHeight: 36 }}>
+            {fuera.length === 1 ? "1 producto no está igual" : `${fuera.length} productos no están iguales`} en Tottus{" "}
+            {verFuera ? "▴" : "▾"}
+          </button>
+          {verFuera &&
+            fuera.map((f) => (
+              <p key={f.nombre} style={{ ...lapiz, margin: "2px 0" }}>
+                {f.nombre} · {f.motivo}
+              </p>
+            ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+export function HojaTottus({
+  lineas,
+  marcados,
+  onMarcar,
+  onCerrar,
+}: {
+  lineas: { sku: string; nombre: string; url: string; unidades: number; precio: number; cmr?: number }[];
+  marcados: string[];
+  onMarcar: (sku: string) => void;
+  onCerrar: () => void;
+}) {
+  const hechos = lineas.filter((l) => marcados.includes(l.sku)).length;
+  return (
+    <Hoja
+      titulo="Agregar en Tottus, paso a paso"
+      sub="Tottus no deja llenar su carrito desde aquí. Abre cada producto, agrégalo allá y márcalo. Lo que marques se recuerda en este celular."
+      onCerrar={onCerrar}
+      pie={
+        <Boton variante="lleno" style={{ width: "100%" }} onClick={onCerrar}>
+          {hechos === lineas.length ? "Listo, ya está todo" : `Llevo ${hechos} de ${lineas.length}`}
+        </Boton>
+      }
+    >
+      <div style={{ display: "grid", gap: 8 }}>
+        {lineas.map((l) => {
+          const hecho = marcados.includes(l.sku);
+          return (
+            <div
+              key={l.sku}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 12px",
+                borderRadius: radio.fila,
+                background: color.papel2,
+                opacity: hecho ? 0.6 : 1,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={hecho}
+                onChange={() => onMarcar(l.sku)}
+                aria-label={`Ya agregué ${l.nombre}`}
+                style={{ width: 22, height: 22, flex: "0 0 auto", accentColor: color.tinta }}
+              />
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 14, fontWeight: 700, textDecoration: hecho ? "line-through" : "none" }}>
+                  {l.nombre}
+                </span>
+                <span style={{ ...lapiz, display: "block", fontVariantNumeric: "tabular-nums" }}>
+                  {l.unidades} × {soles(l.precio)}
+                  {l.cmr ? ` · CMR ${soles(l.cmr)}` : ""}
+                </span>
+              </span>
+              <a
+                href={l.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ ...enlace, fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", minHeight: 44, display: "inline-flex", alignItems: "center" }}
+              >
+                Abrir ›
+              </a>
+            </div>
+          );
+        })}
+      </div>
+    </Hoja>
+  );
+}

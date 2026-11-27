@@ -23,6 +23,11 @@
   · Carrito: vive en su servidor (`/s/checkout/v1/carts`, con cabeceras propias)
     atado a la sesión del navegador en tottus.com.pe. No hay enlace que lo llene
     desde fuera → hoy Tottus solo podría COMPARAR, no recibir el pedido.
+  · **HECHO (PO: «Solo para comparar»):** tarjeta «Tottus · solo para comparar»
+    en «Revisar y pedir» (mismo producto por EAN, precio online y CMR, «S/ X
+    menos/más» sin decir «Ahorras» porque no hay envío) y hoja «Agregar en
+    Tottus paso a paso» con enlace, cantidad y casilla que se recuerda (idea
+    tomada del «Pedir paso a paso» de Nada Menos). `lib/tottus.ts`.
 
 ## ▶️ Novedad 2026-11-27 (tarde) — Plaza Vea, tercera cadena (PR #3)
 

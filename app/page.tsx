@@ -95,10 +95,13 @@ import {
   Desplegable,
   FilaPago,
   HojaPago,
+  HojaTottus,
   OTRO_DISTRITO,
   OtraTienda,
+  TottusCard,
   TuTienda,
   type EstadoComparar,
+  type EstadoTottus,
   type EstadoEnvio,
 } from "@/app/ui/Revisar";
 import type { LineaAComparar } from "@/lib/comparar";
@@ -378,6 +381,10 @@ export default function App() {
   const [hojaPago, setHojaPago] = useState(false);
   // Una comparación por cada otra cadena, en el orden de lib/cadenas.ts.
   const [comparaciones, setComparaciones] = useState<{ id: string; estado: EstadoComparar }[]>([]);
+  // Tottus, aparte: solo se compara (lib/tottus.ts).
+  const [tottus, setTottus] = useState<EstadoTottus>({ tipo: "nada" });
+  const [hojaTottus, setHojaTottus] = useState(false);
+  const [marcadosTottus, setMarcadosTottus] = useState<string[]>([]);
 
   const compRef = useRef<HTMLInputElement>(null);
   const archivoRef = useRef<HTMLInputElement>(null);
@@ -557,6 +564,7 @@ export default function App() {
   useEffect(() => {
     if (ruta !== "pedir" || !perfil.tienda || !hayOtraCadena || aComparar.length === 0) {
       setComparaciones([]);
+      setTottus({ tipo: "nada" });
       return;
     }
     let vivo = true;
@@ -564,6 +572,15 @@ export default function App() {
     setComparaciones(otras.map((c) => ({ id: c.id, estado: { tipo: "cargando" } })));
     const poner = (id: string, estado: EstadoComparar) =>
       vivo && setComparaciones((xs) => xs.map((x) => (x.id === id ? { id, estado } : x)));
+    setTottus({ tipo: "cargando" });
+    fetch("/api/comparar-tottus", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tienda: perfil.tienda, lineas: aComparar }),
+    })
+      .then((r) => r.json())
+      .then((d) => vivo && setTottus(d.ok ? { tipo: "listo", ...d } : { tipo: "sin-respuesta" }))
+      .catch(() => vivo && setTottus({ tipo: "sin-respuesta" }));
     for (const c of otras) {
       fetch("/api/comparar", {
         method: "POST",
@@ -1768,6 +1785,21 @@ export default function App() {
                       }}
                     />
                   ))}
+                <TottusCard
+                  estado={tottus}
+                  nombreOrigen={tuCadena}
+                  conCmr={
+                    (perfil.pago?.tarjetas ?? []).some((t) => /cmr/i.test(t)) || /cmr/i.test(perfil.pago?.otra ?? "")
+                  }
+                  onPasoAPaso={() => {
+                    try {
+                      setMarcadosTottus(JSON.parse(localStorage.getItem("sc-tottus-marcados") ?? "[]"));
+                    } catch {
+                      setMarcadosTottus([]);
+                    }
+                    setHojaTottus(true);
+                  }}
+                />
               </div>
 
               <div style={{ display: "grid", gap: 10, marginTop: 18 }}>
@@ -2210,6 +2242,25 @@ export default function App() {
           cadena={tuCadena}
           onPago={(t, otra) => actualizarPerfil((p) => responderPago(p, t, otra))}
           onCerrar={() => setHojaPago(false)}
+        />
+      )}
+
+      {hojaTottus && tottus.tipo === "listo" && (
+        <HojaTottus
+          lineas={tottus.lineas}
+          marcados={marcadosTottus}
+          onMarcar={(sku) =>
+            setMarcadosTottus((xs) => {
+              const nuevos = xs.includes(sku) ? xs.filter((x) => x !== sku) : [...xs, sku];
+              try {
+                localStorage.setItem("sc-tottus-marcados", JSON.stringify(nuevos));
+              } catch {
+                // sin almacenamiento, la casilla vale mientras la hoja esté abierta
+              }
+              return nuevos;
+            })
+          }
+          onCerrar={() => setHojaTottus(false)}
         />
       )}
 
