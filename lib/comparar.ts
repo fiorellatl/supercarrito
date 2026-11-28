@@ -43,11 +43,16 @@ export type LineaAComparar = {
 export type LadoComparado = {
   tienda: Tienda;
   total?: number; // lo que la tienda cobra por los productos comparados
+  iguales?: number; // de ese total, los que son el mismo producto
+  parecidos?: number; // y los parecidos (misma marca y tipo, otro tamaño…)
   envio?: EnvioDeTienda;
 };
 
 export type Comparacion = {
-  comparados: number;
+  comparados: number; // el MISMO producto en las dos
+  // Parecidos que entran en la cuenta, marcados (aprobado por la PO el
+  // 2026-11-28): misma marca y tipo, otro tamaño o una palabra de más.
+  parecidos: { nombre: string; otro: string }[];
   origen: LadoComparado;
   destino: LadoComparado;
   // Lo que no entra en la suma, con el porqué en palabras de la familia.
@@ -76,6 +81,7 @@ async function buscarPor(cadena: Cadena, campo: "skuId" | "alternateIds_Ean", va
 // El mismo producto en la otra cadena, por SKU y si no, por código de barras.
 async function equivalentesEn(cadena: Cadena, lineas: LineaAComparar[]) {
   const porSku = new Map<string, ProductoWong>();
+  const parecidos = new Set<string>();
   const conItem = (p: VtexProduct, encaja: (it: { itemId?: string; ean?: string }) => boolean) => {
     const item = p.items?.find(encaja);
     return item ? mapear("", { ...p, items: [item] }, cadena) : undefined;
@@ -119,12 +125,20 @@ async function equivalentesEn(cadena: Cadena, lineas: LineaAComparar[]) {
             return;
           }
         }
+        // Sin el mismo: el parecido más cercano, vendido de la misma forma.
+        const parecido = candidatos.find(
+          (c) => parentesco(l, c) === "parecido" && (c.unidadVenta ?? "un") === (l.unidadVenta ?? "un")
+        );
+        if (parecido) {
+          porSku.set(l.sku, { ...parecido, alternativas: undefined });
+          parecidos.add(l.sku);
+        }
       } catch {
         // Si la otra cadena no contesta para este, queda fuera y se dice.
       }
     })
   );
-  return porSku;
+  return { porSku, parecidos };
 }
 
 const normal = (s?: string) =>
@@ -150,7 +164,7 @@ export async function comparar(
     (a, b) => distancia(a, origen.tienda) - distancia(b, origen.tienda)
   )[0];
 
-  const equivalentes = await equivalentesEn(destino, lineas);
+  const { porSku: equivalentes, parecidos } = await equivalentesEn(destino, lineas);
 
   // Primera pasada: qué hay hoy en cada tienda.
   const mapeadas = lineas.filter((l) => equivalentes.has(l.sku));
@@ -168,7 +182,7 @@ export async function comparar(
   const comparables: LineaAComparar[] = [];
   for (const l of lineas) {
     const eq = equivalentes.get(l.sku);
-    if (!eq) fuera.push({ nombre: l.nombre, motivo: `no lo encontré igual en ${destino.nombre}` });
+    if (!eq) fuera.push({ nombre: l.nombre, motivo: `no lo encontré en ${destino.nombre}` });
     else if ((eq.cantidadMinima ?? 1) !== (l.cantidadMinima ?? 1))
       fuera.push({ nombre: l.nombre, motivo: `${destino.nombre} lo vende en otra medida` });
     else if (!hayOrigen.has(l.sku))
@@ -178,23 +192,31 @@ export async function comparar(
     else comparables.push(l);
   }
 
-  // Segunda pasada: los dos totales, de exactamente la misma lista.
-  const deOrigen = comparables.map((l) => ({ sku: l.sku, unidades: l.unidades }));
-  const deDestino = comparables.map((l) => ({
-    sku: equivalentes.get(l.sku)!.sku!,
-    unidades: l.unidades,
-  }));
-  const [tOrigen, tDestino, eOrigen, eDestino] = await Promise.all([
-    comparables.length ? catOrigen.precios(deOrigen, origen.tienda) : undefined,
-    comparables.length ? catDestino.precios(deDestino, tiendaDestino) : undefined,
-    lugarEnvio && comparables.length ? catOrigen.envio(deOrigen, lugarEnvio).catch(() => undefined) : undefined,
-    lugarEnvio && comparables.length ? catDestino.envio(deDestino, lugarEnvio).catch(() => undefined) : undefined,
+  // Segunda pasada: los totales, de exactamente la misma lista, en dos
+  // grupos —iguales y parecidos— para que cada cifra se pueda explicar.
+  const deOrigen = (ls: LineaAComparar[]) => ls.map((l) => ({ sku: l.sku, unidades: l.unidades }));
+  const deDestino = (ls: LineaAComparar[]) =>
+    ls.map((l) => ({ sku: equivalentes.get(l.sku)!.sku!, unidades: l.unidades }));
+  const iguales = comparables.filter((l) => !parecidos.has(l.sku));
+  const similares = comparables.filter((l) => parecidos.has(l.sku));
+  const valorar = (cat: typeof catOrigen, ls: { sku: string; unidades: number }[], t: Tienda) =>
+    ls.length ? cat.precios(ls, t).then((r) => r.total) : Promise.resolve(0);
+  const [oIg, oPa, dIg, dPa, eOrigen, eDestino] = await Promise.all([
+    valorar(catOrigen, deOrigen(iguales), origen.tienda),
+    valorar(catOrigen, deOrigen(similares), origen.tienda),
+    valorar(catDestino, deDestino(iguales), tiendaDestino),
+    valorar(catDestino, deDestino(similares), tiendaDestino),
+    lugarEnvio && comparables.length ? catOrigen.envio(deOrigen(comparables), lugarEnvio).catch(() => undefined) : undefined,
+    lugarEnvio && comparables.length ? catDestino.envio(deDestino(comparables), lugarEnvio).catch(() => undefined) : undefined,
   ]);
+  const suma = (a?: number, b?: number) =>
+    comparables.length && a != null && b != null ? Math.round((a + b) * 100) / 100 : undefined;
 
   return {
-    comparados: comparables.length,
-    origen: { tienda: origen.tienda, total: tOrigen?.total, envio: eOrigen },
-    destino: { tienda: tiendaDestino, total: tDestino?.total, envio: eDestino },
+    comparados: iguales.length,
+    parecidos: similares.map((l) => ({ nombre: l.nombre, otro: equivalentes.get(l.sku)!.nombre ?? "" })),
+    origen: { tienda: origen.tienda, total: suma(oIg, oPa), iguales: oIg, parecidos: oPa, envio: eOrigen },
+    destino: { tienda: tiendaDestino, total: suma(dIg, dPa), iguales: dIg, parecidos: dPa, envio: eDestino },
     fuera,
     equivalentes: Object.fromEntries(equivalentes),
   };

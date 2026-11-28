@@ -26,6 +26,7 @@
 // sumar al total algo cuya cantidad no conocemos · sugerir que hay una forma
 // correcta de escribir.
 
+import { primeEnEnvio } from "@/lib/prime";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   aprenderCantidad,
@@ -1809,6 +1810,7 @@ export default function App() {
                   onDistrito={(d) => actualizarPerfil((p) => elegirDistrito(p, d))}
                   envio={envio}
                   conTarjeta={conTuTarjeta}
+                  prime={primeEnEnvio(perfil.tienda?.cadena, perfil.pago?.tarjetas, montoEntrega)}
                   onCambiarTienda={abrirTienda}
                 />
                 {/* La que más ahorra, primero. Cada una con SU lista de iguales. */}
@@ -1820,6 +1822,7 @@ export default function App() {
                       estado={estado}
                       conDistrito={!!perfil.envio?.distrito && perfil.envio.distrito !== OTRO_DISTRITO}
                       nombreCadena={(t) => cadenaDe(t.cadena).nombre}
+                      tarjetas={perfil.pago?.tarjetas}
                       onPedirAlla={() => {
                         if (estado.tipo === "listo") pedirAlla(estado.destino.tienda, estado.equivalentes);
                       }}

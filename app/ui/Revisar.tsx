@@ -27,6 +27,7 @@ import type { ProductoWong } from "@/lib/catalog";
 import type { Tienda } from "@/lib/tienda";
 import distritos from "@/data/distritos.json";
 import { CADENA_POR_DEFECTO, cadenasDisponibles } from "@/lib/cadenas";
+import { primeEnEnvio, type ConPrime } from "@/lib/prime";
 
 export const OTRO_DISTRITO = "Otro distrito";
 
@@ -37,7 +38,13 @@ export type EstadoEnvio =
   | { tipo: "no-llega" }
   | { tipo: "listo"; precio: number; precioMaximo?: number; desde?: string; hasta?: string };
 
-export type Lado = { tienda: Tienda; total?: number; envio?: { hay: boolean; precio?: number } };
+export type Lado = {
+  tienda: Tienda;
+  total?: number;
+  iguales?: number;
+  parecidos?: number;
+  envio?: { hay: boolean; precio?: number };
+};
 
 export type EstadoComparar =
   | { tipo: "nada" }
@@ -46,6 +53,7 @@ export type EstadoComparar =
   | {
       tipo: "listo";
       comparados: number;
+      parecidos?: { nombre: string; otro: string }[];
       origen: Lado;
       destino: Lado;
       fuera: { nombre: string; motivo: string }[];
@@ -176,8 +184,11 @@ export function TuTienda({
   onDistrito,
   envio,
   conTarjeta,
+  prime,
   onCambiarTienda,
 }: {
+  // Wong Prime de la familia (lib/prime.ts): gratis desde S/ 79.90, y se dice.
+  prime?: ConPrime;
   tienda?: { nombre: string };
   // Cuánto descontaría la tienda con la tarjeta de la familia. Va aparte: la
   // tienda lo resta al pagar, no en el carrito.
@@ -193,6 +204,8 @@ export function TuTienda({
   onCambiarTienda: () => void;
 }) {
   const conEnvio = envio.tipo === "listo" && distrito !== OTRO_DISTRITO;
+  const conPrime = conEnvio && envio.tipo === "listo" && envio.precio > 0 && !!prime?.aplica;
+  const cobroEnvio = conEnvio && envio.tipo === "listo" && !conPrime ? envio.precio : 0;
   const textoEnvio =
     distrito === OTRO_DISTRITO
       ? "al pagar"
@@ -231,7 +244,7 @@ export function TuTienda({
       />
       <Fila
         izquierda={
-          <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
             Envío a
             <select
               value={distrito ?? ""}
@@ -242,7 +255,7 @@ export function TuTienda({
                 fontSize: 14,
                 fontWeight: 600,
                 minHeight: 36,
-                maxWidth: 150,
+                maxWidth: 140,
                 padding: "4px 6px",
                 borderRadius: 10,
                 border: `1.5px solid ${distrito ? color.renglon : color.aji}`,
@@ -262,8 +275,23 @@ export function TuTienda({
             </select>
           </label>
         }
-        derecha={<span style={{ color: conEnvio ? color.tinta : color.lapiz }}>{textoEnvio}</span>}
+        derecha={
+          conPrime ? (
+            <span>
+              <s style={{ color: color.lapiz, fontWeight: 400 }}>{textoEnvio}</s> gratis
+            </span>
+          ) : (
+            <span style={{ color: conEnvio ? color.tinta : color.lapiz }}>{textoEnvio}</span>
+          )
+        }
       />
+      {conEnvio && envio.tipo === "listo" && envio.precio > 0 && prime && (
+        <p style={{ ...lapiz, margin: "0 0 2px" }}>
+          {prime.aplica
+            ? `Gratis con tu Wong Prime (compras desde ${soles(prime.desde)}). Wong lo confirma al pagar.`
+            : `Con tu Wong Prime es gratis desde ${soles(prime.desde)}: te faltan ${soles(prime.faltan ?? 0)}.`}
+        </p>
+      )}
       {conEnvio && envio.tipo === "listo" && franja(envio.desde, envio.hasta) && (
         <p style={{ ...lapiz, margin: "0 0 2px" }}>
           Llega {franja(envio.desde, envio.hasta)} · tarifa de {cadena} para el distrito
@@ -279,14 +307,16 @@ export function TuTienda({
         izquierda="Total"
         derecha={
           <span key={monto} className="sc-monto" style={{ ...plata, fontSize: 22, letterSpacing: "-0.03em" }}>
-            {monto > 0 ? soles(redondo(monto + (conEnvio && envio.tipo === "listo" ? envio.precio : 0))) : "S/ —"}
+            {monto > 0 ? soles(redondo(monto + cobroEnvio)) : "S/ —"}
           </span>
         }
       />
       <p style={{ ...lapiz, margin: 0, textAlign: "right" }}>
-        {conEnvio && envio.tipo === "listo" && envio.precio > 0
-          ? `${soles(monto)} + ${soles(envio.precio)} de envío`
-          : distrito && distrito !== OTRO_DISTRITO
+        {cobroEnvio > 0
+          ? `${soles(monto)} + ${soles(cobroEnvio)} de envío`
+          : conPrime
+            ? "Envío gratis con tu Prime"
+            : distrito && distrito !== OTRO_DISTRITO
             ? "Sin cargo de envío"
             : "Sin envío: elige tu distrito"}
         {!precioDeTienda && " · lo confirma la tienda"}
@@ -321,10 +351,12 @@ export function OtraTienda({
   estado,
   conDistrito,
   nombreCadena,
+  tarjetas,
   onPedirAlla,
 }: {
   estado: EstadoComparar;
   conDistrito: boolean;
+  tarjetas?: string[]; // las de la familia: Wong Prime cambia el envío de Wong
   nombreCadena: (t: Tienda) => string;
   onPedirAlla: () => void;
 }) {
@@ -344,12 +376,13 @@ export function OtraTienda({
     );
 
   const { origen, destino, comparados, fuera } = estado;
+  const parecidos = estado.parecidos ?? [];
   const otra = nombreCadena(destino.tienda);
-  if (comparados === 0 || origen.total == null || destino.total == null)
+  if (comparados + parecidos.length === 0 || origen.total == null || destino.total == null)
     return (
       <div style={{ ...tarjeta(false), display: "flex", gap: 10, alignItems: "center" }}>
         <Punto on={false} />
-        <span style={lapiz}>Nada de tu lista está igual en {otra}: no hay qué comparar.</span>
+        <span style={lapiz}>Nada de tu lista está en {otra}: no hay qué comparar.</span>
       </div>
     );
 
@@ -357,9 +390,15 @@ export function OtraTienda({
   const conEnvio =
     conDistrito && !!origen.envio?.hay && !!destino.envio?.hay &&
     origen.envio.precio != null && destino.envio.precio != null;
-  const total = (l: Lado) => redondo((l.total ?? 0) + (conEnvio ? l.envio!.precio! : 0));
+  // Wong Prime (lib/prime.ts): el envío de Wong es gratis desde S/ 79.90.
+  const prime = (l: Lado) => primeEnEnvio(l.tienda.cadena, tarjetas, l.total);
+  const cobro = (l: Lado) => (conEnvio && !prime(l)?.aplica ? l.envio!.precio! : 0);
+  const total = (l: Lado) => redondo((l.total ?? 0) + cobro(l));
   const diferencia = redondo(total(origen) - total(destino));
   const masBarata = diferencia > 0;
+  const envioDe = (l: Lado) =>
+    prime(l)?.aplica && l.envio!.precio! > 0 ? "gratis con Prime" : l.envio!.precio! > 0 ? soles(l.envio!.precio!) : "gratis";
+  const todos = comparados + parecidos.length + fuera.length;
 
   const contenido = (
     <>
@@ -367,7 +406,8 @@ export function OtraTienda({
         <Punto on={false} />
         <span style={{ flex: 1, minWidth: 0, fontSize: 16, fontWeight: 800 }}>{destino.tienda.nombre}</span>
         {masBarata ? (
-          <Sello>Ahorras {soles(diferencia)}</Sello>
+          // Con parecidos no es la misma compra: se dice «menos», no «ahorras».
+          <Sello>{parecidos.length ? `${soles(diferencia)} menos` : `Ahorras ${soles(diferencia)}`}</Sello>
         ) : (
           <Sello tono="aji">{diferencia === 0 ? "Igual" : `${soles(-diferencia)} más`}</Sello>
         )}
@@ -386,19 +426,35 @@ export function OtraTienda({
           fontVariantNumeric: "tabular-nums",
         }}
       >
-        <span>{comparados} iguales</span>
+        <span>
+          Comparé {comparados + parecidos.length} de {todos}
+        </span>
         <span style={{ textAlign: "right" }}>{nombreCadena(origen.tienda)}</span>
         <span style={{ textAlign: "right" }}>{otra}</span>
-        <span>Productos</span>
-        <span style={{ textAlign: "right" }}>{soles(origen.total)}</span>
-        <span style={{ textAlign: "right", color: color.tinta }}>{soles(destino.total)}</span>
+        {comparados > 0 && (
+          <>
+            <span>Iguales ({comparados})</span>
+            <span style={{ textAlign: "right" }}>{soles(origen.iguales ?? origen.total)}</span>
+            <span style={{ textAlign: "right", color: color.tinta }}>{soles(destino.iguales ?? destino.total)}</span>
+          </>
+        )}
+        {parecidos.length > 0 && (
+          <>
+            <span>Parecidos ({parecidos.length})</span>
+            <span style={{ textAlign: "right" }}>{soles(origen.parecidos ?? 0)}</span>
+            <span style={{ textAlign: "right", color: color.tinta }}>{soles(destino.parecidos ?? 0)}</span>
+            {parecidos.map((p) => (
+              <span key={p.nombre} style={{ gridColumn: "1 / -1", fontSize: 12, paddingLeft: 10 }}>
+                └ {p.nombre} → allá: {p.otro}
+              </span>
+            ))}
+          </>
+        )}
         {conEnvio && (
           <>
             <span>Envío</span>
-            <span style={{ textAlign: "right" }}>{soles(origen.envio!.precio!)}</span>
-            <span style={{ textAlign: "right", color: color.tinta }}>
-              {destino.envio!.precio! > 0 ? soles(destino.envio!.precio!) : "gratis"}
-            </span>
+            <span style={{ textAlign: "right" }}>{envioDe(origen)}</span>
+            <span style={{ textAlign: "right", color: color.tinta }}>{envioDe(destino)}</span>
           </>
         )}
         <span style={{ fontWeight: 700, color: color.tinta }}>Total</span>
@@ -436,8 +492,7 @@ export function OtraTienda({
       {fuera.length > 0 && (
         <div style={{ padding: "2px 4px 0" }}>
           <button onClick={() => setVerFuera((x) => !x)} aria-expanded={verFuera} style={{ ...enlace, ...lapiz, minHeight: 36 }}>
-            {fuera.length === 1 ? "1 producto no está igual" : `${fuera.length} productos no están iguales`} en las dos{" "}
-            {verFuera ? "▴" : "▾"}
+            Sin comparar ({fuera.length}) {verFuera ? "▴" : "▾"}
           </button>
           {verFuera &&
             fuera.map((f) => (
@@ -613,7 +668,7 @@ export function usarTarjetas(pago: { tarjetas: string[]; otra?: string } | undef
         />
       )}
       {marcadas.includes("Wong Prime") && (
-        <p style={{ ...lapiz, margin: "12px 0 0" }}>Si tu Prime cubre el envío, también lo descuenta Wong al pagar.</p>
+        <p style={{ ...lapiz, margin: "12px 0 0" }}>Con Prime, el envío de Wong sale gratis desde S/ 79.90: te lo mostramos así en el total.</p>
       )}
     </>
   );
@@ -750,7 +805,7 @@ export function TottusCard({
             fontVariantNumeric: "tabular-nums",
           }}
         >
-          <span>{comparados} iguales</span>
+          <span>Comparé {comparados} de {comparados + fuera.length}</span>
           <span style={{ textAlign: "right" }}>{nombreOrigen}</span>
           <span style={{ textAlign: "right" }}>Tottus</span>
           <span style={{ fontWeight: 700, color: color.tinta }}>Productos</span>
@@ -795,7 +850,7 @@ export function TottusCard({
       {fuera.length > 0 && (
         <div style={{ padding: "2px 4px 0" }}>
           <button onClick={() => setVerFuera((x) => !x)} aria-expanded={verFuera} style={{ ...enlace, ...lapiz, minHeight: 36 }}>
-            {fuera.length === 1 ? "1 producto no está igual" : `${fuera.length} productos no están iguales`} en Tottus{" "}
+            Sin comparar ({fuera.length}){" "}
             {verFuera ? "▴" : "▾"}
           </button>
           {verFuera &&

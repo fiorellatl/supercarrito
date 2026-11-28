@@ -44,7 +44,14 @@ function palabras(nombre: string, marca?: string) {
     normal(nombre)
       .replace(/\b\d+(\.\d+)?\s*[a-z]*\b/g, " ")
       .split(" ")
-      .filter((t) => t.length > 1 && !VACIAS.has(t) && !deMarca.has(t))
+      // La marca, aunque la cadena la escriba con una letra de más («ALACENAA»).
+      .filter(
+        (t) =>
+          t.length > 1 &&
+          !VACIAS.has(t) &&
+          !deMarca.has(t) &&
+          ![...deMarca].some((m) => m.length >= 4 && t.startsWith(m) && t.length - m.length <= 1)
+      )
   );
 }
 
@@ -100,7 +107,14 @@ export function parentesco(nuestro: Producto, otro: Producto): Parentesco {
       ? ta.unidad === tb.unidad && Math.abs(ta.valor - tb.valor) <= Math.max(2, ta.valor * 0.02)
       : !ta && !tb && nuestro.unidadVenta === "kg" && otro.unidadVenta === "kg";
   if (mismoTamano && cubre(a, b) >= 0.75 && cubre(b, a) >= 0.75) return "mismo";
-  if (cubre(a, b) >= 0.5) return "parecido";
+  // Parecido: casi todo lo nuestro está en el otro, y el otro no es otra cosa
+  // con más ingredientes («Pack Mixto Queso Edam + Jamón» no es queso edam).
+  // Y de un tamaño que se pueda comparar: un pack de dos contra una botella
+  // no dice cuál es más barato (±35%: el pan de 480 g contra el de 590 g sí).
+  const tamanoCercano =
+    mismoTamano ||
+    (ta && tb && ta.unidad === tb.unidad && Math.abs(ta.valor - tb.valor) <= ta.valor * 0.35);
+  if (tamanoCercano && cubre(a, b) >= 0.75 && cubre(b, a) >= 0.5) return "parecido";
   return null;
 }
 
