@@ -65,14 +65,14 @@ export default function HojaCantidad({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
           <span>
             <span style={{ ...lapiz, display: "block", fontSize: 11, letterSpacing: "0.13em", textTransform: "uppercase" }}>
-              Aún no suma
+              Falta la cantidad
             </span>
             <span style={{ ...plata, fontSize: 24, color: color.lapiz, letterSpacing: "-0.03em" }}>
               S/ —
             </span>
           </span>
           <Boton variante="fantasma" chico onClick={onCerrar}>
-            Hoy no
+            Ahora no
           </Boton>
         </div>
       }

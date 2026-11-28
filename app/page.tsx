@@ -834,10 +834,31 @@ export default function App() {
     const texto = e.clipboardData.getData("text");
     if (!texto || partir(texto).length < 2) return; // una línea suelta: pegado normal
     e.preventDefault();
+    pegarConversacion(texto);
+  }
+
+  function pegarConversacion(texto: string) {
     const n = anotarTexto(texto, "pegada");
     setBorrador("");
     // Entra tal cual: con emojis, con "mami" y con faltas. No se toca nada.
     setAviso({ texto: "Pegado. Separé lo que es compra de la conversación.", deshacer: n });
+  }
+
+  // El botón «Pegar WhatsApp» pega de verdad. Si el navegador no deja leer el
+  // portapapeles (o está vacío), deja la caja lista para pegar a mano.
+  async function pegarDelPortapapeles() {
+    let texto = "";
+    try {
+      texto = (await navigator.clipboard?.readText?.()) ?? "";
+    } catch {
+      texto = "";
+    }
+    if (texto.trim()) {
+      pegarConversacion(texto);
+      return;
+    }
+    compRef.current?.focus();
+    setAviso({ texto: "Mantén presionada la caja y elige «Pegar». Yo separo lo que es compra." });
   }
 
   async function subirCaptura(archivo: File) {
@@ -1248,7 +1269,7 @@ export default function App() {
       texto: "Todo elegido y con cantidad",
       falta:
         sinCantidad.length > 1
-          ? `decidir ${sinCantidad.length} cosas`
+          ? `elegir ${sinCantidad.length} productos`
           : sinElegir.length === 1
             ? `elegir tu ${sinElegir[0].ingrediente}`
             : `decir cuánto ${sinCantidad[0]?.ingrediente ?? ""}`,
@@ -1266,7 +1287,7 @@ export default function App() {
     {
       ok: preciosSuyos,
       texto: `Precios de hoy de ${perfil.tienda?.nombre ?? `tu ${tuCadena}`}`,
-      falta: `tu ${tuCadena} no contestó: son precios referenciales`,
+      falta: `tu ${tuCadena} no contestó: son precios aproximados`,
     },
   ];
   const opinaPapaya = vivos.length > 0 && buscandoIds.size === 0 && !esperandoTienda && preciosDeTienda !== null;
@@ -1359,6 +1380,7 @@ export default function App() {
       return (
         <LineaCarrito
           key={key}
+          cadena={tuCadena}
           ingrediente={deLaLinea > 1 ? it.ingrediente : l.texto}
           estado="sin-resultado"
           nota={nota}
@@ -1410,13 +1432,13 @@ export default function App() {
             : undefined;
     if (estado !== "agotado" && otras.length > 0)
       acciones.push({
-        texto: `Cambiar (${otras.length})`,
+        texto: `Ver otras (${otras.length})`,
         onClick: () => setHoja({ tipo: "opciones", ingrediente: it.ingrediente }),
       });
     if (deLaLinea === 1) acciones.push({ texto: "Quitar", onClick: quitarLinea });
     else
       acciones.push({
-        texto: it.fuera ? "Volver a ponerlo" : "Sin esto",
+        texto: it.fuera ? "Volver a ponerlo" : "No llevar",
         onClick: () =>
           setItems((xs) =>
             (xs ?? []).map((x) =>
@@ -1428,6 +1450,7 @@ export default function App() {
     return (
       <LineaCarrito
         key={key}
+        cadena={tuCadena}
         ingrediente={deLaLinea > 1 ? it.ingrediente : l.texto}
         producto={it.elegido}
         estado={estado}
@@ -1589,7 +1612,7 @@ export default function App() {
                 <Compositor
                   ref={compRef}
                   valor={borrador}
-                  marcador={vacia ? "leche, pan, 2 kg de papa…" : "añade algo más…"}
+                  marcador={vacia ? "leche, pan, 2 kg de papa…" : "agrega algo más…"}
                   onEscribir={setBorrador}
                   onEnter={() => {
                     if (anotarTexto(borrador)) setBorrador("");
@@ -1614,10 +1637,7 @@ export default function App() {
                   {
                     clave: "pegar",
                     texto: "Pegar WhatsApp",
-                    onClick: () => {
-                      compRef.current?.focus();
-                      setAviso({ texto: "Pega aquí tu mensaje tal cual. Yo separo lo que es compra." });
-                    },
+                    onClick: () => void pegarDelPortapapeles(),
                   },
                   { clave: "captura", texto: "Foto o captura", onClick: () => archivoRef.current?.click() },
                   { clave: "menu", texto: "Menú de la semana", onClick: () => setHojaMenus(true) },
@@ -1647,7 +1667,7 @@ export default function App() {
                   const suyos = (items ?? []).filter((i) => i.lineaId === l.id);
                   if (buscandoIds.has(l.id) || suyos.length === 0)
                     return (
-                      <LineaCarrito key={l.id} ingrediente={l.texto} estado="buscando" />
+                      <LineaCarrito key={l.id} ingrediente={l.texto} estado="buscando" cadena={tuCadena} />
                     );
                   if (suyos.length === 1) return renderItem(suyos[0], l, 1, 0);
                   // Un menú o una receta: una línea que se abrió en varios
@@ -1732,8 +1752,8 @@ export default function App() {
                 {opinaPapaya && <Papaya pepas={pepas} nadaSuma={cuentan === 0 && sinCantidad.length === 0} />}
                 {perfil.tienda && preciosDeTienda === false && (
                   <div style={{ ...lapiz, marginBottom: 8 }}>
-                    {perfil.tienda.nombre} no me contestó: estos son precios
-                    referenciales, no los suyos.
+                    {perfil.tienda.nombre} no me contestó: estos precios son
+                    aproximados, no los de tu tienda.
                   </div>
                 )}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 12 }}>
@@ -1742,9 +1762,11 @@ export default function App() {
                       {esperandoTienda
                         ? `Preguntando a ${perfil.tienda?.nombre ?? `tu ${tuCadena}`}…`
                         : cuentan === 0
-                          ? "Aún no suma"
+                          ? porDecidir.length > 0
+                            ? "Falta elegir"
+                            : "Aún no suma"
                           : pendientes > 0
-                            ? `Subtotal de ${cuentan}`
+                            ? `Suman ${cuentan} de ${vivos.length}`
                             : `${cuentan} ${cuentan === 1 ? "producto" : "productos"}`}
                     </span>
                     <span
@@ -1757,7 +1779,7 @@ export default function App() {
                   </span>
                   {porDecidir.length > 0 ? (
                     <Boton variante="lleno" style={{ whiteSpace: "nowrap" }} onClick={() => setCola({ total: porDecidir.length })}>
-                      {porDecidir.length === 1 ? "Decidir 1 cosa" : `Decidir ${porDecidir.length} cosas`}
+                      {porDecidir.length === 1 ? "Elegir 1 producto" : `Elegir ${porDecidir.length} productos`}
                     </Boton>
                   ) : (
                     <Boton
@@ -1775,7 +1797,7 @@ export default function App() {
                     onClick={() => ir("pedir")}
                     style={{ ...enlaceTexto, fontSize: 12.5, minHeight: 32, marginTop: 4 }}
                   >
-                    Pedir así, sin decidirlo
+                    Seguir sin elegirlos
                   </button>
                 )}
               </>
@@ -1794,7 +1816,7 @@ export default function App() {
           onVolver={() => ir("lista")}
           cuerpo={
             <>
-              <Pasos actual={3} cadena={tuCadena} />
+              <Pasos actual={2} cadena={tuCadena} />
               <h2 style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.03em", margin: "10px 0 10px", color: color.tinta }}>
                 ¿Dónde lo pides?
               </h2>
@@ -1847,11 +1869,11 @@ export default function App() {
 
               <div style={{ display: "grid", gap: 10, marginTop: 18 }}>
                 <Desplegable
-                  titulo="Lo que va"
+                  titulo="Va a tu carrito"
                   resumen={[
                     `${entrega.viajan.length}`,
-                    ajustes.length > 0 && `${ajustes.length} ajustado${ajustes.length === 1 ? "" : "s"}`,
-                    entrega.sequedan.length > 0 && `${entrega.sequedan.length} no va${entrega.sequedan.length === 1 ? "" : "n"}`,
+                    ajustes.length > 0 && `${ajustes.length} con otra cantidad`,
+                    entrega.sequedan.length > 0 && `${entrega.sequedan.length} se ${entrega.sequedan.length === 1 ? "queda" : "quedan"} en tu lista`,
                   ]
                     .filter(Boolean)
                     .join(" · ")}
@@ -1878,7 +1900,7 @@ export default function App() {
                   ))}
                   {entrega.sequedan.map((q) => (
                     <p key={q.nombre} style={{ ...lapiz, margin: "6px 0 0" }}>
-                      No va: {q.nombre} · {q.motivo}. Sigue en tu lista.
+                      Se queda en tu lista: {q.nombre} · {q.motivo}.
                     </p>
                   ))}
                 </Desplegable>
@@ -1996,17 +2018,17 @@ export default function App() {
           cuerpo={
             nPrefs === 0 && compras.length === 0 && !perfil.tienda ? (
               <Vacio
-                titulo="Todavía no sé nada de ustedes."
-                texto="Aquí van a ir apareciendo su tienda, sus marcas y sus compras — solo de verlos comprar. No hay nada que rellenar."
+                titulo="Todavía no sé nada de tu casa."
+                texto="Aquí irán apareciendo tu tienda, tus marcas y tus compras, solo de verte comprar. No hay nada que llenar."
               />
             ) : (
               <>
                 {perfil.tienda && (
                   <>
-                    <Seccion>Dónde compran</Seccion>
+                    <Seccion>Dónde compras</Seccion>
                     <Fila
                       titulo={perfil.tienda.nombre}
-                      nota={`${perfil.tienda.distrito ? perfil.tienda.distrito + " · " : ""}precios y stock de esta tienda`}
+                      nota={`${perfil.tienda.distrito ? perfil.tienda.distrito + " · " : ""}precios y productos de esta tienda`}
                       derecha={
                         <Boton onClick={abrirTienda}>Cambiar</Boton>
                       }
@@ -2016,7 +2038,7 @@ export default function App() {
 
                 {nPrefs > 0 && (
                   <>
-                    <Seccion>Lo que aprendí de ustedes</Seccion>
+                    <Seccion>Lo que ya sé de tu casa</Seccion>
                     {Object.entries(perfil.preferencias).map(([clave, pref]) => (
                       <Fila key={clave} titulo={fraseDe(clave, pref)} nota={motivoDe(pref)} />
                     ))}
@@ -2025,7 +2047,7 @@ export default function App() {
 
                 {listas.length > 0 && (
                   <>
-                    <Seccion>Sus listas</Seccion>
+                    <Seccion>Tus listas</Seccion>
                     {listas.map((l) => {
                       const activas = l.lineas.filter((x) => x.activa).length;
                       return (
@@ -2049,7 +2071,7 @@ export default function App() {
 
                 {compras.length > 0 && (
                   <>
-                    <Seccion>Sus compras</Seccion>
+                    <Seccion>Tus compras</Seccion>
                     {compras.map((c) => (
                       <Fila
                         key={c.ts}
@@ -2079,13 +2101,6 @@ export default function App() {
                   </>
                 )}
 
-                {perfil.metricas?.preguntasEvitadas ? (
-                  <p style={{ ...lapiz, paddingTop: 16 }}>
-                    {perfil.metricas.preguntasEvitadas}{" "}
-                    {perfil.metricas.preguntasEvitadas === 1 ? "pregunta" : "preguntas"} que ya no hizo
-                    falta hacerles.
-                  </p>
-                ) : null}
               </>
             )
           }
@@ -2179,7 +2194,6 @@ export default function App() {
                   </span>
                 </label>
               ))}
-              <p style={{ ...lapiz, marginTop: 16 }}>Comparar con Metro · pronto</p>
               <button
                 onClick={() => {
                   const borrada = verLista;
@@ -2310,7 +2324,7 @@ export default function App() {
       {hojaTienda && (
         <Hoja
           titulo="¿Dónde compras?"
-          sub="Cada tienda tiene sus precios y su stock. Con la tuya, lo que veas será lo que pagas."
+          sub="Cada tienda tiene sus precios y sus productos. Con la tuya, ves los precios de hoy de tu tienda."
           onCerrar={() => {
             setHojaTienda(false);
           }}
@@ -2320,7 +2334,7 @@ export default function App() {
           ) : tiendas.length === 0 ? (
             <p style={lapiz}>
               No pude traer la lista de tiendas. Puedes seguir sin elegir: los
-              precios serán referenciales.
+              precios serán aproximados.
             </p>
           ) : (
 <ListaTiendas tiendas={tiendas} elegidaId={perfil.tienda?.id} onElegir={tomarTienda} />

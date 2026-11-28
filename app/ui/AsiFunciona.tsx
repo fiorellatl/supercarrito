@@ -47,7 +47,7 @@ export default function AsiFunciona({
             Así hacemos tu compra
           </h1>
           <p style={{ fontSize: 15, lineHeight: 1.45, margin: 0, maxWidth: "36ch", opacity: 0.95 }}>
-            {tienda ? `Con ${tienda}, lo que veas es lo que pagas.` : "Lo que veas es lo que pagas."}
+            {tienda ? `Precios de hoy de ${tienda}. ${cadena} los confirma al pagar.` : `Precios de hoy. ${cadena} los confirma al pagar.`}
           </p>
         </div>
         <div className="sc-toldo" aria-hidden />

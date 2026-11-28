@@ -113,7 +113,7 @@ export function Pantalla({
         {casa ? (
           <button
             onClick={casa}
-            aria-label="La casa: lo que aprendí de ustedes"
+            aria-label="Mis compras: lo que ya sé de tu casa"
             title="La casa"
             className="sc-boton"
             style={{
