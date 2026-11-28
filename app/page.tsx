@@ -559,6 +559,8 @@ export default function App() {
         ean: p.ean,
         unidades: unidadesDeVenta(c, p),
         nombre: p.nombre ?? it.ingrediente,
+        marca: p.marca,
+        unidadVenta: p.unidadVenta,
         cantidadMinima: p.cantidadMinima,
       });
     }

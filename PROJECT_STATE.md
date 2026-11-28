@@ -4,6 +4,21 @@
 > hay que leer para retomar**; el resto es la historia de ciclos y decisiones,
 > que se consulta cuando hace falta. Estrategia y competencia: `PRODUCT_CONTEXT.md`.
 
+## ▶️ Homologar productos entre cadenas (2026-11-28, pedido por la PO)
+
+La PO vio «1 iguales» contra Plaza Vea con un pan Bimbo que sí se vende allá.
+**Causa:** Bimbo cambia el EAN del mismo pan entre cadenas (770 g: Wong
+7750727015056, Plaza Vea 7750727014165) y cada cadena lo nombra distinto; solo
+aceptábamos EAN o nombre exacto. Además el de 480 g no existe en Plaza Vea.
+**Hecho:** `lib/homologar.ts` empareja por marca + tamaño total (packs
+incluidos: «Twopack 900ml» = 1800 ml) + palabras que dicen qué es, en las dos
+direcciones (≥75%). Una palabra de más («Añejo») → parecido, nunca mismo.
+**Medido** (canasta de 41 productos de Wong, «mismo» incluye EAN): Plaza Vea
+41% → 71% (+7 parecidos), Makro 29% → 54% (+13 parecidos), Metro 88%,
+Flora y Fauna 1 de 41 (no vende esas marcas). Marcas propias nunca coinciden.
+**Pendiente de la PO:** que los parecidos sumen (marcados) y aplicar Wong Prime
+(envío gratis solo en Wong desde S/ 79.90, wong.pe/prime) si la familia lo marcó.
+
 ## ▶️ Flora y Fauna, quinta cadena (2026-11-27, aprobado por la PO)
 
 - Candidatos medidos: **Flora y Fauna** pasa (VTEX, sc=1, 13 tiendas «F&F» en

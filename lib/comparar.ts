@@ -9,8 +9,10 @@
 //      5 kg es el 521 en las dos, con precio propio), o
 //   2. tiene el mismo código de barras (EAN), o
 //   3. se llama EXACTAMENTE igual en las dos («Leche Reconstituida Gloria Lata
-//      390g»). Los dos catálogos los lleva Cencosud y nombran igual lo que es
-//      igual; las marcas propias («Huevos Pardos Wong») nunca coinciden.
+//      390g»), o
+//   4. tiene la misma marca, el mismo tamaño total y dice lo mismo
+//      (lib/homologar.ts): las marcas cambian el EAN entre cadenas.
+//      Las marcas propias («Huevos Pardos Wong») nunca coinciden.
 // Medido el 2026-11-27: los EAN no son fiables solos —el arroz Costeño de 5 kg
 // es el SKU 521 en las dos cadenas y cada una le pone un EAN distinto—, así que
 // el mismo SKU vale si coincide el EAN o el nombre.
@@ -23,6 +25,7 @@
 import type { ProductoWong } from "@/lib/catalog";
 import type { Cadena } from "@/lib/cadenas";
 import { buscarEnWongVtex, mapear, type VtexProduct } from "@/lib/wongvtex";
+import { consultaPara, parentesco } from "@/lib/homologar";
 import { catalogoDeTienda, type EnvioDeTienda, type Lugar, type Tienda } from "@/lib/tienda";
 
 const TIMEOUT_MS = 9000;
@@ -32,6 +35,8 @@ export type LineaAComparar = {
   ean?: string;
   unidades: number; // unidades de venta, las mismas que viajan en el enlace
   nombre: string;
+  marca?: string;
+  unidadVenta?: string;
   cantidadMinima?: number;
 };
 
@@ -94,16 +99,26 @@ async function equivalentesEn(cadena: Cadena, lineas: LineaAComparar[]) {
       }
     }
   }
-  // Último intento: el mismo nombre exacto, con el buscador de la otra cadena.
+  // Último intento, con el buscador de la otra cadena: el mismo nombre exacto
+  // o, si no, la misma marca, tipo y tamaño (lib/homologar.ts). Las marcas
+  // cambian el código de barras entre cadenas: el pan Bimbo de 770 g lo hace.
   const porNombre = lineas.filter((l) => !porSku.has(l.sku));
   await Promise.all(
     porNombre.map(async (l) => {
       try {
-        const r = await buscarEnWongVtex(l.nombre, cadena);
-        const igual = [r, ...(r.alternativas ?? [])].find(
-          (c) => c.encontrado && mismoNombre(c.nombre, l.nombre)
-        );
-        if (igual) porSku.set(l.sku, { ...igual, alternativas: undefined });
+        const consultas = [l.nombre, ...(l.marca ? [consultaPara(l)] : [])];
+        const candidatos: ProductoWong[] = [];
+        for (const q of consultas) {
+          const r = await buscarEnWongVtex(q, cadena);
+          candidatos.push(...[r, ...(r.alternativas ?? [])].filter((c) => c.encontrado));
+          const igual =
+            candidatos.find((c) => mismoNombre(c.nombre, l.nombre)) ??
+            candidatos.find((c) => parentesco(l, c) === "mismo");
+          if (igual) {
+            porSku.set(l.sku, { ...igual, alternativas: undefined });
+            return;
+          }
+        }
       } catch {
         // Si la otra cadena no contesta para este, queda fuera y se dice.
       }
