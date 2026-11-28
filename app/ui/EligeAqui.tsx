@@ -53,17 +53,7 @@ export default function EligeAqui({
         </div>
       </div>
 
-      <div
-        role="list"
-        style={{
-          display: "flex",
-          gap: 9,
-          overflowX: "auto",
-          padding: "10px 12px 4px",
-          scrollSnapType: "x proximity",
-          WebkitOverflowScrolling: "touch",
-        }}
-      >
+      <div role="list" style={{ display: "grid", gap: 7, padding: "10px 12px 2px" }}>
         {opciones.map((o) => {
           const agotado = o.disponible === false;
           return (
@@ -75,43 +65,36 @@ export default function EligeAqui({
               className="sc-boton"
               aria-label={`${o.nombre ?? o.marca ?? ingrediente}${o.precio != null ? `, ${soles(o.precio)}` : ""}${agotado ? ", hoy no hay" : ""}`}
               style={{
-                flex: "0 0 128px",
-                scrollSnapAlign: "start",
                 display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                gap: 6,
-                padding: 10,
+                alignItems: "center",
+                gap: 11,
+                width: "100%",
+                padding: "8px 12px 8px 8px",
                 borderRadius: 14,
                 background: color.blanco,
                 border: `1px solid ${color.renglon}`,
                 cursor: "pointer",
                 font: "inherit",
                 textAlign: "left",
+                minHeight: 44,
                 opacity: agotado ? 0.6 : 1,
               }}
             >
-              <Foto src={o.imagen} alt={o.nombre ?? ingrediente} grande apagada={agotado} />
-              <span
-                style={{
-                  fontSize: 12.5,
-                  fontWeight: 500,
-                  color: color.tinta,
-                  lineHeight: 1.25,
-                  display: "-webkit-box",
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  minHeight: "3.75em",
-                }}
-              >
-                {o.nombre ?? o.marca}
+              <Foto src={o.imagen} alt={o.nombre ?? ingrediente} apagada={agotado} />
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 13.5, fontWeight: 500, color: color.tinta, lineHeight: 1.28 }}>
+                  {o.nombre ?? o.marca}
+                </span>
+                {agotado && (
+                  <span style={{ display: "inline-block", marginTop: 4 }}>
+                    <Sello tono="problema">hoy no hay</Sello>
+                  </span>
+                )}
               </span>
-              <span style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: "auto" }}>
-                <span style={{ ...plata, fontSize: 14 }}>{o.precio != null ? soles(o.precio) : "—"}</span>
+              <span style={{ textAlign: "right", flex: "0 0 auto" }}>
+                <span style={{ ...plata, display: "block", fontSize: 14 }}>{o.precio != null ? soles(o.precio) : "—"}</span>
                 {o.unidadVenta === "kg" && <span style={{ ...lapiz, fontSize: 11 }}>el kg</span>}
               </span>
-              {agotado && <Sello tono="problema">hoy no hay</Sello>}
             </button>
           );
         })}
