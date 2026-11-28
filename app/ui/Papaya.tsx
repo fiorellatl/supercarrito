@@ -122,7 +122,7 @@ export default function Papaya({ pepas, nadaSuma }: { pepas: Pepa[]; nadaSuma?: 
         <DibujoPapaya pepas={llenas} nadaSuma={nadaSuma} />
         <span style={{ flex: 1, minWidth: 0 }}>
           <span style={{ display: "block", fontFamily: fuenteMarca, fontSize: 17, color: color.tinta, lineHeight: 1.15 }}>
-            {titulo} <span style={{ ...lapiz, fontFamily: "inherit", fontSize: 12.5 }}>· {llenas} de 4</span>
+            {titulo}
           </span>
           <span style={{ ...lapiz, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {nadaSuma && !primeraFalta ? "Todavía nada suma al total." : primeraFalta ? `Falta: ${primeraFalta}` : "Todo listo para pedir."}
