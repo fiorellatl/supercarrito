@@ -141,7 +141,7 @@ export default function Cabecera({
         </button>
         {tarjeta && (
           <div style={{ marginTop: 6, fontSize: 12.5, fontWeight: 600, opacity: 0.95 }}>
-            💳 {tarjeta}: {cadena} te lo descuenta al pagar
+            💳 {tarjeta === "Wong Prime" ? "Wong Prime: envío gratis desde S/ 79.90" : `${tarjeta}: ${cadena} te lo descuenta al pagar`}
           </div>
         )}
       </div>
