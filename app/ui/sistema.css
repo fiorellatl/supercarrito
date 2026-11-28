@@ -407,3 +407,21 @@ nav,
   .sc-bv-cuerpo { grid-template-columns: minmax(0, 1fr) 380px; column-gap: 48px; padding-top: 40px !important; }
   .sc-bv-der { position: sticky; top: 32px; padding: 24px; border-radius: 24px; background: var(--papel-2); }
 }
+
+/* --- La marca: carrito que sonríe con la papa asomada (Logo.tsx, 2026-11-28) --- */
+.sc-marca-carrito .mc-ojos { transform-box: fill-box; transform-origin: center; }
+.sc-mc-quieta .mc-ojos { animation: sp-mc-parpadeo 5s infinite; }
+.sc-mc-entra .mc-carro { animation: sp-mc-rueda .9s cubic-bezier(.25,.7,.35,1) both; }
+.sc-mc-entra .mc-papa { animation: sp-mc-asoma .7s .8s cubic-bezier(.3,.6,.4,1) both; }
+.sc-mc-entra .mc-sonrisa { stroke-dasharray: 32; animation: sp-mc-sonrisa .5s 1.4s ease-out both; }
+.sc-mc-crece .mc-papa { animation: sp-mc-salta .6s cubic-bezier(.3,.6,.4,1); }
+.sc-mc-achica .mc-carro { transform-box: fill-box; transform-origin: 50% 100%; animation: sp-mc-sacude .5s ease-in-out; }
+@keyframes sp-mc-parpadeo { 0%, 92% { transform: none; } 95% { transform: scaleY(.1); } 98%, 100% { transform: none; } }
+@keyframes sp-mc-rueda { 0% { transform: translateX(-46px); opacity: 0; } 15% { opacity: 1; } 80% { transform: translateX(4px); } 100% { transform: none; } }
+@keyframes sp-mc-asoma { 0% { transform: translateY(28px); } 65% { transform: translateY(-4px); } 100% { transform: none; } }
+@keyframes sp-mc-sonrisa { from { stroke-dashoffset: 32; } to { stroke-dashoffset: 0; } }
+@keyframes sp-mc-salta { 0% { transform: none; } 35% { transform: translateY(-9px); } 70% { transform: translateY(2px); } 100% { transform: none; } }
+@keyframes sp-mc-sacude { 0%, 100% { transform: none; } 25% { transform: rotate(-6deg); } 50% { transform: rotate(5deg); } 75% { transform: rotate(-3deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .sc-marca-carrito *, .sc-marca-carrito { animation: none !important; }
+}
