@@ -231,7 +231,7 @@ export function TuTienda({
             {tienda?.nombre ?? cadena}
           </span>
           <span style={{ ...lapiz, display: "block" }}>
-            {tienda ? `Tu tienda${actualizado ? ` · precios de hoy, ${actualizado}` : ""}` : "Precios referenciales"} ·{" "}
+            {tienda ? `Tu tienda${actualizado ? ` · precios de hoy, ${actualizado}` : ""}` : "Precios aproximados"} ·{" "}
             <button onClick={onCambiarTienda} style={enlace}>
               {tienda ? "cambiar" : "elegir tienda"}
             </button>
@@ -370,7 +370,7 @@ export function OtraTienda({
         <Punto on={false} />
         <span className={estado.tipo === "cargando" ? "sc-pulso" : undefined} style={lapiz}>
           {estado.tipo === "cargando"
-            ? "Comparando con la otra cadena…"
+            ? "Comparando con el otro súper…"
             : "Ahora no pude comparar: una de las tiendas no contestó."}
         </span>
       </div>
@@ -383,7 +383,7 @@ export function OtraTienda({
     return (
       // La Piña: lo que no depende de nosotros (app/ui/Elenco.tsx).
       <div style={{ ...tarjeta(false), paddingBottom: 2 }}>
-        <Dice quien="pina">{otra} no vende nada de tu lista: aquí no hay qué comparar.</Dice>
+        <Dice quien="pina">{otra} no vende nada de tu lista, así que no hay nada que comparar.</Dice>
       </div>
     );
 
@@ -773,7 +773,7 @@ export function TottusCard({
     return (
       <div style={{ ...tarjeta(false), display: "flex", gap: 10, alignItems: "center" }}>
         <Punto on={false} />
-        <span style={lapiz}>Nada de tu lista está igual en Tottus: no hay qué comparar.</span>
+        <span style={lapiz}>No encontré los mismos productos en Tottus, así que no puedo comparar.</span>
       </div>
     );
 

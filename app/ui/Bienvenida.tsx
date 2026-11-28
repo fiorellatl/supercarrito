@@ -208,13 +208,13 @@ export default function Bienvenida({ onEntrar }: { onEntrar: (nombre: string) =>
                 textWrap: "balance",
               }}
             >
-              Tu lista de la compra, ya hecha.
+              Tu lista del súper, ya hecha.
             </h1>
             {/* La frase que define el producto. Sin "IA", sin "plataforma", sin
                 "optimiza": lo que hace, dicho como lo diría una vecina. */}
             <p style={{ fontSize: 16, lineHeight: 1.5, margin: 0, maxWidth: "34ch", opacity: 0.95 }}>
               Anota lo que falta en casa como te salga. Yo lo convierto en tu
-              carrito de Wong, Metro o Plaza Vea, con los precios de tu tienda.
+              carrito de Wong, Metro, Plaza Vea y más, con los precios de tu tienda.
             </p>
           </div>
         </div>
@@ -307,7 +307,7 @@ export default function Bienvenida({ onEntrar }: { onEntrar: (nombre: string) =>
               línea, un campo de texto en la primera pantalla parece el
               principio de un registro largo. */}
           <p style={{ ...lapiz, fontSize: 12.5, margin: "10px 0 0", textAlign: "center" }}>
-            Sin contraseñas y sin correo. Nada sale de este teléfono.
+            Sin contraseñas y sin correo. Nada sale de este celular.
           </p>
         </form>
       </div>

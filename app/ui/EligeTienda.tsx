@@ -184,7 +184,7 @@ export default function EligeTienda({
             ¿Dónde compras?
           </h1>
           <p style={{ fontSize: 15, lineHeight: 1.45, margin: 0, maxWidth: "36ch", opacity: 0.95 }}>
-            Cada tienda tiene su stock y sus precios. Con la tuya, lo que veas es lo que pagas.
+            Cada tienda tiene sus precios y sus productos. Con la tuya, ves los precios de hoy de tu tienda.
           </p>
         </div>
         <div className="sc-toldo" aria-hidden />
@@ -224,7 +224,7 @@ export default function EligeTienda({
               className="sc-boton"
               style={{ border: 0, background: "none", color: color.tinta, fontFamily: fuente, fontSize: 14, textDecoration: "underline", cursor: "pointer", minHeight: 40 }}
             >
-              Seguir sin tienda (precios referenciales)
+              Seguir sin tienda (precios aproximados)
             </button>
           </div>
         ) : (

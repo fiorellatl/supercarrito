@@ -41,7 +41,9 @@ export default function LineaCarrito({
   decision,
   faltaElegir,
   conTarjeta,
+  cadena = "tu súper",
 }: {
+  cadena?: string; // el súper de la familia: «buscando en Metro…», no siempre Wong
   // El precio con la tarjeta de la familia, tal como lo publica la tienda.
   conTarjeta?: ConTarjeta;
   // Lo que esta línea espera de la familia, si espera algo: un cartelito
@@ -92,7 +94,7 @@ export default function LineaCarrito({
             {ingrediente}
           </div>
           <div className="sc-pulso" style={{ ...lapiz, fontSize: 11.5, marginTop: 2 }}>
-            buscando en Wong…
+            buscando en {cadena}…
           </div>
         </div>
         <Monto apagado>—</Monto>
@@ -115,7 +117,7 @@ export default function LineaCarrito({
             {ingrediente}
           </div>
           <div style={{ ...lapiz, fontSize: 11.5, marginTop: 2 }}>
-            {nota ?? "no lo encontré en Wong"}
+            {nota ?? `no lo encontré en ${cadena}`}
           </div>
           {acciones && acciones.length > 0 && <AccionesLinea acciones={acciones} />}
         </div>
@@ -132,7 +134,7 @@ export default function LineaCarrito({
           target="_blank"
           rel="noopener noreferrer"
           style={{ display: "block", flex: "0 0 auto" }}
-          aria-label={`Ver ${producto.nombre ?? ingrediente} en Wong`}
+          aria-label={`Ver ${producto.nombre ?? ingrediente} en ${cadena}`}
         >
           <Foto src={producto.imagen} alt={producto.nombre ?? ingrediente} apagada={agotado} />
         </a>

@@ -13,7 +13,7 @@ import { TrazosDePapa } from "@/app/ui/Papa";
 // `manifest.ts`, `apple-icon.tsx` y `opengraph-image.tsx`. Next los enlaza solo.
 
 const DESCRIPCION =
-  "Anota lo que falta en casa como te salga. Yo lo convierto en tu carrito de Wong, con los precios de tu tienda.";
+  "Anota lo que falta en casa como te salga. Yo lo convierto en tu carrito de Wong, Metro, Plaza Vea y más, con los precios de tu tienda.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://supercarrito.netlify.app"),
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
         url: "/enlace.png",
         width: 1200,
         height: 630,
-        alt: "SuperCarrito — la papa del carrito: tu lista de la compra, ya hecha en tu Wong",
+        alt: "SuperCarrito — la papa del carrito: tu lista del súper, ya hecha en tu Wong, Metro o Plaza Vea",
       },
     ],
   },
