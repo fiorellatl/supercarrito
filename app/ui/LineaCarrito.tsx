@@ -2,9 +2,11 @@
 
 import { color, lapiz, plata, soles } from "@/app/ui/sistema";
 import type { ProductoWong } from "@/lib/catalog";
+import type { ConTarjeta } from "@/lib/tarjetas";
 import { etiquetaUnitaria, formatearCantidad } from "@/lib/cantidades";
-import Boton from "@/app/ui/Boton";
+import Papa from "@/app/ui/Papa";
 import Foto from "@/app/ui/Foto";
+import { Pina, Yuca } from "@/app/ui/Elenco";
 import Sello from "@/app/ui/Sello";
 
 // Una línea del carrito. Es la pantalla donde se gana o se pierde la confianza,
@@ -20,7 +22,7 @@ import Sello from "@/app/ui/Sello";
 // sustituye en silencio: si desaparece, la familia cree que no la entendimos;
 // viéndolo, entiende que el problema es la tienda.
 
-export type EstadoLinea = "confirmado" | "pendiente" | "agotado" | "sin-resultado";
+export type EstadoLinea = "confirmado" | "pendiente" | "agotado" | "sin-resultado" | "buscando";
 
 export default function LineaCarrito({
   ingrediente,
@@ -34,7 +36,22 @@ export default function LineaCarrito({
   atenuada,
   orden,
   onCantidad,
+  nota,
+  personaje,
+  decision,
+  faltaElegir,
+  conTarjeta,
 }: {
+  // El precio con la tarjeta de la familia, tal como lo publica la tienda.
+  conTarjeta?: ConTarjeta;
+  // Lo que esta línea espera de la familia, si espera algo: un cartelito
+  // amarillo a la derecha, en el sitio del monto. Una sola decisión por línea.
+  decision?: { texto: string; onClick: () => void };
+  faltaElegir?: boolean; // escrito sin marca: falta elegir cuál, no cuánto
+  nota?: string; // qué decir cuando no hay producto: «no lo encontré», «Wong no contestó»
+  // Quién da la cara cuando no hay producto: la Yuca si no lo encontramos tal
+  // cual, la Piña si Wong no contestó. Sin personaje, la foto apagada de siempre.
+  personaje?: "yuca" | "pina";
   ingrediente: string;
   producto?: ProductoWong;
   estado: EstadoLinea;
@@ -60,23 +77,55 @@ export default function LineaCarrito({
 
   // Sin resultado no es un error de la familia: es algo que no supimos
   // encontrar. Se dice en primera persona y se deja su palabra intacta.
-  if (estado === "sin-resultado") {
+  // Recién anotada: la línea ya está en su sitio, con sus palabras, mientras
+  // Wong contesta. Nada salta ni se reordena cuando llega el producto.
+  // La papa saca la lupa mientras tanto (PO, 2026-11-26: «buscando» tenía que
+  // ser más divertido que un texto que parpadea).
+  if (estado === "buscando") {
     return (
       <Fila retraso={retraso}>
-        <Foto alt={ingrediente} apagada />
+        <span style={{ width: 46, height: 46, flex: "0 0 auto", display: "grid", placeItems: "center" }}>
+          <Papa px={42} momento="busca" />
+        </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14.5, fontWeight: 500, color: color.tinta, lineHeight: 1.28 }}>
             {ingrediente}
           </div>
-          <div style={{ ...lapiz, fontSize: 11.5, marginTop: 2 }}>no lo encontré en Wong</div>
+          <div className="sc-pulso" style={{ ...lapiz, fontSize: 11.5, marginTop: 2 }}>
+            buscando en Wong…
+          </div>
         </div>
-        <Monto>—</Monto>
+        <Monto apagado>—</Monto>
+      </Fila>
+    );
+  }
+
+  if (estado === "sin-resultado") {
+    return (
+      <Fila retraso={retraso}>
+        {personaje === "yuca" ? (
+          <Yuca px={46} />
+        ) : personaje === "pina" ? (
+          <Pina px={46} />
+        ) : (
+          <Foto alt={ingrediente} apagada />
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14.5, fontWeight: 500, color: color.tinta, lineHeight: 1.28 }}>
+            {ingrediente}
+          </div>
+          <div style={{ ...lapiz, fontSize: 11.5, marginTop: 2 }}>
+            {nota ?? "no lo encontré en Wong"}
+          </div>
+          {acciones && acciones.length > 0 && <AccionesLinea acciones={acciones} />}
+        </div>
+        <Monto apagado>—</Monto>
       </Fila>
     );
   }
 
   return (
-    <Fila atenuada={atenuada} retraso={retraso}>
+    <Fila atenuada={atenuada} retraso={retraso} pendiente={!!decision}>
       {producto?.url ? (
         <a
           href={producto.url}
@@ -94,10 +143,10 @@ export default function LineaCarrito({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: 14.5,
-            fontWeight: 500,
+            fontSize: 15,
+            fontWeight: 600,
             color: color.tinta,
-            lineHeight: 1.28,
+            lineHeight: 1.25,
             textWrap: "pretty",
           }}
         >
@@ -121,7 +170,9 @@ export default function LineaCarrito({
           }}
         >
           {agotado ? (
-            "hoy no hay en Wong"
+            "hoy no hay en tu tienda"
+          ) : subtotal === undefined && faltaElegir ? (
+            "falta elegir cuál"
           ) : subtotal === undefined ? (
             `${producto?.precio != null ? soles(producto.precio) : "—"}${etiquetaUnitaria(
               producto?.unidadVenta ?? "un"
@@ -151,6 +202,26 @@ export default function LineaCarrito({
             </>
           )}
         </div>
+
+        {conTarjeta && !agotado && (
+          <div
+            style={{
+              ...lapiz,
+              fontSize: 11.5,
+              marginTop: 3,
+              fontVariantNumeric: "tabular-nums",
+              color: color.tinta,
+              fontWeight: 700,
+            }}
+          >
+            💳 con tu {conTarjeta.tarjeta}:{" "}
+            <span style={{ whiteSpace: "nowrap" }}>
+              {soles(conTarjeta.precio)}
+              {etiquetaUnitaria(producto?.unidadVenta ?? "un")}
+              {conTarjeta.porcentaje ? ` (−${conTarjeta.porcentaje}%)` : ""}
+            </span>
+          </div>
+        )}
 
         {(producto?.marca || producto?.presentacion) && (
           <div style={{ ...lapiz, fontSize: 11, color: color.lapiz2, marginTop: 2 }}>
@@ -183,22 +254,18 @@ export default function LineaCarrito({
           </div>
         )}
 
-        {acciones && acciones.length > 0 && (
-          <div style={{ marginTop: 7, display: "flex", flexWrap: "wrap", gap: 7 }}>
-            {acciones.map((a) => (
-              <Boton key={a.texto} variante="fantasma" chico onClick={a.onClick}>
-                {a.texto}
-              </Boton>
-            ))}
-          </div>
-        )}
+        {acciones && acciones.length > 0 && <AccionesLinea acciones={acciones} />}
       </div>
 
       {/* Lo que no sabemos vale un guion, jamás un cero: un S/ 0.00 al lado de
           su propia multiplicación es un monto que ya no se puede explicar. */}
-      <Monto apagado={subtotal === undefined || agotado}>
-        {subtotal === undefined || agotado ? "—" : soles(subtotal)}
-      </Monto>
+      {decision ? (
+        <Cartelito {...decision} />
+      ) : (
+        <Monto apagado={subtotal === undefined || agotado}>
+          {subtotal === undefined || agotado ? "—" : soles(subtotal)}
+        </Monto>
+      )}
     </Fila>
   );
 }
@@ -293,14 +360,45 @@ function Paso({
   );
 }
 
+// El cartelito del puesto: lo que falta decidir, en amarillo ají sobre verde
+// noche. Es lo único que grita en la lista, y grita poco.
+function Cartelito({ texto, onClick }: { texto: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="sc-boton"
+      style={{
+        flex: "0 0 auto",
+        alignSelf: "center",
+        border: 0,
+        borderRadius: 999,
+        background: color.noche,
+        color: color.aji,
+        padding: "8px 12px",
+        minHeight: 34,
+        font: "inherit",
+        fontSize: 12.5,
+        fontWeight: 800,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {texto}
+    </button>
+  );
+}
+
 function Fila({
   children,
   atenuada,
   retraso,
+  pendiente,
 }: {
   children: React.ReactNode;
   atenuada?: boolean;
   retraso?: number;
+  pendiente?: boolean;
 }) {
   return (
     <div
@@ -309,8 +407,10 @@ function Fila({
         display: "flex",
         alignItems: "flex-start",
         gap: 11,
-        padding: "10px 0",
-        borderBottom: `1px solid ${color.renglon}`,
+        padding: "10px 12px",
+        marginBottom: 8,
+        borderRadius: 16,
+        background: pendiente ? "#FFF4D6" : color.papel2,
         // Lo que se deja anotado no se borra ni se esconde: se apaga. Sigue a
         // la vista para poder volver a ponerlo sin buscarlo.
         opacity: atenuada ? 0.45 : 1,
@@ -328,13 +428,48 @@ function Monto({ children, apagado }: { children: React.ReactNode; apagado?: boo
     <div
       style={{
         ...plata,
-        fontSize: 14,
+        fontSize: 15,
+        fontWeight: 800,
         color: apagado ? color.lapiz2 : color.tinta,
         paddingTop: 1,
         flex: "0 0 auto",
       }}
     >
       {children}
+    </div>
+  );
+}
+
+// Las decisiones de una línea, en una sola fila de enlaces. En la lista hay
+// veinte productos: si cada uno trae dos botones grandes, la compra deja de
+// verse. Son tocables (32 px de alto) sin gritar.
+function AccionesLinea({ acciones }: { acciones: { texto: string; onClick: () => void }[] }) {
+  return (
+    <div style={{ marginTop: 4, display: "flex", flexWrap: "wrap", columnGap: 16 }}>
+      {acciones.map((a) => (
+        <button
+          key={a.texto}
+          type="button"
+          onClick={a.onClick}
+          className="sc-boton"
+          style={{
+            border: "none",
+            background: "none",
+            padding: 0,
+            minHeight: 32,
+            cursor: "pointer",
+            font: "inherit",
+            fontSize: 12.5,
+            fontWeight: 500,
+            color: color.tinta,
+            textDecoration: "underline",
+            textDecorationColor: color.renglon,
+            textUnderlineOffset: 3,
+          }}
+        >
+          {a.texto}
+        </button>
+      ))}
     </div>
   );
 }

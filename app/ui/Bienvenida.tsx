@@ -29,72 +29,150 @@
 //   · **El nombre de la casa deja de ser un campo de registro.** Es la última
 //     frase de una conversación, no el primer paso de un alta.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Boton from "@/app/ui/Boton";
-import Logo from "@/app/ui/Logo";
-import { color, fuente, lapiz, plata } from "@/app/ui/sistema";
+import Logo, { Carrito } from "@/app/ui/Logo";
+import { color, fuente, lapiz, plata, soles } from "@/app/ui/sistema";
 
 // Cuatro formas equivalentes de empezar. Ninguna va primera por ser mejor: van
 // en el orden en que se le ocurren a una persona, y las cuatro terminan en el
 // mismo sitio.
+// Cards, no pasos (PO, 2026-11-27): son caminos paralelos. Cada una con un
+// ejemplo real, porque se entiende antes viendo qué escribir. Informativas: en
+// la bienvenida no hay lista todavía, así que no se tocan ni lo aparentan.
 const CAPACIDADES = [
-  { icono: "✎", texto: "Escríbelo como te salga" },
-  { icono: "⌘", texto: "Pega un WhatsApp entero, tal cual" },
-  { icono: "◫", texto: "Importa una compra que ya hiciste" },
-  { icono: "☰", texto: "Carga el menú de la semana" },
+  { icono: "✎", texto: "Escríbelo como te salga", ejemplo: "«pan, leche, 2 kg de pollo»" },
+  { icono: "⌘", texto: "Pega un WhatsApp", ejemplo: "«Mami compra huevos y…», tal cual" },
+  { icono: "◫", texto: "Importa una compra", ejemplo: "foto de la boleta o captura del carrito" },
+  { icono: "☰", texto: "Carga el menú de la semana", ejemplo: "«lunes: ají de gallina»" },
 ];
 
-// La demostración. Es la aplicación de verdad, en pequeño: la letra de la
-// familia arriba, lo que contesta SuperCarrito abajo, y la flecha que hace de
-// verbo. Los datos son reales —ese producto y ese precio existen— porque una
+// La demostración. Es la aplicación de verdad, en pequeño: la frase de la
+// familia se escribe sola, la flecha hace de verbo y los productos caen al
+// carrito uno por uno, con su multiplicación y su total. Rota entre tres
+// encargos típicos (pedido de la PO, 2026-11-26: «más personalidad»).
+//
+// Los productos y precios son de Wong real, consultados el 2026-11-26: una
 // demostración con cifras inventadas es la primera mentira del producto.
+const EJEMPLOS: { frase: string; productos: { n: string; c: string; m: number }[] }[] = [
+  {
+    frase: "mami compra 2 kg de pollo y leche",
+    productos: [
+      { n: "Pollo Entero Fresco x kg", c: "2 kg × S/ 11.90/kg", m: 23.8 },
+      { n: "Leche Gloria Entera 400 g", c: "1 × S/ 4.50 c/u", m: 4.5 },
+    ],
+  },
+  {
+    frase: "papa 2 kg, aceite primor y huevos 🥚",
+    productos: [
+      { n: "Papa Negra Comcen 2 kg", c: "1 × S/ 11.00 c/u", m: 11 },
+      { n: "Aceite Vegetal Primor 1.8 L", c: "1 × S/ 17.10 c/u", m: 17.1 },
+      { n: "Huevos Pardos La Calera 14 un", c: "1 × S/ 18.20 c/u", m: 18.2 },
+    ],
+  },
+  {
+    frase: "medio kilo de cebolla pls",
+    productos: [{ n: "Cebolla Blanca x kg", c: "0.5 kg × S/ 5.29/kg", m: 2.65 }],
+  },
+];
+
 function Muestra() {
+  const [n, setN] = useState(0);
+  const [letras, setLetras] = useState(0);
+  const quieto = useRef(false);
+  const ej = EJEMPLOS[n];
+  const escrita = letras >= ej.frase.length;
+
+  useEffect(() => {
+    quieto.current = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    if (quieto.current) setLetras(EJEMPLOS[0].frase.length);
+  }, []);
+
+  useEffect(() => {
+    if (quieto.current) return;
+    if (!escrita) {
+      const t = setTimeout(() => setLetras((x) => x + 1), 38 + Math.random() * 40);
+      return () => clearTimeout(t);
+    }
+    // Escrita: caen los productos y se queda a la vista un rato antes de
+    // pasar al siguiente encargo.
+    const t = setTimeout(() => {
+      setN((x) => (x + 1) % EJEMPLOS.length);
+      setLetras(0);
+    }, 3600 + ej.productos.length * 260);
+    return () => clearTimeout(t);
+  }, [letras, escrita, ej.productos.length]);
+
+  const total = ej.productos.reduce((a, p) => a + p.m, 0);
+
+  // Cada producto que cae a la lista cae también al carrito: su número sube
+  // y el carrito da un saltito, al compás de las tarjetas.
+  const [caidos, setCaidos] = useState(0);
+  useEffect(() => {
+    setCaidos(0);
+    if (!escrita) return;
+    const ts = ej.productos.map((_, i) => setTimeout(() => setCaidos(i + 1), 120 + i * 260 + 320));
+    return () => ts.forEach(clearTimeout);
+  }, [escrita, n, ej.productos]);
+
   return (
     <div
       className="sc-entra"
-      style={{
-        animationDelay: "90ms",
-        border: `1px solid ${color.renglon}`,
-        borderRadius: 16,
-        background: color.blanco,
-        padding: "13px 15px 14px",
-        boxShadow: "0 1px 2px rgba(34,51,84,.05)",
-      }}
+      aria-label={`Ejemplo: «${ej.frase}» se convierte en ${ej.productos.length} productos de Wong`}
+      style={{ animationDelay: "90ms", borderRadius: 20, background: color.papel2, padding: "16px 16px 14px", minHeight: 318 }}
     >
-      <div style={{ fontSize: 15, fontWeight: 500, color: color.tinta, lineHeight: 1.35 }}>
-        &ldquo;mami compra 2 kg de pollo y leche&rdquo;
+      <div style={{ fontSize: 17, fontWeight: 600, color: color.tinta, lineHeight: 1.35, minHeight: 46 }}>
+        &ldquo;{ej.frase.slice(0, letras)}
+        {!escrita && <span className="sc-cursor" aria-hidden />}
+        {escrita && <>&rdquo;</>}
       </div>
 
-      <div
-        aria-hidden
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 7,
-          margin: "9px 0 8px",
-          color: color.lapiz2,
-        }}
-      >
+      <div aria-hidden style={{ display: "flex", alignItems: "center", gap: 10, margin: "12px 0 12px" }}>
         <span style={{ height: 1, flex: 1, background: color.renglon }} />
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 5v14M6 13l6 6 6-6" />
-        </svg>
+<Carrito px={26} cuenta={caidos || undefined} />
         <span style={{ height: 1, flex: 1, background: color.renglon }} />
       </div>
 
-      <div style={{ display: "grid", gap: 4 }}>
-        {[
-          { n: "Pollo Entero Fresco x kg", c: "2 kg × S/ 11.90/kg", m: "S/ 23.80" },
-          { n: "Leche Gloria Entera 400 g", c: "1 × S/ 4.50 c/u", m: "S/ 4.50" },
-        ].map((p) => (
-          <div key={p.n} style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: color.tinta, lineHeight: 1.3 }}>
-              {p.n}
-              <span style={{ ...lapiz, fontSize: 11, display: "block", marginTop: 1 }}>{p.c}</span>
-            </span>
-            <span style={{ ...plata, fontSize: 13, flex: "0 0 auto" }}>{p.m}</span>
+      <div style={{ display: "grid", gap: 8 }}>
+        {escrita &&
+          ej.productos.map((p, i) => (
+            <div
+              key={`${n}-${p.n}`}
+              className="sc-cae-carrito"
+              style={{
+                animationDelay: `${120 + i * 260}ms`,
+                display: "flex",
+                alignItems: "baseline",
+                gap: 10,
+                background: color.blanco,
+                borderRadius: 14,
+                padding: "10px 12px",
+              }}
+            >
+              <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, color: color.tinta, lineHeight: 1.3 }}>
+                {p.n}
+                <span style={{ ...lapiz, fontSize: 11, display: "block", marginTop: 1 }}>{p.c}</span>
+              </span>
+              <span style={{ ...plata, fontSize: 15, fontWeight: 800, flex: "0 0 auto" }}>{soles(p.m)}</span>
+            </div>
+          ))}
+        {escrita && (
+          <div
+            className="sc-cae-carrito"
+            style={{
+              animationDelay: `${120 + ej.productos.length * 260}ms`,
+              display: "flex",
+              justifyContent: "space-between",
+              padding: "2px 12px 0",
+              fontSize: 13,
+              fontWeight: 800,
+              color: color.pino,
+            }}
+          >
+            <span>Tu carrito de Wong</span>
+            <span style={{ fontVariantNumeric: "tabular-nums" }}>{soles(total)}</span>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
@@ -103,124 +181,136 @@ function Muestra() {
 export default function Bienvenida({ onEntrar }: { onEntrar: (nombre: string) => void }) {
   const [nombre, setNombre] = useState("");
 
+  // Estilo «puesto de mercado» (2026-11-26): el letrero rojo con su toldo es
+  // lo primero que se ve, igual que en la lista. En escritorio, dos columnas:
+  // la promesa a la izquierda, la demostración y la puerta a la derecha.
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        gap: 20,
-        padding: "40px 0 calc(28px + var(--abajo))",
-      }}
-    >
-      <div className="sc-entra">
-        <Logo />
-        <h1
+    <div className="sc-bienvenida" style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
+      <div className="sc-bv-letrero" style={{ margin: "0 -22px" }}>
+        <div
+          className="sc-entra"
           style={{
-            fontFamily: fuente,
-            fontSize: 28,
-            fontWeight: 600,
-            color: color.tinta,
-            letterSpacing: "-0.035em",
-            lineHeight: 1.15,
-            margin: "18px 0 8px",
-            textWrap: "balance",
+            background: color.papaya,
+            color: "#fff",
+            padding: "calc(28px + env(safe-area-inset-top, 0px)) 22px 22px",
           }}
         >
-          Tu lista de la compra,
-          <br />
-          ya hecha.
-        </h1>
-        {/* La frase que define el producto. Sin "IA", sin "plataforma", sin
-            "optimiza": lo que hace, dicho como lo diría una vecina. */}
-        <p style={{ ...lapiz, fontSize: 15, lineHeight: 1.55, margin: 0, maxWidth: "31ch" }}>
-          Anota lo que falta en casa como te salga. Yo lo convierto en tu carrito
-          de Wong, con los precios de tu tienda.
-        </p>
-      </div>
-
-      <Muestra />
-
-      <ul
-        className="sc-entra"
-        style={{
-          animationDelay: "180ms",
-          listStyle: "none",
-          margin: 0,
-          padding: 0,
-          display: "grid",
-          gap: 9,
-        }}
-      >
-        {CAPACIDADES.map((c) => (
-          <li key={c.texto} style={{ display: "flex", alignItems: "center", gap: 11 }}>
-            <span
-              aria-hidden
+          <div className="sc-bv-ancho">
+            <Logo claro animado />
+            <h1
               style={{
-                width: 30,
-                height: 30,
-                flex: "0 0 auto",
-                display: "grid",
-                placeItems: "center",
-                borderRadius: 9,
-                border: `1px solid ${color.renglon}`,
-                background: color.blanco,
-                color: color.lapiz,
-                fontSize: 13,
+                fontFamily: fuente,
+                fontSize: "clamp(34px, 6vw, 56px)",
+                fontWeight: 800,
+                letterSpacing: "-0.045em",
+                lineHeight: 1,
+                margin: "22px 0 12px",
+                textWrap: "balance",
               }}
             >
-              {c.icono}
-            </span>
-            <span style={{ fontSize: 14, color: color.tinta, lineHeight: 1.35 }}>{c.texto}</span>
-          </li>
-        ))}
-      </ul>
+              Tu lista de la compra, ya hecha.
+            </h1>
+            {/* La frase que define el producto. Sin "IA", sin "plataforma", sin
+                "optimiza": lo que hace, dicho como lo diría una vecina. */}
+            <p style={{ fontSize: 16, lineHeight: 1.5, margin: 0, maxWidth: "34ch", opacity: 0.95 }}>
+              Anota lo que falta en casa como te salga. Yo lo convierto en tu
+              carrito de Wong, Metro o Plaza Vea, con los precios de tu tienda.
+            </p>
+          </div>
+        </div>
+        <div className="sc-toldo" aria-hidden />
+      </div>
 
-      <form
-        className="sc-entra"
-        style={{ animationDelay: "270ms" }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (nombre.trim()) onEntrar(nombre);
-        }}
-      >
-        <label htmlFor="sc-nombre" style={{ ...lapiz, display: "block", marginBottom: 6 }}>
-          ¿Cómo llamamos a tu casa?
-        </label>
-        <input
-          id="sc-nombre"
-          className="sc-campo"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          placeholder="Rosa · los Torres · casa"
-          autoComplete="off"
-          enterKeyHint="go"
-          style={{
-            width: "100%",
-            fontFamily: fuente,
-            fontSize: 16,
-            color: color.tinta,
-            background: color.blanco,
-            border: `1px solid ${color.renglon}`,
-            borderRadius: 13,
-            padding: "12px 14px",
-            outline: "none",
-            marginBottom: 12,
-            boxSizing: "border-box",
+      <div className="sc-bv-cuerpo" style={{ display: "grid", gap: 20, padding: "22px 0 calc(28px + var(--abajo))" }}>
+        <div className="sc-bv-izq" style={{ display: "grid", gap: 20, alignContent: "start" }}>
+          <Muestra />
+          <ul
+            className="sc-entra sc-bv-cards"
+            style={{ animationDelay: "180ms", listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}
+          >
+            {CAPACIDADES.map((c, i) => (
+              <li
+                key={c.texto}
+                style={{
+                  display: "grid",
+                  gap: 6,
+                  alignContent: "start",
+                  padding: "12px 12px 13px",
+                  borderRadius: 16,
+                  background: color.papel2,
+                  minWidth: 0,
+                }}
+              >
+                <span
+                  aria-hidden
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 999,
+                    display: "grid",
+                    placeItems: "center",
+                    fontSize: 13,
+                    color: "#fff",
+                    background: [color.papaya, color.pino, "#C9A227", "#3B82C4"][i % 4],
+                  }}
+                >
+                  {c.icono}
+                </span>
+                <span style={{ fontSize: 14.5, fontWeight: 700, color: color.tinta, lineHeight: 1.2 }}>{c.texto}</span>
+                <span style={{ ...lapiz, fontSize: 12.5, lineHeight: 1.35 }}>{c.ejemplo}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <form
+          className="sc-entra sc-bv-der"
+          style={{ animationDelay: "270ms", alignSelf: "start" }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (nombre.trim()) onEntrar(nombre);
           }}
-        />
-        <Boton variante="lleno" type="submit" disabled={!nombre.trim()} style={{ width: "100%" }}>
-          Empezar
-        </Boton>
+        >
+          <label
+            htmlFor="sc-nombre"
+            style={{ display: "block", marginBottom: 8, fontSize: 18, fontWeight: 800, color: color.tinta, letterSpacing: "-0.02em" }}
+          >
+            ¿Cómo llamamos a tu casa?
+          </label>
+          <input
+            id="sc-nombre"
+            className="sc-campo"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Rosa · los Torres · casa"
+            autoComplete="off"
+            enterKeyHint="go"
+            style={{
+              width: "100%",
+              fontFamily: fuente,
+              fontSize: 16,
+              color: color.tinta,
+              background: color.blanco,
+              border: `2px solid ${color.tinta}`,
+              borderRadius: 999,
+              padding: "13px 18px",
+              outline: "none",
+              marginBottom: 12,
+              boxSizing: "border-box",
+            }}
+          />
+          <Boton variante="lleno" type="submit" disabled={!nombre.trim()} style={{ width: "100%" }}>
+            Empezar
+          </Boton>
 
-        {/* Se dice antes de que lo pregunte, y pegado al botón: sin esta línea,
-            un campo de texto en la primera pantalla parece el principio de un
-            registro largo. */}
-        <p style={{ ...lapiz, fontSize: 12, margin: "10px 0 0", textAlign: "center" }}>
-          Sin contraseñas y sin correo. Nada sale de este teléfono.
-        </p>
-      </form>
+          {/* Se dice antes de que lo pregunte, y pegado al botón: sin esta
+              línea, un campo de texto en la primera pantalla parece el
+              principio de un registro largo. */}
+          <p style={{ ...lapiz, fontSize: 12.5, margin: "10px 0 0", textAlign: "center" }}>
+            Sin contraseñas y sin correo. Nada sale de este teléfono.
+          </p>
+        </form>
+      </div>
     </div>
   );
 }

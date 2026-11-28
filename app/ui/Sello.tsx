@@ -13,7 +13,7 @@ type Tono = "confirmado" | "sabido" | "pendiente" | "problema";
 
 const tonos: Record<Tono, { fondo: string; texto: string }> = {
   confirmado: { fondo: "rgba(46,93,75,.10)", texto: color.pino },
-  sabido: { fondo: "rgba(34,51,84,.07)", texto: color.tinta2 },
+  sabido: { fondo: "rgba(21,48,31,.07)", texto: color.tinta2 },
   pendiente: { fondo: "rgba(224,134,75,.12)", texto: "#8A5426" },
   problema: { fondo: "rgba(168,80,60,.10)", texto: color.ladrillo },
 };

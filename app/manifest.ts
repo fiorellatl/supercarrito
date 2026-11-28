@@ -15,15 +15,15 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "SuperCarrito",
     short_name: "SuperCarrito",
     description:
-      "Anota lo que falta en casa como te salga. Yo lo convierto en tu carrito de Wong, con los precios de tu tienda.",
+      "Anota lo que falta en casa como te salga. Yo lo convierto en tu carrito del súper (Wong, Metro o Plaza Vea), con los precios de tu tienda.",
     lang: "es-PE",
     dir: "ltr",
     start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#F5F3ED",
-    theme_color: "#F5F3ED",
+    background_color: "#FFFFFF",
+    theme_color: "#E8412C",
     categories: ["shopping", "food", "lifestyle"],
     icons: [
       { src: "/icono.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },

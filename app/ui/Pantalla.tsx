@@ -1,6 +1,7 @@
 "use client";
 
 import { color, lapiz } from "@/app/ui/sistema";
+import Papa from "@/app/ui/Papa";
 
 // El armazón de cualquier lugar de la aplicación: cabecera, cuerpo que respira,
 // y un pie que no se mueve.
@@ -36,24 +37,28 @@ export function Pantalla({
   sentido?: "adelante" | "atras";
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
-      {encabezado}
+    <div className="sc-pantalla" style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
+      {encabezado && <div className="sc-p-cabeza">{encabezado}</div>}
       {!encabezado && (
-      <header
+      <div className="sc-p-cabeza">
+      {/* El toldo del puesto en TODA pantalla de adentro (auditoría de marca,
+          2026-11-27): el kiosko vivía solo en la entrada y en Mi lista, y cada
+          pantalla nueva nacía blanca. Vive aquí para que se herede sin
+          acordarse. Misma estructura que la Cabecera (`data-letrero`), así el
+          escritorio lo lleva de borde a borde con las mismas reglas. */}
+      <header data-letrero style={{ margin: "0 -22px", flex: "0 0 auto", position: "relative", zIndex: 2 }}>
+      <div
         style={{
           display: "flex",
           alignItems: "center",
           gap: 10,
-          padding: "18px 0 10px",
-          flex: "0 0 auto",
-          position: "relative",
-          zIndex: 2,
+          background: color.papaya,
+          color: "#fff",
+          padding: "calc(14px + env(safe-area-inset-top, 0px)) 22px 12px",
         }}
       >
         {onVolver && (
-          // 44 px de zona tocable con 34 px de dibujo dentro. Volver es el gesto
-          // que más se repite en todo el producto y estaba en 34: el margen
-          // negativo mantiene el dibujo donde siempre estuvo.
+          // 44 px de zona tocable con 34 px de dibujo dentro.
           <button
             onClick={onVolver}
             aria-label="Volver"
@@ -67,7 +72,7 @@ export function Pantalla({
               placeItems: "center",
               border: 0,
               background: "none",
-              color: color.lapiz,
+              color: "#fff",
               cursor: "pointer",
               padding: 0,
             }}
@@ -79,20 +84,10 @@ export function Pantalla({
                 display: "grid",
                 placeItems: "center",
                 borderRadius: 10,
-                border: `1px solid ${color.renglon}`,
-                background: color.blanco,
+                background: "rgba(255,255,255,.18)",
               }}
             >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m15 18-6-6 6-6" />
               </svg>
             </span>
@@ -104,17 +99,18 @@ export function Pantalla({
             flex: 1,
             minWidth: 0,
             margin: 0,
-            fontSize: 21,
-            fontWeight: 600,
-            color: color.tinta,
-            letterSpacing: "-0.03em",
-            lineHeight: 1.2,
+            fontSize: 24,
+            fontWeight: 800,
+            color: "#fff",
+            letterSpacing: "-0.04em",
+            lineHeight: 1.15,
+            textWrap: "balance",
           }}
         >
           {titulo}
         </h1>
 
-        {casa && (
+        {casa ? (
           <button
             onClick={casa}
             aria-label="La casa: lo que aprendí de ustedes"
@@ -125,34 +121,31 @@ export function Pantalla({
               height: 34,
               flex: "0 0 auto",
               borderRadius: "50%",
-              border: `1px solid ${color.renglon}`,
-              background: color.blanco,
-              color: color.lapiz,
+              border: 0,
+              background: "rgba(255,255,255,.18)",
+              color: "#fff",
               cursor: "pointer",
               display: "grid",
               placeItems: "center",
               padding: 0,
             }}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 11l8-7 8 7M6 10v9h12v-9" />
             </svg>
           </button>
+        ) : (
+          // La papa acompaña en chico: es la casera que te lleva de un lado a otro.
+          <Papa px={36} />
         )}
+      </div>
+      <div className="sc-toldo" aria-hidden />
       </header>
+      </div>
       )}
 
       <div
-        className={`sc-scroll sc-${sentido}`}
+        className={`sc-scroll sc-p-cuerpo sc-${sentido}`}
         style={{ flex: 1, minHeight: 0, position: "relative", zIndex: 1 }}
       >
         {cuerpo}
@@ -160,6 +153,7 @@ export function Pantalla({
 
       {pie && (
         <div
+          className="sc-p-pie"
           style={{
             flex: "0 0 auto",
             position: "sticky",
@@ -177,7 +171,7 @@ export function Pantalla({
         </div>
       )}
 
-      {navegacion}
+      {navegacion && <div className="sc-p-nav">{navegacion}</div>}
     </div>
   );
 }
@@ -187,6 +181,10 @@ export function Pantalla({
 export function Vacio({ titulo, texto, accion }: { titulo: string; texto?: string; accion?: React.ReactNode }) {
   return (
     <div style={{ paddingTop: 34, maxWidth: "27ch" }}>
+      {/* Un vacío nunca es una pantalla muerta: la papa espera con su carrito. */}
+      <div style={{ marginBottom: 12 }}>
+        <Papa px={64} momento="reposo" />
+      </div>
       <div style={{ fontSize: 19, fontWeight: 600, color: color.tinta, letterSpacing: "-0.025em", lineHeight: 1.35 }}>
         {titulo}
       </div>

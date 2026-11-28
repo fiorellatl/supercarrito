@@ -13,7 +13,7 @@
 
 import { naturalezaDe, type Lectura } from "@/lib/contexto";
 
-export type OrigenLinea = "escrita" | "pegada" | "captura" | "menu";
+export type OrigenLinea = "escrita" | "pegada" | "captura" | "menu" | "repetida";
 
 export type Linea = {
   id: string;
@@ -67,6 +67,11 @@ export function lecturaDe(linea: Linea): Lectura {
   if (linea.esCompra === true) return { naturaleza: "compra", motivo: "" };
   if (linea.esCompra === false)
     return { naturaleza: "contexto", motivo: "dijiste que no era una compra" };
+  // Lo que viene de una compra que ya existió (una captura de boleta o de
+  // carrito, o «Repetir») es compra por definición. Sus nombres son los largos
+  // del catálogo —«Galletas con Chips de Cacao Sin Azúcar»— y el filtro de
+  // conversación los plegaba como «frase» (prueba con Wong real, 2026-11-26).
+  if (linea.origen === "captura" || linea.origen === "repetida") return { naturaleza: "compra", motivo: "" };
   return naturalezaDe(linea.texto);
 }
 
@@ -144,10 +149,35 @@ export function resolverCompra(libreta: Libreta, compradas: string[]): Libreta {
 export function aPedidos(libreta: Libreta) {
   return libreta.lineas
     .filter((l) => lecturaDe(l).naturaleza === "compra")
-    .map((l) => ({
-      texto: l.texto,
-      ...(l.cantidad != null ? { cantidad: l.cantidad, unidad: l.unidad } : {}),
-    }));
+    .map((l) => {
+      const leida = l.cantidad != null ? { cantidad: l.cantidad, unidad: l.unidad } : cantidadEscrita(l.texto);
+      return { texto: l.texto, ...(leida ?? {}) };
+    });
+}
+
+// La cantidad que la familia escribió al empezar la línea: «2 kg de papa»,
+// «500 g de carne», «3 leches». Antes se ignoraba y «2 kg de papa» salía como
+// una bolsa de 1 kg sin avisar (prueba de punta a punta, 2026-11-26). El texto
+// no se toca: solo se lee. Lo que no encaja en estas formas no se adivina.
+export function cantidadEscrita(texto: string): { cantidad: number; unidad: "kg" | "un" } | undefined {
+  const m = texto
+    .trim()
+    .toLowerCase()
+    .replace(/^1\/2\b/, "medio")
+    .match(/^(\d+(?:[.,]\d+)?|medio|un|una|dos|tres|cuatro|cinco|seis)\s*(kg|kgs|kilos?|k|g|gr|grs|gramos)?\.?\s+(?:de\s+)?\S/);
+  if (!m) return undefined;
+  // Litros y mililitros no son ni kilos ni piezas: mejor preguntar que adivinar.
+  if (/^\S+\s*(?:l|lt|lts|litros?|ml)\b/i.test(texto.trim())) return undefined;
+  const palabras: Record<string, number> = { medio: 0.5, un: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6 };
+  const n = palabras[m[1]] ?? Number(m[1].replace(",", "."));
+  if (!Number.isFinite(n) || n <= 0) return undefined;
+  const u = m[2];
+  if (!u) {
+    // «medio pollo», «un pan»: sin unidad no sabemos si es kilo o pieza.
+    if (m[1] === "medio" || !Number.isInteger(n) || n > 60) return undefined;
+    return { cantidad: n, unidad: "un" };
+  }
+  return { cantidad: /^g/.test(u) ? n / 1000 : n, unidad: "kg" };
 }
 
 export function origenLegible(origen: OrigenLinea): string {
@@ -157,5 +187,7 @@ export function origenLegible(origen: OrigenLinea): string {
       ? "de la captura"
       : origen === "menu"
         ? "del menú"
+        : origen === "repetida"
+          ? "de tu compra anterior"
         : "lo escribiste tú";
 }

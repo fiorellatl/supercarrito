@@ -1,8 +1,11 @@
+import { cadenaDe } from "@/lib/cadenas";
 import { NextResponse } from "next/server";
 import { comprarIntencion, comprarLibreta, comprarLista } from "@/lib/cart";
 
 export async function POST(req: Request) {
-  const { mensaje, lista, lineas, titulo } = await req.json();
+  const { mensaje, lista, lineas, titulo, cadena: idCadena } = await req.json();
+  // La cadena de la tienda que eligió la familia. Sin ella, o sin verificar, Wong.
+  const cadena = cadenaDe(idCadena);
 
   // Tres formas de pedir lo mismo; una sola tubería a partir de aquí.
   //
@@ -18,10 +21,13 @@ export async function POST(req: Request) {
     : null;
 
   const carrito = Array.isArray(lineas)
-    ? await comprarLibreta(lineas.map((x) => (typeof x === "string" ? { texto: x } : x)))
+    ? await comprarLibreta(
+        lineas.map((x) => (typeof x === "string" ? { texto: x } : x)),
+        cadena
+      )
     : pedidos
-      ? await comprarLista(typeof titulo === "string" && titulo ? titulo : "Tu compra", pedidos)
-      : await comprarIntencion(mensaje ?? "");
+      ? await comprarLista(typeof titulo === "string" && titulo ? titulo : "Tu compra", pedidos, cadena)
+      : await comprarIntencion(mensaje ?? "", cadena);
 
   if (!carrito) {
     return NextResponse.json({

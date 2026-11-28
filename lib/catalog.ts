@@ -1,3 +1,6 @@
+import type { CadenaId } from "@/lib/cadenas";
+import type { ConTarjeta } from "@/lib/tarjetas";
+
 // Contrato del catálogo. Es lo ÚNICO que conoce el resto del sistema.
 // FakeWong y WongVTEX devuelven exactamente esta forma. Cambiar de proveedor
 // no cambia este tipo ni el código que lo consume.
@@ -11,6 +14,9 @@ export type ProductoWong = {
   encontrado: boolean;
 
   sku?: string;
+  // Código de barras. Es lo único que dice que el producto de una cadena es el
+  // MISMO que el de otra: sin él no hay comparación honesta entre tiendas.
+  ean?: string;
   nombre?: string;
   marca?: string;
   imagen?: string;
@@ -31,11 +37,14 @@ export type ProductoWong = {
   // Opcional a propósito: un proveedor que no clasifique sigue siendo válido.
   categoriaRuta?: string;
   disponible?: boolean;
+  // El precio pagando con una tarjeta, si la tienda lo publica (lib/tarjetas.ts).
+  // Es estado, como el precio: se vuelve a preguntar con la tienda.
+  conTarjeta?: ConTarjeta[];
   url?: string; // enlace al producto
 
   motivo?: string; // por qué no se encontró (debug / QA)
-  proveedor?: "fake" | "wong"; // de dónde salió el dato (debug)
-  degradado?: boolean; // true si Wong falló y se usó FakeWong de respaldo
+  proveedor?: "fake" | CadenaId; // de dónde salió el dato (debug)
+  degradado?: boolean; // true si Wong no respondió: no sabemos si existe, no que no exista
 
   // Ciclo 5: los otros candidatos del catálogo para el MISMO ingrediente.
   // Son la materia prima de la corrección ("esta no, quiero otra") y, por tanto,

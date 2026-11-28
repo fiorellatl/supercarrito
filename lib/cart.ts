@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { buscarEnWong, type ProductoWong } from "@/lib/wong";
+import { CADENA_POR_DEFECTO, type Cadena } from "@/lib/cadenas";
 import { sinEncabezado } from "@/lib/libreta";
 
 type Menus = Record<string, { nombre: string; platos: string[] }>;
@@ -188,12 +189,19 @@ function cantidadAplicable(p: ProductoWong, pedido: Pedido): number | undefined 
 // términos que traen sufijo, y todas van en paralelo.
 const SUFIJO_DE_VENTA = /\s+(?:x|por)\s+(?:kg|kilo|kilos|un|und|unid|unidad|unidades)\.?\s*$/i;
 
+const CANTIDAD_INICIAL =
+  /^\s*(?:\d+(?:[.,]\d+)?|1\/2|medio|media|un|una|dos|tres|cuatro|cinco|seis)\s*(?:kg|kgs|kilos?|k|g|gr|grs|gramos)?\.?\s+(?:de\s+)?(?=\S)/i;
+
 export function terminoDeBusqueda(texto: string): string {
   // Y por delante, el encabezado del mensaje: "mami compra 2 kg de pollo" se
   // busca como "2 kg de pollo". Ver `sinEncabezado` — lista cerrada, solo al
   // principio, y solo para BUSCAR: la línea escrita no se toca.
   const sinCabeza = sinEncabezado(texto) || texto;
-  return sinCabeza.replace(SUFIJO_DE_VENTA, "").replace(/\s+/g, " ").trim() || texto.trim();
+  // La cantidad del principio tampoco se busca: ya viaja aparte (ver
+  // `cantidadEscrita` en lib/libreta.ts). Con ella dentro, Wong contestaba a
+  // «6 huevos» con un pack de 6 galletas (prueba con Wong real, 2026-11-26).
+  const sinCantidad = sinCabeza.replace(CANTIDAD_INICIAL, "");
+  return sinCantidad.replace(SUFIJO_DE_VENTA, "").replace(/\s+/g, " ").trim() || texto.trim();
 }
 
 function unidadDelSufijo(texto: string): "kg" | "un" | undefined {
@@ -245,6 +253,9 @@ function puntuarResultado(
 const UTENSILIO =
   /\b(cortador(?:a|es)?|rallador(?:a|es)?|molde(?:s)?|exprimidor(?:a|es)?|batidor(?:a|es)?|licuadora(?:s)?|pelador(?:a|es)?|mandolina(?:s)?|colador(?:es)?|escurridor(?:es)?|cocedor(?:a|es)?|hervidor(?:a|es)?|separador(?:a|es)?|sartenes?|sarten|olla(?:s)?|cuchillo(?:s)?|espatula(?:s)?|cucharon(?:es)?|batidora(?:s)?|tostadora(?:s)?|waflera(?:s)?|freidora(?:s)?)\b/i;
 
+const MASCOTA = /\b(?:mascotas?|perros?|perritos?|gatos?|gatitos?|cachorros?|ricocan|ricocat)\b/;
+const PACK = /\b(?:twopack|tripack|sixpack|pack)\b/;
+
 // ¿Qué tan buen candidato es, más allá del orden que trajo el proveedor?
 function puntuarCandidato(consulta: string, p: ProductoWong): number {
   if (!p.encontrado) return -99;
@@ -268,6 +279,17 @@ function puntuarCandidato(consulta: string, p: ProductoWong): number {
   // 3. Desempate: en español el sustantivo principal del producto va primero.
   if (claves.length > 0 && nombre.startsWith(claves[0])) punto += 0.3;
 
+  // 4. Un pack no es la apuesta por defecto si nadie pidió un pack. La tienda
+  //    pone primero «Twopack Aceite Primor» y «Sixpack Leche Gloria»: es su
+  //    forma de vender más, no lo que escribió la familia. Medido el 2026-11-27.
+  //    Sigue ahí como alternativa, y la memoria de compra lo sube si es su formato.
+  if (PACK.test(nombre) && !PACK.test(limpiar(consulta))) punto -= 0.5;
+
+  // 5. La comida de mascota no es la apuesta por defecto si nadie habló de una
+  //    mascota: «atún» traía un Ricocat y «pollo», un Purina. Mismo trato que
+  //    el utensilio: al fondo, nunca fuera.
+  if (/^mascotas\b/.test(ruta) && !MASCOTA.test(limpiar(consulta))) punto -= 1;
+
   return punto;
 }
 
@@ -284,8 +306,10 @@ function reordenarPorClase(consulta: string, p: ProductoWong): ProductoWong {
     .sort((a, b) => b.punto - a.punto || a.i - b.i)
     .map((x) => x.c);
 
+  // Top-6, como siempre: el proveedor puede traer más para que haya margen al
+  // reordenar, pero la familia no tiene por qué ver diez opciones.
   const [mejor, ...resto] = ordenados;
-  return { ...mejor, alternativas: resto };
+  return { ...mejor, alternativas: resto.slice(0, 5) };
 }
 
 // --- Instrumentación de matching (solo investigación) ------------------------
@@ -330,24 +354,27 @@ function anotar(
 // Busca con y sin sufijo cuando lo hay, y devuelve el mejor de los dos.
 async function buscarMejor(
   termino: string,
+  cadena: Cadena,
   traza?: TrazaMatching
 ): Promise<ProductoWong> {
   const limpio = terminoDeBusqueda(termino);
 
   // Toda respuesta del proveedor pasa por la reordenación por clase antes de
   // que nadie la mire: es una sola puerta, igual que el normalizador.
-  const buscar = async (q: string) => reordenarPorClase(q, await buscarEnWong(q));
+  const buscar = async (q: string) => reordenarPorClase(q, await buscarEnWong(q, cadena));
 
-  if (limpio === termino.trim()) {
-    const r = await buscar(termino);
+  // Sin sufijo de venta solo cambia la cantidad del principio («2 kg de pollo»),
+  // y esa nunca se busca: con ella, Wong contestaba con comida de gato de 2 kg.
+  const unidad = unidadDelSufijo(termino);
+  if (limpio === termino.trim() || !unidad) {
+    const r = await buscar(limpio);
     if (traza) {
-      traza.intentos.push(anotar("directa", termino, r));
+      traza.intentos.push(anotar("directa", limpio, r));
       traza.motivo = "sin sufijo de venta: una sola consulta";
     }
     return r;
   }
 
-  const unidad = unidadDelSufijo(termino);
   const [conSufijo, sinSufijo] = await Promise.all([buscar(termino), buscar(limpio)]);
   const pCon = puntuarResultado(termino, conSufijo, unidad);
   const pSin = puntuarResultado(termino, sinSufijo, unidad);
@@ -371,12 +398,13 @@ async function buscarMejor(
 // que se está observando.
 async function buscarConAlternativa(
   pedido: Pedido,
+  cadena: Cadena,
   traza?: TrazaMatching
 ): Promise<ItemCarrito> {
   const ingrediente = pedido.producto;
   // Se prueba con y sin sufijo de venta; el ingrediente que se le muestra al
   // usuario sigue siendo el suyo: no le cambiamos las palabras.
-  const exacto = await buscarMejor(ingrediente, traza);
+  const exacto = await buscarMejor(ingrediente, cadena, traza);
   if (exacto.encontrado) {
     if (traza) traza.elegido = exacto.nombre;
     return {
@@ -392,7 +420,7 @@ async function buscarConAlternativa(
   const limpio = terminoDeBusqueda(ingrediente);
   const generico = limpio.split(" ")[0];
   if (generico.toLowerCase() !== limpio.toLowerCase()) {
-    const alt = reordenarPorClase(generico, await buscarEnWong(generico));
+    const alt = reordenarPorClase(generico, await buscarEnWong(generico, cadena));
     if (traza) {
       traza.intentos.push(anotar("alternativa genérica", generico, alt));
     }
@@ -427,7 +455,8 @@ export type Carrito = ResultadoMenu & {
   items: ItemCarrito[];
   total: number; // SOLO lo confirmado: los pendientes no suman
   pendientes: number; // cuántos productos esperan que se defina su cantidad
-  faltantes: string[];
+  faltantes: string[]; // Wong contestó y no lo tiene
+  sinRespuesta: string[]; // Wong no contestó: no sabemos si lo tiene
   // Solo presente con DEBUG_MATCHING=1. Herramienta de investigación, no de
   // producto: nunca se pinta en la interfaz normal.
   trazas?: TrazaMatching[];
@@ -443,7 +472,11 @@ export function subtotalDe(it: ItemCarrito): number | undefined {
 }
 
 // Corazón compartido: de una intención ya normalizada al carrito con productos.
-async function armarCarrito(base: Intencion, pedidos: Pedido[]): Promise<Carrito> {
+async function armarCarrito(
+  base: Intencion,
+  pedidos: Pedido[],
+  cadena: Cadena
+): Promise<Carrito> {
   // Las trazas solo se crean si DEBUG_MATCHING está activo: en producción esto
   // es exactamente el mismo trabajo que ya se hacía, sin coste extra.
   const trazas = DEBUG_MATCHING
@@ -457,12 +490,17 @@ async function armarCarrito(base: Intencion, pedidos: Pedido[]): Promise<Carrito
 
   // En paralelo: no hacemos esperar al usuario ingrediente por ingrediente.
   const items = await Promise.all(
-    pedidos.map((p, i) => buscarConAlternativa(p, trazas?.[i]))
+    pedidos.map((p, i) => buscarConAlternativa(p, cadena, trazas?.[i]))
   );
 
   const total = items.reduce((s, it) => s + (subtotalDe(it) ?? 0), 0);
   const pendientes = items.filter((it) => subtotalDe(it) === undefined).length;
-  const faltantes = items.filter((it) => !it.encontrado).map((it) => it.ingrediente);
+  // «No lo tiene» y «no contestó» son dos verdades distintas y se dicen
+  // distinto: la primera es sobre el producto; la segunda, sobre la tienda hoy.
+  const faltantes = items
+    .filter((it) => !it.encontrado && !it.degradado)
+    .map((it) => it.ingrediente);
+  const sinRespuesta = items.filter((it) => it.degradado).map((it) => it.ingrediente);
 
   return {
     ...base,
@@ -470,18 +508,23 @@ async function armarCarrito(base: Intencion, pedidos: Pedido[]): Promise<Carrito
     total: Math.round(total * 100) / 100,
     pendientes,
     faltantes,
+    sinRespuesta,
     ...(trazas ? { trazas } : {}),
   };
 }
 
 // Cualquier intención (menú, receta o lista) -> carrito con productos reales.
 // El texto libre nunca trae cantidades: los pesables quedarán pendientes.
-export async function comprarIntencion(mensaje: string): Promise<Carrito | null> {
+export async function comprarIntencion(
+  mensaje: string,
+  cadena: Cadena = CADENA_POR_DEFECTO
+): Promise<Carrito | null> {
   const base = await normalizarIntencion(mensaje);
   if (!base) return null;
   return armarCarrito(
     base,
-    base.ingredientes.map((producto) => ({ producto }))
+    base.ingredientes.map((producto) => ({ producto })),
+    cadena
   );
 }
 
@@ -492,7 +535,8 @@ export async function comprarIntencion(mensaje: string): Promise<Carrito | null>
 // por la que un carrito importado puede explicarse solo.
 export async function comprarLista(
   titulo: string,
-  pedidos: Pedido[]
+  pedidos: Pedido[],
+  cadena: Cadena = CADENA_POR_DEFECTO
 ): Promise<Carrito | null> {
   const vistos = new Set<string>();
   const limpios: Pedido[] = [];
@@ -506,7 +550,8 @@ export async function comprarLista(
 
   return armarCarrito(
     { menu: titulo, titulo, platos: [], ingredientes: limpios.map((p) => p.producto) },
-    limpios
+    limpios,
+    cadena
   );
 }
 
@@ -524,7 +569,10 @@ export async function comprarLista(
 
 export type LineaPedida = { texto: string; cantidad?: number; unidad?: "kg" | "un" };
 
-export async function comprarLibreta(lineas: LineaPedida[]): Promise<Carrito | null> {
+export async function comprarLibreta(
+  lineas: LineaPedida[],
+  cadena: Cadena = CADENA_POR_DEFECTO
+): Promise<Carrito | null> {
   const vivas = (lineas ?? []).filter((l) => (l?.texto ?? "").trim());
   if (vivas.length === 0) return null;
 
@@ -555,6 +603,7 @@ export async function comprarLibreta(lineas: LineaPedida[]): Promise<Carrito | n
 
   return armarCarrito(
     { menu: "Tu compra", titulo: "Tu compra", platos: [], ingredientes: pedidos.map((p) => p.producto) },
-    pedidos
+    pedidos,
+    cadena
   );
 }

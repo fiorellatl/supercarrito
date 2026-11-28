@@ -64,7 +64,7 @@ export default function Resumen({
 
       <p style={{ ...lapiz, fontSize: 14, margin: 0, maxWidth: "34ch" }}>
         {primeraVez
-          ? "Empieza como te resulte más fácil. Cuando estés lista, la convierto en tu carrito de Wong con precios de hoy."
+          ? "Empieza como te resulte más fácil. Cuando estés lista, la convierto en tu carrito del súper con precios de hoy."
           : desdeAntes.length
             ? `Desde la última vez: ${desdeAntes.join(" · ")}.`
             : ahora}

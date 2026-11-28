@@ -65,6 +65,8 @@ export type TiendaPreferida = {
   distrito?: string;
   lon: number;
   lat: number;
+  // "wong" | "metro". Ausente en las tiendas guardadas antes de 2026-11-27: Wong.
+  cadena?: string;
   elegida: string; // ISO
 };
 
@@ -73,6 +75,13 @@ export type Perfil = {
   preferencias: Record<string, Preferencia>;
   metricas: Metricas;
   tienda?: TiendaPreferida;
+  // Dónde le llevan la compra. Solo el distrito, nunca la dirección. "Otro"
+  // es una respuesta válida: la salida abierta de la pregunta.
+  envio?: { distrito: string; elegido: string };
+  // Con qué paga, tal como lo dijo la familia (2026-11-27). Se guarda para
+  // aprender, y NO toca ningún monto: el descuento con tarjeta solo lo aplica
+  // la tienda al pagar y no lo podemos comprobar desde fuera.
+  pago?: { tarjetas: string[]; otra?: string; respondido: string };
 };
 
 export function perfilVacio(): Perfil {
@@ -88,6 +97,18 @@ export function perfilVacio(): Perfil {
 // temporada—: es una preferencia, no una decisión definitiva.
 export function elegirTienda(perfil: Perfil, tienda: Omit<TiendaPreferida, "elegida">): Perfil {
   return { ...perfil, tienda: { ...tienda, elegida: new Date().toISOString() } };
+}
+
+export function elegirDistrito(perfil: Perfil, distrito: string): Perfil {
+  return { ...perfil, envio: { distrito, elegido: new Date().toISOString() } };
+}
+
+export function responderPago(perfil: Perfil, tarjetas: string[], otra?: string): Perfil {
+  const libre = otra?.trim();
+  return {
+    ...perfil,
+    pago: { tarjetas, ...(libre ? { otra: libre } : {}), respondido: new Date().toISOString() },
+  };
 }
 
 // Clave canónica: "Leche " y "leche" son el mismo ingrediente.

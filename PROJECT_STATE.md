@@ -1,22 +1,140 @@
 # PROJECT_STATE — SuperCarrito
 
-> Memoria permanente del proyecto. Se actualiza al cerrar cada ciclo.
-> **Última actualización: 2026-08-02 — la arquitectura ARQ-3 está IMPLEMENTADA en
-> la aplicación real y lista para entrevistas. Ver §A al final.** Cambio de modo
-> de la PO: se prioriza aprendizaje sobre perfección; se decide y se construye,
-> y lo que solo puede responder un usuario se lleva a la entrevista.
->
-> Histórico — 2026-08-01: ciclo de importación por captura cerrado:
-> montos explicables, pasada de UX, benchmark de modelo/estrategia (Sonnet 5 +
-> `completar`), pipeline de búsqueda con matiz, `DEBUG_MATCHING` para
-> investigación. **Listo para pruebas con usuarios.**
-> **En curso:** sprint de **Product Design** de las cuatro puertas de entrada
-> (Lista → Menú → Recetas → Imagen), empezando por Lista. Cambio de método:
-> *la investigación ocurre ahora a través del producto, no antes*. Sin código.
-> Lo diseñado vive en **§H-D como hipótesis de diseño**, no como decisiones.
-> **Base fijada: la libreta es el Home** — la pantalla de inicio con tres formas de
-> empezar desaparece del prototipo. Siguiente paso: los estados de la Puerta 1.
+> Memoria permanente del proyecto. **La cabecera «Estado actual» es lo único que
+> hay que leer para retomar**; el resto es la historia de ciclos y decisiones,
+> que se consulta cuando hace falta. Estrategia y competencia: `PRODUCT_CONTEXT.md`.
 
+## ▶️ Homologar productos entre cadenas (2026-11-28, pedido por la PO)
+
+La PO vio «1 iguales» contra Plaza Vea con un pan Bimbo que sí se vende allá.
+**Causa:** Bimbo cambia el EAN del mismo pan entre cadenas (770 g: Wong
+7750727015056, Plaza Vea 7750727014165) y cada cadena lo nombra distinto; solo
+aceptábamos EAN o nombre exacto. Además el de 480 g no existe en Plaza Vea.
+**Hecho:** `lib/homologar.ts` empareja por marca + tamaño total (packs
+incluidos: «Twopack 900ml» = 1800 ml) + palabras que dicen qué es, en las dos
+direcciones (≥75%). Una palabra de más («Añejo») → parecido, nunca mismo.
+**Medido** (canasta de 41 productos de Wong, «mismo» incluye EAN): Plaza Vea
+41% → 71% (+7 parecidos), Makro 29% → 54% (+13 parecidos), Metro 88%,
+Flora y Fauna 1 de 41 (no vende esas marcas). Marcas propias nunca coinciden.
+**Pendiente de la PO:** que los parecidos sumen (marcados) y aplicar Wong Prime
+(envío gratis solo en Wong desde S/ 79.90, wong.pe/prime) si la familia lo marcó.
+
+## ▶️ Flora y Fauna, quinta cadena (2026-11-27, aprobado por la PO)
+
+- Candidatos medidos: **Flora y Fauna** pasa (VTEX, sc=1, 13 tiendas «F&F» en
+  Lima, carrito real por enlace S/ 33.69). **Vivanda**: web propia (Next.js
+  sobre otra plataforma), sin buscador público ni enlace de carrito. **Mass**:
+  web solo informativa. **Economax**: registro mayorista de Makro.
+- Flora y Fauna publica precios **sin IGV** y lo da aparte (`Tax` en el
+  catálogo, `tax` por ítem y `Tax` en los totales de la simulación): se suma
+  siempre, porque es lo que se paga (leche Danlac 6.86 → 8.09).
+- Comparte pocos productos con las demás (es saludable/orgánica): la
+  comparación tendrá pocos «iguales».
+
+## ⏭ Makro y Tottus (pedido por la PO el 2026-11-27, medido el mismo día)
+
+- **Makro: HECHO (cuarta cadena).** `www.makro.plazavea.com.pe`, canal `sc=9`,
+  seller 1, carrito real por enlace verificado (S/ 64.30 leído en el orderForm).
+  Mismo directorio que Plaza Vea (4 tiendas en Lima) y mismas reglas (código
+  postal, sellingPrice). Redirige casi toda búsqueda; el último tramo puede ser
+  la marca (`/lacteos-y-huevos/leche/gloria` → categoría + `brand/gloria`).
+  Su envío en Lima es S/ 19.90: en compras chicas pierde contra las demás.
+- **Tottus (Falabella):** otra plataforma. El buscador es público y en JSON:
+  `www.tottus.com.pe/s/browse/v1/search/pe?Ntt=<texto>` (48 por página), con
+  `prices[]` de tipo `internetPrice`, `normalPrice` y **`cmrPrice`** (tarjeta CMR,
+  explícito: Pilsen twelve pack ×3 S/ 121.90 → CMR S/ 118.90). Medido además:
+  · EAN: no viene en el buscador, sí en la página del producto
+    (`okayToShopBarcodes`); coincide con Wong (arroz Costeño 5 kg = SKU 521).
+  · Zona: los precios salen para una zona de reparto (`zones=` derivadas de la
+    ubicación; por defecto Las Begonias/San Isidro), no por tienda.
+  · Carrito: vive en su servidor (`/s/checkout/v1/carts`, con cabeceras propias)
+    atado a la sesión del navegador en tottus.com.pe. No hay enlace que lo llene
+    desde fuera → hoy Tottus solo podría COMPARAR, no recibir el pedido.
+  · **HECHO (PO: «Solo para comparar»):** tarjeta «Tottus · solo para comparar»
+    en «Revisar y pedir» (mismo producto por EAN, precio online y CMR, «S/ X
+    menos/más» sin decir «Ahorras» porque no hay envío) y hoja «Agregar en
+    Tottus paso a paso» con enlace, cantidad y casilla que se recuerda (idea
+    tomada del «Pedir paso a paso» de Nada Menos). `lib/tottus.ts`.
+
+## ▶️ Novedad 2026-11-27 (tarde) — Plaza Vea, tercera cadena (PR #3)
+
+- Aprobado por la PO («Sí, como en el plan»). Medido antes de activar: búsqueda,
+  precio real y carrito real por enlace (leche Gloria ×2 + aceite → S/ 45.50 leído
+  en el orderForm). 44 tiendas en el directorio.
+- Lo distinto de Plaza Vea: ubica por código postal (data/distritos.json lo
+  tiene), redirige «arroz/azúcar/huevos» a su categoría, `price` = lista y
+  `sellingPrice` = lo que cobra, y el envío viene repartido en `sla.price` por
+  producto (Wong lo pone en la franja).
+- Comparación con las otras dos, una tarjeta por cadena. Wong→Plaza Vea: 5 de 6
+  iguales por EAN; Plaza Vea→Metro: 3 de 6 (EAN distintos).
+- Tarjeta Sip (antes Oh!), verificada con dos capturas de la PO: teaser «TARJETA
+  OH - PVEA», `PromotionalPriceTableItemsDiscount` = soles que se restan al precio
+  REGULAR. Bola DECO HOME 3.90 − 2.03 = 1.87; Cusqueña Trigo 26.90 − 5.40 = 21.50.
+
+## ▶️ Novedad 2026-11-27 — Metro, envío y mejor emparejamiento (PR #3)
+
+- **Metro** es la segunda cadena: se elige en «¿Dónde compras?» (Wong | Metro).
+  Cambiar de cadena vuelve a buscar los productos; lo aprendido se queda.
+  Verificado leyendo un carrito real de metro.pe (`sc=1`).
+- **Emparejamiento:** Intelligent Search + packs y comida de mascota al fondo.
+  Sobre 30 productos típicos, de ~16 bien elegidos a 28.
+- **Envío real por distrito** en «Revisar y pedir», aparte y sumado a la vista.
+- **Tarjetas/Prime:** se pregunta al empezar (paso 3 de 4, con «Otra» y «Ninguna»).
+  **Precio con Tarjeta Cencosud, real:** Wong y Metro lo publican por producto
+  como teaser con BIN (`[TCENCO]…`, −20%/−30% o «a S/ 999»); verificado con la
+  captura de la PO (Rummikub XP: S/ 91.00 → S/ 72.80). Se enseña en la línea y
+  como «−S/ X con tu tarjeta» en «Revisar y pedir»; no se resta del total. Hoy
+  casi todo es juguetes/electro: en abarrotes no se vio ninguna. Interbank: aún
+  sin promociones a la vista.
+- **Comparar (bloque B):** «La misma compra en Metro/Wong» en «Revisar y pedir».
+  Solo el MISMO producto (mismo SKU + EAN o nombre, o mismo EAN, o mismo nombre
+  exacto; `lib/comparar.ts`), totales y envío de cada tienda, y lo que no entra
+  se cuenta. Canasta de 30: 22 comparables; Metro ~S/ 9 más barato + envío.
+  «Pedir en Metro» se lleva los mismos productos comparados.
+- **Por probar con familias:** ¿cambian de cadena por S/ 8–20? ¿Entienden
+  «productos que no entran»? ¿Qué tarjetas dicen tener?
+
+## ▶️ Estado actual — 2026-11-26 (retomada tras pausa desde el 2026-08-03)
+
+**Qué es hoy:** un acelerador de la compra en **Wong** con un flujo de dos
+pasos (rediseño del 2026-11-26, §O). **Mi lista** es a la vez la lista y el
+carrito: cada línea escrita o pegada (WhatsApp, captura, menú) se convierte al
+momento en su producto con foto, `cantidad × precio` y acciones (cantidad, otra
+marca o tamaño, quitar). La tienda se elige en la cabecera. **Revisar y pedir**
+enseña qué va, qué se ajusta y qué no, y abre el carrito en wong.pe. **Mis
+compras** guarda lo pedido con «Repetir». No compara cadenas ni calcula delivery.
+
+**Base:** rama `claude/project-thread-f0igdg` (PR #1). `tsc`, `build` y `npm run
+humo` en verde. Sin tests ni CI. Sin backend: todo en `localStorage`.
+
+**Uso real acumulado:** 1 entrevista (I-1) y 1 sesión de bitácora. H1 sigue sin
+validar con usuarios. **Lo siguiente es ponerlo delante de familias.**
+
+**Arreglado el 2026-11-26** (§N–O): saludos y frases de encuadre ya no llegan al
+buscador; si Wong falla se dice y no se inventa; el total espera a la tienda;
+aviso de marcha blanca; `playwright` fuera.
+
+**Pendiente:** verificar el salto en iPhone y Android reales · probar con 5
+familias · spike de Metro (semana 3) · métricas anónimas de uso (decisión PO).
+
+**Modelo de negocio (PO, 2026-11-26):** primero la capa gratuita. Después,
+supermercados (tráfico, destacados etiquetados, datos agregados) y suscripción
+familiar pro. Ver `PRODUCT_CONTEXT.md`.
+
+> Histórico — 2026-08-02: ARQ-3 implementada (§A). 2026-08-01: ciclo de
+> importación por captura cerrado (montos explicables, benchmark Sonnet 5 +
+> `completar`, `DEBUG_MATCHING`). Los §A–M al final narran agosto en orden.
+
+
+> **2026-11-27 — Marca y primera vez (PR #2).** La PO aprobó el universo de marca
+> «Más papaya» (https://claude.ai/artifact/QtCrwQkMYDnTAXZBd8gaKR): Papa
+> protagonista, Papaya con cara como meta e indicador de 4 pepas comprobables
+> (cantidad, encontrado, disponible, precios de tu tienda; no mide ahorro), Piña
+> en agotados y «Wong no contestó», Yuca en «no lo encontré». Firma «Más papaya.».
+> Decisiones de producto del día: **una línea sin marca con varias opciones la
+> elige la familia la primera vez** (no suma hasta elegir; luego el perfil la
+> recuerda) y **una pantalla «Así funciona»** tras elegir la tienda (revierte
+> «sin tour» de agosto). Pendiente: probarlo con la pareja de la PO y las 5 familias.
 ---
 
 ## 1. Visión del producto
@@ -2549,3 +2667,170 @@ número que haría cerrar la aplicación.
 
 Se anota y no se toca. La decisión de abrir el sprint de comprensión es de la PO.
 
+---
+
+## N · Retomada y auditoría (2026-11-26)
+
+El proyecto estuvo pausado del 2026-08-03 al 2026-11-26. La PO lo retoma con una
+visión ampliada (comparar y optimizar la canasta entre supermercados, delivery,
+memoria del hogar, listas familiares) y pide auditar antes de construir.
+
+### Hallazgos verificados en el repo
+
+- Build y tipos en verde. 29 commits; árbol limpio.
+- La interfaz de chat ya no existe (solo el nombre `/api/chat` y un README viejo,
+  corregido en esta revisión).
+- `lib/wong.ts` marca `degradado: true` al caer a FakeWong y ningún archivo de
+  `app/` lo lee. Reproducido con wong.pe bloqueado: `/api/chat` devolvió
+  productos ficticios con precio, sin aviso.
+- Delivery excluido a propósito del total (`sumarTotales` en `lib/tienda.ts`).
+- `playwright` en dependencias sin uso; `/editar` no persiste en Netlify.
+- Los menús de S/ 63.50 · 68.20 · 31.20 que se recordaban no aparecen en ningún
+  archivo: no son relevantes (los precios ahora los da la tienda).
+
+### Decisiones que la auditoría propone revisar (no revisadas todavía)
+
+- «Solo Wong» y «segundo supermercado: no ahora» → abrir **una** segunda cadena
+  (Metro: misma cuenta VTEX). Sin ella no hay ahorro que mostrar.
+- «El envío no es parte de la compra» → mostrar delivery aparte y explicable.
+- «Si Wong falla, FakeWong» en producción → decir que no pudimos consultar.
+- Congelar las cuatro puertas de entrada: el cuello de botella es el uso real.
+
+### Plan propuesto (espera aprobación)
+
+1. **Semana 1 — Que no mienta:** filtrar saludos/encuadres; degradación honesta;
+   no enseñar total hasta tener el de la tienda; aviso de marcha blanca;
+   métricas mínimas anónimas; quitar `playwright`; script de humo; verificar el
+   salto en iPhone y Android reales.
+2. **Semana 2 — Cinco familias, dos domingos** + «repetir mi compra anterior».
+3. **Semana 3 — Spike de Metro:** API pública, 30 productos emparejados por EAN,
+   delivery por distrito. Puerta: ¿la diferencia de canasta supera el delivery?
+4. **Semana 4 — Según evidencia:** comparación de canasta (tienda entera, sin
+   reparto) o lista compartida por enlace.
+
+Explícitamente no ahora: reparto entre 3+ tiendas, tarjetas de descuento,
+cuentas/login, app nativa, voz, Tottus, más documentos de diseño.
+
+---
+
+## O · El flujo nuevo: la lista es el carrito (2026-11-26)
+
+Pedido de la PO: *«todo el flujo debe cambiar, por uno enfocado en el UX como
+Nada Menos»*. Wireframes en el hilo; la PO eligió «una sola pantalla».
+
+**Antes:** libreta (sin fotos) → revisión → ¿cuál es tu Wong? → carrito →
+llevar a Wong. Cinco pantallas.
+**Ahora:** **Mi lista** (lista y carrito a la vez) → **Revisar y pedir**. Más
+**Mis compras** con «Repetir».
+
+Decisiones de agosto que se revierten a conciencia:
+- «La foto marca la frontera entre escribir y comprar» (sin fotos en la
+  libreta): ahora cada línea muestra su producto al anotarla.
+- Decisión 22 «la revisión sobrevive»: desaparece. Lo que no parece compra se
+  pliega en «N líneas no parecían compra», con «Sí es compra» y «Quitar».
+- Decisión 21 «barra de tres lugares»: quedan dos (Mi lista · Mis compras).
+- La tienda deja de ser una pantalla: es una barra sobre la lista y una hoja.
+
+Cómo está hecho:
+- Cada línea compra se resuelve sola con **una llamada a `/api/chat` por
+  línea**; cada producto guarda su `lineaId`. Quitar o corregir la línea toca
+  exactamente sus productos; un menú es una línea con varios productos y
+  «Quitar todo».
+- Lo repetido (mismo ingrediente o mismo SKU en otra línea) no se compra dos
+  veces: la línea dice «ya está en tu lista».
+- Al pedir, se va la línea cuyos productos cruzaron todos; la conversación
+  pegada se va con la compra; lo demás queda marcado.
+- Las compras guardan cantidad y unidad: «Repetir» vuelve a anotar cada
+  producto por su nombre exacto (la búsqueda que mejor acierta en Wong).
+- Pasos visibles «Arma tu lista · Revisa · Pide en Wong».
+
+Verificado a 375×812 con `CATALOG_PROVIDER=fake` (wong.pe bloqueado en el
+entorno): pegar un WhatsApp de 8 líneas (3 de conversación plegadas, menú
+abierto en productos, duplicados evitados), otra marca, elegir tienda (sin
+red: degrada con mensaje), revisar y pedir, compra registrada, repetir, recarga
+sin re-emparejar. Consola sin errores.
+
+Pendiente de ver con Wong real: precios de tienda en la lista, agotados,
+pesables con «¿Cuánto llevas?».
+
+## §P Estilo «puesto de mercado» y una decisión a la vez (2026-11-26)
+
+La PO aprobó el flujo de los bocetos y pidió un diseño «menos IA, con
+personalidad». Entre tres estilos (Chicha, Libreta, Mercado) eligió **Mercado**:
+cabecera rojo tomate con toldo a rayas, verde hoja para el dinero y la acción,
+amarillo ají para lo que espera a la familia y la letra Bricolage Grotesque.
+
+- Bienvenida en 2 pasos: nombre de la casa → «2 de 2 · ¿Cuál es tu Wong?» (se puede saltar).
+- Cada fila es una tarjeta; la que espera algo se pinta amarilla con un solo
+  cartelito («¿Cuánto?» / «Elige otro»).
+- Con pendientes, el botón del pie es «Decidir N cosas». Abre las hojas en
+  fila, «1 de N», hasta que todo suma. Salida abierta: «Pedir así, sin decidirlo».
+- Los nombres de los colores en `app/ui/sistema.ts` se mantienen; cambian los valores.
+
+**Prueba de punta a punta (2026-11-26, catálogo de prueba, 375 px):** pasan 33 de 33
+chequeos. Cubren bienvenida, escribir, pegar WhatsApp con Deshacer, conversación
+plegada, sin resultado, menú, cambiar marca, cantidad ±, quitar, foto, «Decidir 1 de N»,
+recarga, revisar y pedir, enlace `sc=70&qcart=1`, copiar, entregado, Mis compras,
+Repetir y /editar.
+
+Encontrado y arreglado: la cantidad escrita al inicio de la línea se ignoraba
+(«2 kg de papa» salía como 1 bolsa). Ahora se lee con `cantidadEscrita()`
+(`lib/libreta.ts`). Si la unidad de venta es otra y la cuenta es exacta, se
+convierte (2 bolsas de 1 kg). Si no es exacta, la línea queda «¿Cuánto?»,
+nunca redondeada en silencio.
+
+Falta: lo mismo con Wong real en un celular (el sandbox no llega a wong.pe).
+
+**Prueba con Wong real (2026-11-26, vista previa de Netlify):** el recorrido
+completo funciona con Wong real.
+- El enlace llena el carrito de Wong en `sc=70` con los SKU y las cantidades
+  (leído del `orderForm`).
+- Arreglado: lo que viene de una captura o de «Repetir» se plegaba como «frase»
+  por sus nombres largos de catálogo.
+- Arreglado: la cantidad del principio entraba en la búsqueda («6 huevos» → pack de 6 galletas).
+- Hallazgo: el enlace no lleva la tienda. Con la tienda Aldabas el aceite
+  Primor costaba S/ 17.10 en SuperCarrito y S/ 18.90 en el carrito de Wong sin
+  tienda elegida. Se avisa en «Revisar y pedir»; queda pendiente verificar que,
+  eligiendo la misma tienda en Wong, el precio coincide.
+- Pendiente de emparejamiento: «1 kilo de pollo» → «1/2 Pollo Rostizado»;
+  «3 leches gloria» → base para torta tres leches.
+
+**Tienda primero (decisión de la PO, 2026-11-26):** sin tienda no se entra a la
+lista. Después del nombre de la casa viene la pantalla «2 de 2 · ¿Cuál es tu
+Wong?» (`app/ui/EligeTienda.tsx`), que tiene buscador por distrito. Si Wong no
+devuelve sus tiendas, la familia puede reintentar o «Seguir sin tienda
+(precios referenciales)». A quien ya usaba la app sin tienda también se le
+pide al abrir.
+
+**Bienvenida con personalidad:** la demostración se escribe sola y los
+productos caen al carrito uno por uno, rotando entre tres encargos con precios
+reales de Wong. El toldo se mece al llegar. Con `prefers-reduced-motion`, todo queda quieto.
+
+**Logo con carrito vivo (pedido de la PO, 2026-11-26):**
+- El logo es ahora un carrito lleno, con una botella, un tomate y un pan asomando (`app/ui/Logo.tsx`, `Carrito`). En la bienvenida las cosas caen dentro una por una.
+- En la demo, cada producto que aparece cae también al carrito: el número sube y el carrito da un saltito.
+- En la lista, el carrito del letrero cuenta los productos y salta cada vez que la lista crece.
+- Pendiente: llevar el logo nuevo al ícono de la pestaña y a la imagen para compartir.
+
+
+**La papa del carrito (decisión de la PO, 2026-11-26)** — reemplaza al carrito con compra:
+- Recorrido de la marca: el carrito con cosas le pareció «aburrido» y la primera ronda de logos, «genérica». Luego eligió un cuy en carrito, pero lo descartó porque otro súper en Perú ya usa un cuy. Entre la papa, el ají amarillo y el choclo, eligió **la papa**: con chullo y un brote que hace de oreja.
+- Estilo tomado de una referencia que le gustó (Goova, «parece dibujado»):
+  - el borde «hierve»: tres trazos con `feTurbulence` que se alternan 8 veces por segundo;
+  - la cáscara tiene rayado de lápiz;
+  - todo se mueve a saltitos con `steps()`;
+  - los ojos son redondos y se abren como de «ardilla loca».
+- La marca dice «SUPER / CARRITO» apilado en Lilita One.
+- Momentos (`app/ui/Papa.tsx`, animaciones `.sc-papa` en `sistema.css`):
+  - **¡plaf!** al abrir la bienvenida: cae del cielo, aplasta el carrito, salen las ruedas y ve estrellas. Es el favorito de la PO.
+  - **reposo:** el viento le vuela el chullo.
+  - **le cae un tomate:** cuando la lista crece.
+  - **se le cae el pan:** cuando la lista se achica.
+  - **lupa:** en cada línea «buscando en Wong…».
+- Ícono de pestaña, de iPhone, recortable e imagen del enlace regenerados con `herramientas/marca.mjs`.
+- Con `prefers-reduced-motion` no se mueve.
+- Pendiente:
+  - usar «feliz» (salto con chispas) al terminar de decidir y al abrir Wong;
+  - «se come algo» con la lista vacía;
+  - más adelante, que la papa vaya mutando a otras variedades (idea de la PO);
+  - antes de lanzar la marca, buscar «papa» en las marcas registradas de Indecopi.

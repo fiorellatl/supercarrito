@@ -1,7 +1,8 @@
 "use client";
 
-import { color, lapiz } from "@/app/ui/sistema";
+import { color, fuenteMarca, lapiz } from "@/app/ui/sistema";
 import Boton from "@/app/ui/Boton";
+import { DibujoPapaya } from "@/app/ui/Papaya";
 
 // Las tres pantallas donde el producto le pide tiempo a la familia, o le cuenta
 // algo que salió mal. Comparten forma a propósito: nada de aquí es una alarma.
@@ -21,11 +22,18 @@ export default function PantallaCalma({
   titulo,
   texto,
   accion,
+  sello = false,
+  children,
 }: {
   estado: Estado;
   titulo: string;
   texto?: string;
   accion?: { texto: string; onClick: () => void };
+  // La compra quedó en Wong: la Papaya cae con su ¡plaf! (marca aprobada por la
+  // PO el 2026-11-27). Es el único momento de celebración del producto, y aun
+  // así el título sigue siendo un dato, no una exclamación.
+  sello?: boolean;
+  children?: React.ReactNode; // lo que se ofrece antes de volver (p. ej. nombrar la lista)
 }) {
   return (
     <div
@@ -54,7 +62,13 @@ export default function PantallaCalma({
         />
       )}
 
-      {estado === "listo" && (
+      {estado === "listo" && sello && (
+        <span className="sc-plaf" style={{ display: "inline-block" }}>
+          <DibujoPapaya pepas={4} px={96} />
+        </span>
+      )}
+
+      {estado === "listo" && !sello && (
         <svg width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden>
           <circle cx="22" cy="22" r="21" stroke={color.pino} strokeWidth="1.5" opacity=".28" />
           <path
@@ -91,6 +105,12 @@ export default function PantallaCalma({
       </div>
 
       {texto && <div style={{ ...lapiz, fontSize: 13, maxWidth: "30ch" }}>{texto}</div>}
+
+      {sello && (
+        <div style={{ fontFamily: fuenteMarca, fontSize: 18, color: color.papaya }}>Más papaya, imposible.</div>
+      )}
+
+      {children}
 
       {accion && (
         <Boton variante="fantasma" chico onClick={accion.onClick}>

@@ -26,11 +26,13 @@ export default function HojaCantidad({
   producto,
   onResponder,
   onCerrar,
+  paso: etapa,
 }: {
   ingrediente: string;
   producto: ProductoWong;
   onResponder: (cantidad: number) => void;
   onCerrar: () => void;
+  paso?: string;
 }) {
   const [abierta, setAbierta] = useState(false);
   const [texto, setTexto] = useState("");
@@ -58,6 +60,7 @@ export default function HojaCantidad({
         producto.precio != null ? soles(producto.precio) : "—"
       }${etiquetaUnitaria(unidad)}${paso}`}
       onCerrar={onCerrar}
+      paso={etapa}
       pie={
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
           <span>

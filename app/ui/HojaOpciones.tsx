@@ -5,6 +5,7 @@ import type { ProductoWong } from "@/lib/catalog";
 import Foto from "@/app/ui/Foto";
 import Hoja from "@/app/ui/Hoja";
 import Sello from "@/app/ui/Sello";
+import { Dice } from "@/app/ui/Elenco";
 
 // "Prefiero otra". Es la única puerta al aprendizaje del producto: si nadie
 // entra aquí, el perfil nunca aprende nada.
@@ -21,20 +22,35 @@ export default function HojaOpciones({
   ingrediente,
   opciones,
   elegidaSku,
+  primeraVez,
+  agotado,
   onElegir,
   onCerrar,
+  paso,
 }: {
   ingrediente: string;
   opciones: ProductoWong[];
   elegidaSku?: string;
+  // Lo escribió sin marca y no sabemos cuál compra: eligen ellos, y se dice
+  // que la próxima vez ya no se pregunta. Sin «la que tienes puesta».
+  primeraVez?: boolean;
+  // Si se llega aquí porque lo que tenía puesto se acabó, la Piña lo dice una
+  // vez, con la tienda que lo dijo, y deja paso a las opciones.
+  agotado?: { nombre: string; tienda?: string };
   onElegir: (p: ProductoWong) => void;
   onCerrar: () => void;
+  paso?: string;
 }) {
   return (
     <Hoja
-      titulo={`Para “${ingrediente}”`}
-      sub="Estas son las que encontré. Toca la que compras tú."
+      titulo={primeraVez ? `¿Cuál “${ingrediente}”?` : `Para “${ingrediente}”`}
+      sub={
+        primeraVez
+          ? "Eliges tú esta vez; la próxima me acuerdo."
+          : "Estas son las que encontré. Toca la que compras tú."
+      }
       onCerrar={onCerrar}
+      paso={paso}
       pie={
         // 🚪 La salida abierta de esta pregunta: si ninguna es, la familia no
         // tiene que elegir una mentira. Se queda como está y se va.
@@ -43,6 +59,11 @@ export default function HojaOpciones({
         </p>
       }
     >
+      {agotado && (
+        <Dice quien="pina">
+          Qué piña: {agotado.nombre} se acabó en {agotado.tienda ?? "tu tienda"}. Mira estas otras.
+        </Dice>
+      )}
       {opciones.map((o) => {
         const esta = o.sku === elegidaSku;
         const agotado = o.disponible === false;

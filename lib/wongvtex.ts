@@ -1,27 +1,43 @@
 // WongVTEX: conector real a Wong usando su API pública de VTEX.
-// GET /api/catalog_system/pub/products/search?ft=<texto>
+// GET /api/io/_v/api/intelligent-search/product_search/?query=<texto>
 // Devuelve el MISMO ProductoWong que FakeWong. Nada de scraping.
+//
+// Por qué Intelligent Search y no `catalog_system/pub/products/search` (cambio
+// del 2026-11-27, medido contra wong.pe): el buscador viejo solo cruza texto y
+// contestaba «leche» con un chocolate, «azúcar» con un azucarero de Snoopy y
+// «atún» con un mueble. Intelligent Search es el buscador que usa la propia
+// web de la tienda, es igual de público y devuelve los productos con la MISMA
+// forma (items, sellers, commertialOffer, measurementUnit, unitMultiplier).
+// Con él: leche → Leche Entera Danlac, azúcar → Azúcar Rubia, atún → Atún Primor.
 //
 // Degradación: ante un fallo de transporte (timeout, 429, 403, 5xx, endpoint
 // caído) LANZA un error; el dispatcher (lib/wong.ts) lo captura y usa FakeWong.
 // Una respuesta válida pero vacía NO es un fallo: se devuelve "no encontrado".
 
 import type { ProductoWong } from "@/lib/catalog";
-
-const BASE = "https://www.wong.pe";
+import { CADENA_POR_DEFECTO, type Cadena } from "@/lib/cadenas";
+import { preciosConTarjeta, teasersDeIS } from "@/lib/tarjetas";
 const TIMEOUT_MS = 8000;
 
 // Forma parcial de la respuesta VTEX (solo lo que usamos).
-type VtexOffer = { Price?: number; IsAvailable?: boolean; AvailableQuantity?: number };
+type VtexOffer = {
+  Price?: number;
+  ListPrice?: number;
+  Tax?: number; // Flora y Fauna: el IGV aparte, por unidad
+  IsAvailable?: boolean;
+  AvailableQuantity?: number;
+  teasers?: Parameters<typeof teasersDeIS>[0];
+};
 type VtexItem = {
   itemId?: string;
   name?: string;
   measurementUnit?: string;
+  ean?: string;
   unitMultiplier?: number;
   images?: { imageUrl?: string }[];
   sellers?: { commertialOffer?: VtexOffer }[];
 };
-type VtexProduct = {
+export type VtexProduct = {
   productId?: string;
   productName?: string;
   brand?: string;
@@ -32,12 +48,17 @@ type VtexProduct = {
   items?: VtexItem[];
 };
 
-export async function buscarEnWongVtex(ingrediente: string): Promise<ProductoWong> {
+export async function buscarEnWongVtex(
+  ingrediente: string,
+  cadena: Cadena = CADENA_POR_DEFECTO
+): Promise<ProductoWong> {
   // Ciclo 5: pedimos el Top-6, no el primero. Las alternativas son la materia
   // prima de la corrección y, por tanto, de todo el aprendizaje del perfil.
-  const url = `${BASE}/api/catalog_system/pub/products/search?ft=${encodeURIComponent(
+  // Pedimos 10: la reordenación por clase (lib/cart.ts) necesita margen para
+  // pasar por delante el producto suelto cuando la tienda pone primero los packs.
+  const url = `${cadena.base}/api/io/_v/api/intelligent-search/product_search/?query=${encodeURIComponent(
     ingrediente
-  )}&_from=0&_to=5`;
+  )}&count=10&page=1&locale=es-PE`;
 
   // fetch lanza en timeout/red; !ok lo convertimos en throw -> el dispatcher degrada.
   const res = await fetch(url, {
@@ -48,29 +69,79 @@ export async function buscarEnWongVtex(ingrediente: string): Promise<ProductoWon
     throw new Error(`VTEX HTTP ${res.status}`); // 403/429/5xx/endpoint caído
   }
 
-  const data = (await res.json()) as VtexProduct[];
+  const json = (await res.json()) as { products?: VtexProduct[]; redirect?: string };
+  let data = json?.products;
+  if ((!Array.isArray(data) || data.length === 0) && json?.redirect) {
+    data = await seguirRedireccion(json.redirect, cadena);
+  }
   if (!Array.isArray(data) || data.length === 0) {
-    return { ingrediente, encontrado: false, motivo: "sin resultados", proveedor: "wong" };
+    return { ingrediente, encontrado: false, motivo: "sin resultados", proveedor: cadena.id };
   }
 
   // Mapeamos todos y nos quedamos con los que tienen precio. El primero es el
   // elegido por defecto (orden de relevancia de Wong); el resto, alternativas.
-  const candidatos = data.map((p) => mapear(ingrediente, p)).filter((c) => c.encontrado);
+  const candidatos = data.map((p) => mapear(ingrediente, p, cadena)).filter((c) => c.encontrado);
   if (candidatos.length === 0) {
-    return { ingrediente, encontrado: false, motivo: "sin precio", proveedor: "wong" };
+    return { ingrediente, encontrado: false, motivo: "sin precio", proveedor: cadena.id };
   }
 
   const [mejor, ...resto] = candidatos;
   return { ...mejor, alternativas: resto };
 }
 
-function mapear(ingrediente: string, p: VtexProduct): ProductoWong {
+// Plaza Vea contesta las palabras más buscadas («arroz», «azúcar», «huevos»)
+// sin productos y con una redirección a su categoría, que es lo que haría su web.
+// Medido el 2026-11-27. Dos formas:
+//   /abarrotes/arroz                → la misma categoría en Intelligent Search
+//   /busca/?fq=C:431/434&ft=azucar  → el catálogo con esa categoría y ese texto
+// Solo se siguen rutas de la propia tienda; si falla, es «sin resultados».
+async function seguirRedireccion(destino: string, cadena: Cadena): Promise<VtexProduct[] | undefined> {
+  if (!destino.startsWith("/") || destino.startsWith("//")) return undefined;
+  try {
+    const u = new URL(destino, cadena.base);
+    let url: string;
+    if (u.pathname.startsWith("/busca")) {
+      const fq = u.searchParams.get("fq") ?? "";
+      const ft = u.searchParams.get("ft") ?? "";
+      const cat = fq.match(/^C:([\d/]+)$/)?.[1];
+      const filtros = [cat ? `fq=${encodeURIComponent(`C:/${cat.replace(/^\/|\/$/g, "")}/`)}` : "", ft ? `ft=${encodeURIComponent(ft)}` : ""]
+        .filter(Boolean)
+        .join("&");
+      if (!filtros) return undefined;
+      url = `${cadena.base}/api/catalog_system/pub/products/search?${filtros}&_from=0&_to=9`;
+      const res = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+      return res.ok ? ((await res.json()) as VtexProduct[]) : undefined;
+    }
+    // Makro (2026-11-27) redirige casi todo, y el último tramo a veces es la
+    // MARCA: «leche gloria» → /lacteos-y-huevos/leche/gloria. Primero todo como
+    // categorías; si no hay nada, el último tramo como marca.
+    const partes = u.pathname.split("/").filter(Boolean).slice(0, 4).map((p) => encodeURIComponent(decodeURIComponent(p)));
+    if (partes.length === 0) return undefined;
+    const comoCategorias = (ps: string[]) => ps.map((p, i) => `category-${i + 1}/${p}`).join("/");
+    const intentos = [comoCategorias(partes)];
+    if (partes.length > 1) intentos.push(`${comoCategorias(partes.slice(0, -1))}/brand/${partes[partes.length - 1]}`);
+    for (const facetas of intentos) {
+      url = `${cadena.base}/api/io/_v/api/intelligent-search/product_search/${facetas}?count=10&page=1&locale=es-PE`;
+      const res = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+      if (!res.ok) continue;
+      const productos = ((await res.json()) as { products?: VtexProduct[] })?.products;
+      if (productos?.length) return productos;
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function mapear(ingrediente: string, p: VtexProduct, cadena: Cadena): ProductoWong {
   const item = p.items?.[0];
   const oferta = item?.sellers?.[0]?.commertialOffer;
-  const precio = oferta?.Price;
+  // Lo que se paga: Flora y Fauna publica sin IGV y lo da en `Tax`.
+  const precio =
+    typeof oferta?.Price === "number" ? Math.round((oferta.Price + (oferta.Tax ?? 0)) * 100) / 100 : undefined;
 
   if (typeof precio !== "number" || precio <= 0) {
-    return { ingrediente, encontrado: false, motivo: "sin precio", proveedor: "wong" };
+    return { ingrediente, encontrado: false, motivo: "sin precio", proveedor: cadena.id };
   }
 
   // categoría: VTEX la da como "/Abarrotes/Arroz/Arroz Extra y Superior/".
@@ -99,10 +170,13 @@ function mapear(ingrediente: string, p: VtexProduct): ProductoWong {
   const disponible =
     oferta?.IsAvailable ?? ((oferta?.AvailableQuantity ?? 0) > 0);
 
+  const conTarjeta = preciosConTarjeta(teasersDeIS(oferta?.teasers), precio, oferta?.ListPrice);
+
   return {
     ingrediente,
     encontrado: true,
     sku: item?.itemId ?? p.productReference ?? p.productId,
+    ean: item?.ean || undefined,
     nombre: p.productName,
     marca: p.brand,
     imagen: item?.images?.[0]?.imageUrl,
@@ -113,7 +187,8 @@ function mapear(ingrediente: string, p: VtexProduct): ProductoWong {
     categoria,
     categoriaRuta,
     disponible,
-    url: p.linkText ? `${BASE}/${p.linkText}/p` : p.link,
-    proveedor: "wong",
+    conTarjeta: conTarjeta.length ? conTarjeta : undefined,
+    url: p.linkText ? `${cadena.base}/${p.linkText}/p` : p.link,
+    proveedor: cadena.id,
   };
 }
