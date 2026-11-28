@@ -40,6 +40,7 @@ export type ItemResuelto = {
   // elige ella (decisión de la PO, 2026-11-27). Mientras tanto no suma, igual que
   // un producto sin cantidad. Al elegir, el perfil lo recuerda para la próxima.
   porElegir?: boolean;
+  recienElegido?: boolean; // la familia lo eligió en esta lista: «lo acabas de elegir»
   cantidadPedida?: number;
   unidadPedida?: "kg" | "un";
   cantidadElegida?: number;

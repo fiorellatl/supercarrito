@@ -78,6 +78,7 @@ import { repositorioCasa } from "@/lib/perfil-store";
 
 import { color, fuente, lapiz, plata, rotulo, soles } from "@/app/ui/sistema";
 import Aviso from "@/app/ui/Aviso";
+import EligeAqui from "@/app/ui/EligeAqui";
 import Bienvenida from "@/app/ui/Bienvenida";
 import Cabecera from "@/app/ui/Cabecera";
 import Navegacion from "@/app/ui/Navegacion";
@@ -282,6 +283,9 @@ function totalDe(items: ItemResuelto[], perfil: Perfil) {
 
 function estadoDe(it: ItemResuelto, subtotal?: number): EstadoLinea {
   if (!it.elegido?.encontrado) return "sin-resultado";
+  // Sin elegir no hay producto puesto: que el primero del catálogo esté agotado
+  // no dice nada de la compra de la familia. Las opciones lo muestran una a una.
+  if (it.porElegir) return "pendiente";
   if (it.elegido.disponible === false) return "agotado";
   if (subtotal === undefined) return "pendiente";
   return "confirmado";
@@ -309,6 +313,7 @@ function confianzaDe(
   if (estado === "pendiente") return { tono: "pendiente", texto: "pendiente de confirmar" };
   if (estado === "sin-resultado") return undefined;
   if (it.cantidadElegida != null) return { tono: "confirmado", texto: "lo acabas de confirmar" };
+  if (it.recienElegido) return { tono: "confirmado", texto: "lo acabas de elegir" };
   if (it.porPerfil) {
     const veces = preferenciaDe(perfil, it.ingrediente)?.vecesConfirmada ?? 0;
     return veces >= 3
@@ -953,6 +958,11 @@ export default function App() {
       } else {
         const r = resolver(data as CarritoApi, perfilRef.current);
         nuevos = r.items.map((it) => ({ ...it, lineaId: l.id }));
+        // Lo que se acaba de escribir y ya quedó puesto se celebra una vez
+        // (PO, 2026-11-28). Lo que espera una elección no: ahí aún falta algo.
+        const puestos = nuevos.filter((n) => n.elegido?.encontrado && !n.porElegir).length;
+        if (l.origen === "escrita" && Date.now() - l.ts < 20000 && puestos > 0)
+          setAviso({ texto: `¡${puestos} ${puestos === 1 ? "producto agregado" : "productos agregados"}! Vamos bien.` });
         if (r.evitadas > 0) actualizarPerfil((p) => contarPreguntasEvitadas(p, r.evitadas));
         void repositorioHistorial.agregar({
           tipo: "escribio",
@@ -1110,10 +1120,12 @@ export default function App() {
 
   // La captura de señal: corregir es el mecanismo de aprendizaje, no un fallo.
   function corregir(ingrediente: string, nuevo: ProductoWong) {
-    const candidatos = items?.find((it) => it.ingrediente === ingrediente)?.candidatos ?? [];
+    const antes = items?.find((it) => it.ingrediente === ingrediente);
+    const candidatos = antes?.candidatos ?? [];
+    if (antes?.porElegir && !cola) setAviso({ texto: "¡1 producto agregado! Vamos bien." });
     setItems((xs) =>
       (xs ?? []).map((it) =>
-        it.ingrediente === ingrediente ? { ...it, elegido: nuevo, porPerfil: true, porElegir: false } : it
+        it.ingrediente === ingrediente ? { ...it, elegido: nuevo, porPerfil: true, porElegir: false, recienElegido: true } : it
       )
     );
     setHoja(null);
@@ -1223,7 +1235,7 @@ export default function App() {
     lista.length === 1 ? lista[0].ingrediente : `${lista.length} cosas`;
   const activos = (items ?? []).filter((i) => !i.fuera);
   const sinEncontrar = activos.filter((i) => !i.elegido?.encontrado);
-  const agotados = vivos.filter((i) => i.elegido?.disponible === false);
+  const agotados = vivos.filter((i) => !i.porElegir && i.elegido?.disponible === false);
   const sinCantidad = vivos.filter((i) => estadoDe(i, subtotalDe(i, perfil)) === "pendiente");
   const sinElegir = sinCantidad.filter((i) => i.porElegir);
   const preciosSuyos = preciosDeTienda === true && !esperandoTienda;
@@ -1235,8 +1247,8 @@ export default function App() {
         sinCantidad.length > 1
           ? `decidir ${sinCantidad.length} cosas`
           : sinElegir.length === 1
-            ? `cuál ${sinElegir[0].ingrediente}`
-            : `cuánto ${sinCantidad[0]?.ingrediente ?? ""}`,
+            ? `elegir tu ${sinElegir[0].ingrediente}`
+            : `decir cuánto ${sinCantidad[0]?.ingrediente ?? ""}`,
     },
     {
       ok: sinEncontrar.length === 0,
@@ -1350,6 +1362,32 @@ export default function App() {
           personaje={personaje}
           acciones={acciones}
           orden={i}
+        />
+      );
+    }
+
+    // Escrito sin marca y sin memoria: las opciones se ven en la lista misma y
+    // se toca una (PO, 2026-11-28). Nada puesto de antemano.
+    if (estado === "pendiente" && it.porElegir && !it.fuera) {
+      const fuera = () =>
+        setItems((xs) =>
+          (xs ?? []).map((x) => (x.lineaId === l.id && x.ingrediente === it.ingrediente ? { ...x, fuera: true } : x))
+        );
+      const sacar = deLaLinea === 1 ? quitarLinea : fuera;
+      return (
+        <EligeAqui
+          key={key}
+          ingrediente={it.ingrediente}
+          opciones={it.candidatos.filter((c) => c.encontrado)}
+          orden={i}
+          onElegir={(p) => corregir(it.ingrediente, p)}
+          onNinguno={() => {
+            sacar();
+            setBorrador(`${it.ingrediente} `);
+            compRef.current?.focus();
+            setAviso({ texto: `Escribe la marca junto a «${it.ingrediente}» y lo busco así.` });
+          }}
+          onQuitar={sacar}
         />
       );
     }
@@ -1688,7 +1726,7 @@ export default function App() {
           pie={
             vivos.length > 0 ? (
               <>
-                {opinaPapaya && <Papaya pepas={pepas} nadaSuma={cuentan === 0} />}
+                {opinaPapaya && <Papaya pepas={pepas} nadaSuma={cuentan === 0 && sinCantidad.length === 0} />}
                 {perfil.tienda && preciosDeTienda === false && (
                   <div style={{ ...lapiz, marginBottom: 8 }}>
                     {perfil.tienda.nombre} no me contestó: estos son precios
