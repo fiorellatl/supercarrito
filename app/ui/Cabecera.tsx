@@ -8,7 +8,8 @@
 // paso del flujo, y así la lista empieza un renglón más arriba.
 
 import Logo from "@/app/ui/Logo";
-import { color, fuente } from "@/app/ui/sistema";
+import { color, fuente, soles } from "@/app/ui/sistema";
+import { PRIME } from "@/lib/prime";
 
 export default function Cabecera({
   monograma,
@@ -141,7 +142,7 @@ export default function Cabecera({
         </button>
         {tarjeta && (
           <div style={{ marginTop: 6, fontSize: 12.5, fontWeight: 600, opacity: 0.95 }}>
-            💳 {tarjeta === "Wong Prime" ? "Wong Prime: envío gratis desde S/ 79.90" : `${tarjeta}: ${cadena} te lo descuenta al pagar`}
+            💳 {tarjeta === "Wong Prime" ? `Wong Prime: envío gratis desde ${soles(PRIME.desde)}` : `${tarjeta}: ${cadena} te lo descuenta al pagar`}
           </div>
         )}
       </div>
