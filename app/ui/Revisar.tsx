@@ -28,6 +28,7 @@ import type { Tienda } from "@/lib/tienda";
 import distritos from "@/data/distritos.json";
 import { CADENA_POR_DEFECTO, cadenasDisponibles } from "@/lib/cadenas";
 import { primeEnEnvio, type ConPrime } from "@/lib/prime";
+import { Dice } from "@/app/ui/Elenco";
 
 export const OTRO_DISTRITO = "Otro distrito";
 
@@ -380,9 +381,9 @@ export function OtraTienda({
   const otra = nombreCadena(destino.tienda);
   if (comparados + parecidos.length === 0 || origen.total == null || destino.total == null)
     return (
-      <div style={{ ...tarjeta(false), display: "flex", gap: 10, alignItems: "center" }}>
-        <Punto on={false} />
-        <span style={lapiz}>Nada de tu lista está en {otra}: no hay qué comparar.</span>
+      // La Piña: lo que no depende de nosotros (app/ui/Elenco.tsx).
+      <div style={{ ...tarjeta(false), paddingBottom: 2 }}>
+        <Dice quien="pina">{otra} no vende nada de tu lista: aquí no hay qué comparar.</Dice>
       </div>
     );
 
@@ -882,6 +883,8 @@ function AvisoTottus() {
         lineHeight: 1.4,
       }}
     >
+      {/* La Yuca: lo difícil, pero con salida. El aviso sigue igual de visible. */}
+      <Dice quien="yuca">Con Tottus te toca un poco más de trabajo, pero se puede.</Dice>
       <strong style={{ display: "block", fontSize: 14.5, marginBottom: 4 }}>⚠️ Ojo con Tottus</strong>
       <span style={{ display: "block" }}>
         <strong>Su carrito no se llena solo:</strong> agregas cada producto a mano en su web.

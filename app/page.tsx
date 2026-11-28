@@ -1605,7 +1605,7 @@ export default function App() {
                     compRef.current?.focus();
                   }}
                 >
-                  Añadir
+                  Buscar
                 </Boton>
               </div>
 
